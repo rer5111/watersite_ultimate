@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Waltuhcraft</title>
+    <link rel="stylesheet" href="stylesheet.css">
+</head>
+<body>
+<div class="navbar" style="background-color: rgb(21, 8, 53);">
+    <div class="test" style="flex: 1 50%">
+        <img src="WC-snow.png" width="64px" height="64px" class="icon">
+        <h1 style="color:rgb(255, 255, 255); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Waltercraft</h1>
+    </div>
+    <div class = "test" style="flex:1 30%">
+        <a href="/chat"><h3 class="navop">Игровой чат</h3></a>
+        <a href="/adminPanel"><h3 class="navop">Панель администрации</h3></a>
+        <a href="/"><h3 class="navop">Главная</h3></a>
+        <a href="/players"><h3 class="navop">Наш состав</h3></a>
+        <a><h3 class="navop">Пожертвование</h3></a>
+        <a><h3 class="navop">Регистрация</h3></a>
+        <a href="https://discord.gg/gqrUH3hFhf"><img src="discord-white-icon.png" width="64px" height="64px" style="margin-left:2rem; margin-right: 2rem;"></a>
+    </div>
+</div>
+<form method="post" action="users/add">
+    <input type="text" placeholder="Имя" name="username" required>
+    <input type="password" placeholder="Пароль" name="password" required>
+    <select name="account_id" required>
+        <option th:each="account: ${accounts}" th:value="${account.id}" th:text="${account.username}"></option>
+    </select>
+    <div th:each="role : ${roles}">
+        <input type="checkbox" th:id="${role}"
+               th:name="${'roles'}" th:value="${role}"
+               th:checked="false">
+
+        <label th:text="${role}"></label>
+    </div>
+    <input type="submit" value="Добавить">
+</form>
+<form method="post" action="/userListSID">
+    <input type="number" placeholder="ID" name="id">
+    <input type="submit" value="Найти">
+</form>
+<form method="post" action="/userListName">
+    <input type="text" placeholder="Имя" name="name">
+    <input type="submit" value="Найти">
+</form>
+<ul>
+    <th:block th:each="user : ${users}">
+        <li>
+            <span th:text="${user.name}"></span>
+            <span th:text="${user.getAccount_ID().username}"></span>
+            <span th:text="${user.getRoles()}"></span>
+            <span> Сезоны: </span>
+            <span th:each="season : ${user.seasons}" th:text="${season.id} + ' сезон '"></span>
+            <form method="post" action="users/update">
+                <input type="hidden" name="id" th:value="${user.id}">
+                <input type="text" placeholder="Имя" name="username" required>
+                <input type="password" placeholder="Пароль" name="password" required>
+                <select name="account_id" required>
+                    <option th:each="account: ${accounts}" th:value="${account.id}" th:text="${account.username}"></option>
+                </select>
+                <div th:each="role : ${roles}">
+                    <input type="checkbox" th:id="${role}"
+                           th:name="${'roles'}" th:value="${role}"
+                           th:checked="${#lists.contains(user.getRoles(),role)}">
+
+                    <label th:text="${role}"></label>
+                </div>
+                <input type="submit" value="Изменить">
+            </form>
+            <form method="post" action="users/delete">
+                <input type="hidden" name="id" th:value="${user.id}">
+                <input type="submit" value="Удалить">
+            </form>
+            <form method="post" action="users/addSeason">
+                <label>Добавить сезон: </label>
+                <input type="hidden" name="id" th:value="${user.id}">
+                <select name="s_id">
+                    <option th:each="season: ${seasons}" th:value="${season.id}" th:text="${season.id} + ' сезон'"></option>
+                </select>
+                <input type="submit" value="Добавить">
+            </form>
+            <form method="post" action="users/removeSeason">
+                <label>Удалить сезон: </label>
+                <input type="hidden" name="id" th:value="${user.id}">
+                <select name="s_id">
+                    <option th:each="season: ${user.seasons}" th:value="${season.id}" th:text="${season.id} + ' сезон'"></option>
+                </select>
+                <input type="submit" value="Удалить">
+            </form>
+        </li>
+    </th:block>
+</ul>
+<span th:text="'Кол-во страниц:' + ${pages}"></span>
+<form method="post" action="/userListPage">
+    <input type="number" placeholder="Страница" name="page">
+    <input type="submit" value="Открыть">
+</form>
+</body>
+</html>

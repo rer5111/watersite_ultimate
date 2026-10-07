@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Регистрация - Waltercraft</title>
+    <link rel="stylesheet" href="stylesheet.css">
+</head>
+<body>
+
+<div class="navbar">
+    <div class="test" style="flex: 1 50%">
+        <img src="WC-snow.png" width="64px" height="64px" class="icon">
+        <h1 style="color:rgb(255, 255, 255); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Waltercraft</h1>
+    </div>
+    <div class="test" style="flex:1 30%">
+        <a href="/chat"><h3 class="navop">Игровой чат</h3></a>
+        <a href="/adminPanel"><h3 class="navop">Панель администрации</h3></a>
+        <a href="/"><h3 class="navop">Главная</h3></a>
+        <a href="/players"><h3 class="navop">Наш состав</h3></a>
+        <a href="/donate"><h3 class="navop">Пожертвование</h3></a>
+        <a href="/login" th:if="${#httpServletRequest.remoteUser == null}">
+            <h3 class="navop">Вход / Регистрация</h3>
+        </a>
+
+        <a href="/logout" th:if="${#httpServletRequest.remoteUser != null}">
+            <h3 class="navop">Выход</h3>
+        </a>
+        <a href="https://discord.gg"><img src="discord-white-icon.png" width="64px" height="64px" style="margin-left:2rem; margin-right: 2rem;"></a>
+    </div>
+</div>
+
+<div class="stretch_width" style="margin-top: 4rem;">
+    <div class="card-container">
+        <h2 style="text-align: center">Создание профиля</h2>
+
+        <div th:if="${message}" th:text="${message}" class="alert-error"></div>
+
+        <form th:action="@{/registration}" method="post">
+            <div class="field-group">
+                <label for="name">Логин :</label>
+                <input type="text" id="name" name="name" class="input-text" required />
+            </div>
+            <div class="field-group">
+                <label for="account_name">Имя аккаунта :</label>
+                <input type="text" id="account_name" name="account_name" class="input-text" required />
+            </div>
+            <div class="field-group">
+                <label for="password">Пароль :</label>
+                <input type="password" id="password" name="password" class="input-text" required />
+            </div>
+            <div style="margin-top: 2rem;">
+                <button type="submit" class="btn-primary">Регистрация</button>
+            </div>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.5rem;">
+            <p>Уже зарегистрированы?</p>
+            <a href="/login" style="color: cornflowerblue; font-weight: bold; text-decoration: none;">Войти в аккаунт</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

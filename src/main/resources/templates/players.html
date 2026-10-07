@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Валтеркрафт</title>
+  <link rel="stylesheet" href="stylesheet.css">
+</head>
+<body>
+<div class="navbar">
+  <div class="test" style="flex: 1 50%">
+    <img src="WC-snow.png" width="64px" height="64px" class="icon">
+    <h1 style="color:rgb(255, 255, 255); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Waltercraft</h1>
+  </div>
+  <div class="test" style="flex:1 30%">
+    <a href="/chat"><h3 class="navop">Игровой чат</h3></a>
+    <a href="/adminPanel"><h3 class="navop">Панель администрации</h3></a>
+    <a href="/"><h3 class="navop">Главная</h3></a>
+    <a href="/players"><h3 class="navop">Наш состав</h3></a>
+    <a href="/donate"><h3 class="navop">Пожертвование</h3></a>
+    <a href="/login" th:if="${#httpServletRequest.remoteUser == null}">
+      <h3 class="navop">Вход / Регистрация</h3>
+    </a>
+
+    <a href="/logout" th:if="${#httpServletRequest.remoteUser != null}">
+      <h3 class="navop">Выход</h3>
+    </a>
+    <a href="https://discord.gg"><img src="discord-white-icon.png" width="64px" height="64px" style="margin-left:2rem; margin-right: 2rem;"></a>
+  </div>
+</div>
+<header class="center">
+  <h1>Члены Валтеркрафта</h1>
+  <h2 style="margin-top: 0;">Все игроки, которые играли на нашем сервере.</h2>
+</header>
+<main>
+  <div class="cardholder">
+    <div class="card">
+      <div class="center">
+        <h1>LeadCone_TNF</h1>
+        <img src="lidkon.png">
+      </div>
+      <p>Лидкон_ТНФ, или же просто лидкон - главный администратор валтекрафта. Он владелец сервера и занимается его поддержкой.</p>
+      <ul class="info">
+        <li>Участвовал во всех сезонах Валтеркрафта</li>
+        <li>Житель ватерграда (2 сезон)</li>
+        <li>Основатель спавна (3 сезон)</li>
+        <li>Основатель платформы (4 сезон)</li>
+        <li>Житель крайенбора (5 сезон)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="center">
+        <h1>rer_5111</h1>
+        <img src="rer.png">
+      </div>
+      <p>Рер - совладелец сервера, вместе с лидконом. Он помогает с поддержкой сервера и организует ивенты.</p>
+      <ul class="info">
+        <li>Информация</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="center">
+        <h1>Kotyarendj</h1>
+        <img src="kot.png">
+      </div>
+      <p>Котярендж - один из администраторов дискорда. Он следит за порядком на дискорд сервере, а также организует ивенты.</p>
+      <ul class="info">
+        <li>Информация</li>
+      </ul>
+    </div>
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Waltuhcraft</title>
+    <link rel="stylesheet" href="stylesheet.css">
+</head>
+<body>
+<div class="navbar" style="background-color: rgb(21, 8, 53);">
+    <div class="test" style="flex: 1 50%">
+        <img src="WC-snow.png" width="64px" height="64px" class="icon">
+        <h1 style="color:rgb(255, 255, 255); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Waltercraft</h1>
+    </div>
+    <div class = "test" style="flex:1 30%">
+        <a href="/chat"><h3 class="navop">Игровой чат</h3></a>
+        <a href="/adminPanel"><h3 class="navop">Панель администрации</h3></a>
+        <a href="/"><h3 class="navop">Главная</h3></a>
+        <a href="/players"><h3 class="navop">Наш состав</h3></a>
+        <a href="/donate"><h3 class="navop">Пожертвование</h3></a>
+        <a href="/login" th:if="${#httpServletRequest.remoteUser == null}">
+            <h3 class="navop">Вход / Регистрация</h3>
+        </a>
+
+        <a href="/logout" th:if="${#httpServletRequest.remoteUser != null}">
+            <h3 class="navop">Выход</h3>
+        </a>
+        <a href="https://discord.gg/gqrUH3hFhf"><img src="discord-white-icon.png" width="64px" height="64px" style="margin-left:2rem; margin-right: 2rem;"></a>
+    </div>
+</div>
+<div class="stretch_width" style="background-color: #101050; width:auto; margin-top: 1rem;">
+    <div class="textbox">
+        <p style="margin-right: 2rem; font-weight: bold; font-size: 24px;">Валтеркрафт (также известен как Waltuhcraft) - небольшой проект, который состоит из небольшой, но сплочённой группы друзей, которые играют на майнкрафт сервере.</p>
+    </div>
+</div>
+<div class="main_div">
+    <h3 style="text-align: center; font-size: 24px">Сезоны</h3>
+    <div class="stretch_width">
+        <div class="textbox">
+            <p style="margin-right: 2rem; font-weight: bold; font-size: 20px;">На сервере действует система сезонов - каждый длится около 1-2 года, и заканчиваются крупными событиями. Всего было 5 сезонов, каждый из которых - кусочек истории сервера.</p>
+        </div>
+    </div>
+    <div class="season_border">
+        <h3 style="text-align: center; font-size: 22px">1 Сезон (2022-2022)</h3>
+        <div class="stretch_width" style="margin-bottom: 1rem">
+            <div class="textbox">
+                <p style="font-size:20px; width: 25rem;">1 Сезон - начало сервера, когда он еще небыл назван валтеркрафтом. Тогда у нас был Золотой ключик, и сервер был администрирован игроком Eathless. В этом сезоне начали строить город ватерград, а также более мелкие поселения.</p>
+            </div>
+            <img src="s1.png" class="main_img">
+        </div>
+    </div>
+    <div class="season_border" style="border-top: 0">
+        <h3 style="text-align: center; font-size: 22px">2 Сезон (2022-2023)</h3>
+        <div class="stretch_width" style="margin-bottom: 1rem;">
+            <div class="textbox">
+                <p style="font-size:20px; width: 25rem;">2 Сезон - вершина валтеркрафта, а также его начало. Eathless передает сервер в руки игроков, и они создают новый сервер - Waltercraft. На этом сезоне закончили постройку ватерграда, а также прошло множество ивентов.</p>
+            </div>
+            <img src="s2.png" class="main_img">
+        </div>
+    </div>
+    <div class="season_border" style="border-top: 0">
+        <h3 style="text-align: center; font-size: 22px">3 Сезон (2023-2024)</h3>
+        <div class="stretch_width" style="margin-bottom: 1rem">
+            <div class="textbox">
+                <p style="font-size:20px; width: 25rem;">3 Сезон - продолжение эры валтеркрафта. В нем люди решили отойти от постройки огромного города, и начать строить отдельные базы, со спавном в центре всего. В этом сезоне была некоторая стагнация, но было столько же веселых ивентов.</p>
+            </div>
+            <img src="s3.png" class="main_img">
+        </div>
+    </div>
+    <div class="season_border" style="border-top: 0">
+        <h3 style="text-align: center; font-size: 22px">4 Сезон (2024-2025)</h3>
+        <div class="stretch_width" style="margin-bottom: 1rem">
+            <div class="textbox">
+                <p style="font-size:20px; width: 25rem;">4 Сезон - эра экспериментов. В этом сезоне на сервере действовал огромный кастомный модпак, с 100+ модами, включая Create, Valkiryen Skies, и другие контент-моды. В этом сезоне было много ивентов, однако после некоторого времени сервер пришлось заморозить из-за инактива.</p>
+            </div>
+            <img src="s4.png" class="main_img">
+        </div>
+    </div>
+    <div class="season_border" style="border-top: 0">
+        <h3 style="text-align: center; font-size: 22px">5 Сезон (2025-сейчас)</h3>
+        <div class="stretch_width" style="margin-bottom: 1rem">
+            <div class="textbox">
+                <p style="font-size:20px; width: 25rem;">5 Сезон - возрождение сервера. Сервер уходит из заморозки с новой целью - построить один общий город крайенбор и вернуть единство ватерграда на сервер, с ванильными плагинами, заменяющими Create и другие из 4-го сезона.</p>
+            </div>
+            <img src="s5.png" class="main_img">
+        </div>
+    </div>
+</div>
+<div class="stretch_width">
+    <div class="textbox">
+        <p style="font-size:20px; width: 25rem; font-weight: bold;">Но это всё что было раньше, почему бы вам не зайти, и сделать будущее?</p>
+    </div>
+</div>
+<div class="stretch_width">
+    <a href="https://discord.gg/gqrUH3hFhf" class="button" style="margin-bottom: 1rem;">
+        <p style="margin-left: 2rem; margin-right:2rem; margin-top:1rem; margin-bottom: 1rem; font-size:24px">Присоединится</p></a>
+</div>
+<div class="main_div">
+    <div class="textbox">
+        <p style="font-size:20px; width: 25rem;">Хотите узнать о нашей команде администрации или стать её частью?</p>
+    </div>
+    <div class="stretch_width">
+        <a class="button" style="margin: 1rem; width: 10rem; background-color: cornflowerblue; border-color: cornflowerblue;"><p style="font-size:24px">Узнать</p></a>
+    </div>
+</div>
+</div>
+<div class="main_div" style="justify-content: right; margin-bottom: -1rem;">
+
+    <div class="stretch_width">
+        <p>а еще у нас есть локальный стример -></p>
+        <a href="https://www.twitch.tv/mrtomit"><img src="tushmar.png" style="margin-bottom: -1rem;"></a>
+    </div>
+</div>
+</body>
+</html>

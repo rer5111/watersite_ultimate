@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Waltuhcraft</title>
+    <link rel="stylesheet" href="stylesheet.css">
+</head>
+<body>
+<div class="navbar" style="background-color: rgb(21, 8, 53);">
+    <div class="test" style="flex: 1 50%">
+        <img src="WC-snow.png" width="64px" height="64px" class="icon">
+        <h1 style="color:rgb(255, 255, 255); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Waltercraft</h1>
+    </div>
+    <div class = "test" style="flex:1 30%">
+        <a href="/chat"><h3 class="navop">Игровой чат</h3></a>
+        <a href="/adminPanel"><h3 class="navop">Панель администрации</h3></a>
+        <a href="/"><h3 class="navop">Главная</h3></a>
+        <a href="/players"><h3 class="navop">Наш состав</h3></a>
+        <a href="/donate"><h3 class="navop">Пожертвование</h3></a>
+        <a><h3 class="navop">Регистрация</h3></a>
+        <a href="https://discord.gg/gqrUH3hFhf"><img src="discord-white-icon.png" width="64px" height="64px" style="margin-left:2rem; margin-right: 2rem;"></a>
+    </div>
+</div>
+<div class="cardholder">
+    <th:block th:each="donation : ${donation_types}">
+        <div class="card center" style="margin: 10px">
+            <span th:text="${donation.name}"></span>
+            <span th:text="${donation.cost}"></span>
+            <form action="donate/do" method="post">
+                <input name="user_id" th:value="${user_id}" hidden>
+                <input name="type_id" th:value="${donation.getId()}" hidden>
+                <button class="button">Купить</button>
+            </form>
+        </div>
+    </th:block>
+</div>
+<span th:text="'Кол-во страниц:' + ${pages}"></span>
+<form method="post" action="/applicationListPage">
+    <input type="number" placeholder="Страница" name="page">
+    <input type="submit" value="Открыть">
+</form>
+</body>
+</html>
