@@ -72,24 +72,40 @@ public class UserPermController {
         ).getBody();
     }
 
+    public <T> T fetchFromApi(String endpoint, Class<T> responseType) {
+        return restTemplate.getForObject("http://localhost:8080/api/" + endpoint, responseType);
+    }
+
     @GetMapping("/chat")
     public String Chat(Model model) {return "chatConnector";}
 
     @GetMapping("/players")
-    public String Players(Model model) {return "players";}
+    public String Players(Model model, Principal principal) {
+        return "players";
+    }
 
     @GetMapping("/donate")
     public String DonationPage(Model model, Principal principal){
-        String username;
-        username = principal.getName();
-        model.addAttribute("user_id", fetchFromApi("user/findName/%s".formatted(username), new ParameterizedTypeReference<List<UserModel>>() {}).get(0).getId());
-        model.addAttribute("donation_types", fetchFromApi("donationType/all", new ParameterizedTypeReference<List<DonationTypeModel>>() {}));
+        model.addAttribute("donation_types", fetchFromApi("donationType/findPage/1", new ParameterizedTypeReference<List<DonationTypeModel>>() {}));
+        model.addAttribute("pages", fetchFromApi("donationType/pages", Integer.TYPE));
         return "playerDonate";
     }
 
     @PostMapping("/donate/do")
-    public String DonationPage(Model model, @RequestParam int user_id, @RequestParam int type_id){
+    public String DonationPage(Model model, Principal principal, @RequestParam int type_id){
+        String username;
+        username = principal.getName();
+        int user_id = (int) fetchFromApi("user/findName/%s".formatted(username), new ParameterizedTypeReference<List<UserModel>>() {}).get(0).getId();
         sendParamsToApi("donation/", HttpMethod.PUT, Map.of("date", LocalDate.now(), "typeID", type_id, "userID", user_id));
         return "redirect:/donate";
+    }
+
+    @PostMapping("/sendApp")
+    public String SendApplication(Model model, Principal principal, @RequestParam String text){
+        String username;
+        username = principal.getName();
+        int user_id = (int) fetchFromApi("user/findName/%s".formatted(username), new ParameterizedTypeReference<List<UserModel>>() {}).get(0).getId();
+        sendParamsToApi("application/", HttpMethod.PUT, Map.of("text", text, "date", LocalDate.now(), "status", "На рассмотрении", "userID", user_id));
+        return "redirect:/players";
     }
 }

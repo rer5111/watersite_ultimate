@@ -21,15 +21,17 @@
         <a href="https://discord.gg/gqrUH3hFhf"><img src="discord-white-icon.png" width="64px" height="64px" style="margin-left:2rem; margin-right: 2rem;"></a>
     </div>
 </div>
-<div class="cardholder">
+<div class="center">
+<div class="cardholder" style="grid-template-columns: 33.33% 33.33% 33.33%; width: 75%">
     <th:block th:each="donation : ${donation_types}">
-        <div class="card center" style="margin: 10px">
-            <span th:text="${donation.name}"></span>
-            <span th:text="${donation.cost}"></span>
+        <div class="card" style="padding:5px; margin:20px; width: auto; height: 200px">
+            <h1 th:text="${donation.name}"></h1>
+            <h2 th:text="${donation.cost}+'₽'"></h2>
             <form action="donate/do" method="post">
-                <input name="user_id" th:value="${user_id}" hidden>
                 <input name="type_id" th:value="${donation.getId()}" hidden>
-                <button class="button">Купить</button>
+                <div class="center">
+                <button class="button" style="width: 150px; height: 50px">Купить</button>
+                </div>
             </form>
         </div>
     </th:block>
@@ -39,5 +41,6 @@
     <input type="number" placeholder="Страница" name="page">
     <input type="submit" value="Открыть">
 </form>
+</div>
 </body>
 </html>
