@@ -1,9 +1,9 @@
 package org.example.p3.controller.API;
 
+import lombok.RequiredArgsConstructor;
 import org.example.p3.model.DonationTypeModel;
 import org.example.p3.service.DonationTypeService;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,14 +14,10 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
 @RequestMapping("/api/donationType")
+@RequiredArgsConstructor
 public class DonationTypeController {
 
-    @Autowired
-    private DonationTypeService service;
-
-    public DonationTypeController(DonationTypeService service) {
-        this.service = service;
-    }
+    private final DonationTypeService service;
 
     @Tag(name = "Добавление", description = "Добавляет запись")
     @PutMapping(produces = APPLICATION_JSON_VALUE)
@@ -37,9 +33,13 @@ public class DonationTypeController {
 
     @Tag(name = "Изменение", description = "Изменяет запись")
     @PostMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus updateDonationType(@RequestParam int id, @RequestParam String name, @RequestParam int cost) {
-        if (service.findByID(id).isEmpty()) return HttpStatus.NOT_FOUND;
-        DonationTypeModel donationTypeModel = service.findByID(id).get(0);
+    public HttpStatus updateDonationType(
+            @RequestParam int id,
+            @RequestParam String name,
+            @RequestParam int cost
+    ) {
+        if (service.findById(id).isEmpty()) return HttpStatus.NOT_FOUND;
+        DonationTypeModel donationTypeModel = service.findById(id).get(0);
         donationTypeModel.setName(name);
         donationTypeModel.setCost(cost);
         service.updateDonationType(donationTypeModel);
@@ -78,7 +78,7 @@ public class DonationTypeController {
     @Tag(name = "Нахождение по ID", description = "Находит запись по ID")
     @GetMapping(value="/findID/{id}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<DonationTypeModel>> findById(@PathVariable int id) {
-        return ResponseEntity.ok(service.findByID(id));
+        return ResponseEntity.ok(service.findById(id));
     }
 
     @Tag(name = "Нахождение по имени", description = "Находит запись по имени")
@@ -86,5 +86,4 @@ public class DonationTypeController {
     public ResponseEntity<List<DonationTypeModel>> findByName(@PathVariable String name) {
         return ResponseEntity.ok(service.findByName(name));
     }
-
 }

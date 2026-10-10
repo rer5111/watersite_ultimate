@@ -1,63 +1,57 @@
 package org.example.p3.service;
 
-import org.example.p3.model.SeasonModel;
-import org.example.p3.model.SeasonModel;
+import lombok.RequiredArgsConstructor;
 import org.example.p3.model.SeasonModel;
 import org.example.p3.repository.SeasonRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class SeasonServiceImpl implements SeasonService {
-    private final SeasonRepository SeasonRepository;
 
-    public SeasonServiceImpl(SeasonRepository SeasonRepository) {
-        this.SeasonRepository = SeasonRepository;
-    }
+    private final SeasonRepository seasonRepository;
 
     @Override
-    public List<SeasonModel> findByID(long id) {
-        return SeasonRepository.findById(id).stream().toList();
+    public List<SeasonModel> findById(long id) {
+        return seasonRepository.findById(id).stream().toList();
     }
 
     @Override
     public List<SeasonModel> findAll() {
-        return SeasonRepository.findAll();
+        return seasonRepository.findAll();
     }
 
     @Override
-    public SeasonModel addSeason(SeasonModel Season) {
-        return SeasonRepository.save(Season);
+    public void addSeason(SeasonModel Season) {
+        seasonRepository.save(Season);
     }
 
     @Override
-    public SeasonModel updateSeason(SeasonModel Season) {
-        return SeasonRepository.save(Season);
+    public void updateSeason(SeasonModel Season) {
+        seasonRepository.save(Season);
     }
 
     @Override
     public void deleteSeason(long id) {
-        SeasonRepository.deleteById(id);
+        seasonRepository.deleteById(id);
     }
+
     @Override
-    public List<SeasonModel> findPage(int page){
-        List<SeasonModel> Seasons = SeasonRepository.findAll();
-        if (Seasons.isEmpty()){
-            return new ArrayList<>();
-        } else if (Seasons.size() <page*5-5 || page < 1) {
-            return new ArrayList<>();
+    public List<SeasonModel> findPage(int page) {
+        if (page < 1) {
+            return List.of();
         }
-        if (page*5 < Seasons.size()){
-            return Seasons.subList(page*5-5, page*5);
-        }
-        else{
-            return Seasons.subList(page*5-5, Seasons.size());
-        }
+        Pageable pageable = PageRequest.of(page - 1, 5);
+        return seasonRepository.findAll(pageable).getContent();
     }
+
     @Override
-    public int getPages(){
-        return (SeasonRepository.findAll().size()-1)/5+1;
+    public int getPages() {
+        Pageable pageable = PageRequest.of(0, 5);
+        return seasonRepository.findAll(pageable).getTotalPages();
     }
 }

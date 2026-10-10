@@ -1,89 +1,92 @@
 package org.example.p3.controller.API;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
-import java.util.Map;
+
+import javax.annotation.PostConstruct;
 import java.security.Principal;
-import org.springframework.http.ResponseEntity;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/minecraft-chat")
+@RequiredArgsConstructor
 public class ChatController extends ListenerAdapter {
 
-    @Autowired
-    private JDA jda;
-
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate; // <-- Injected socket engine
+    private final JDA jda;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Value("${discord.chat.channel.id}")
     private String chatChannelId;
 
+    private static final String BOT_USER_ID = "1042883408596062298";
     private static final Pattern CHAT_PATTERN = Pattern.compile("^<([^>]+)>\\s(.*)$");
+
+    @PostConstruct
+    public void registerListener() {
+        jda.addEventListener(this);
+    }
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
-        if (event.getChannel().getId().equals(chatChannelId)) {
+        if (!event.getChannel().getId().equals(chatChannelId)) {
+            return;
+        }
 
-            boolean isOurMinecraftBot = event.getAuthor().getId().equals("1042883408596062298");
-            boolean isAHumanUser = !event.getAuthor().isBot();
+        boolean isOurMinecraftBot = event.getAuthor().getId().equals(BOT_USER_ID);
+        boolean isAHumanUser = !event.getAuthor().isBot();
 
-            if (isAHumanUser || isOurMinecraftBot) {
-                String sender = event.getAuthor().getName();
-                String messageText = event.getMessage().getContentDisplay();
+        if (!isAHumanUser && !isOurMinecraftBot) {
+            return;
+        }
 
-                if (isOurMinecraftBot) {
-                    // Check if the message matches the player chat pattern <PlayerName> text
-                    Matcher matcher = CHAT_PATTERN.matcher(messageText);
+        Map<String, String> chatPayload = getChatPayload(event, isOurMinecraftBot);
 
-                    if (matcher.matches()) {
-                        // Split them cleanly!
-                        sender = matcher.group(1);     // Extracts the name inside the brackets (e.g., rer_5111)
-                        messageText = matcher.group(2); // Extracts the actual text message
-                    } else {
-                        // If it doesn't match brackets, it's a server event (e.g., **rer_5111 joined the game**)
-                        sender = "Minecraft Server";
-                    }
-                }
+        messagingTemplate.convertAndSend("/topic/chat", chatPayload);
+    }
 
-                Map<String, String> chatPayload = Map.of(
-                        "user", sender,
-                        "message", messageText
-                );
+    private static Map<String, String> getChatPayload(MessageReceivedEvent event, boolean isOurMinecraftBot) {
+        String sender = event.getAuthor().getName();
+        String messageText = event.getMessage().getContentDisplay();
 
-                messagingTemplate.convertAndSend("/topic/chat", chatPayload);
+        if (isOurMinecraftBot) {
+            Matcher matcher = CHAT_PATTERN.matcher(messageText);
+            if (matcher.matches()) {
+                sender = matcher.group(1);
+                messageText = matcher.group(2);
+            } else {
+                sender = "Minecraft Server";
             }
         }
+
+        return Map.of(
+                "user", sender,
+                "message", messageText
+        );
     }
 
     @PostMapping("/send")
-    @ResponseBody
     public ResponseEntity<String> sendWebMessageToGame(@RequestParam String message, Principal principal) {
-
-        String username = "Anonymous";
-
-        if (principal != null) {
-            username = principal.getName();
-        }
-
+        String username = (principal != null) ? principal.getName() : "Anonymous";
         String formattedMessage = String.format("[Web] %s: %s", username, message);
 
-        jda.getTextChannelById(chatChannelId)
-                .sendMessage(formattedMessage)
-                .queue();
+        TextChannel channel = jda.getTextChannelById(chatChannelId);
+        if (channel == null) {
+            log.error("Configured Discord channel ID '{}' was not found by JDA", chatChannelId);
+            return ResponseEntity.badRequest().body("Discord channel not found");
+        }
 
+        channel.sendMessage(formattedMessage).queue();
         return ResponseEntity.ok("Message sent successfully");
-    }
-
-    @Autowired
-    public void registerListener(JDA jda) {
-        jda.addEventListener(this);
     }
 }

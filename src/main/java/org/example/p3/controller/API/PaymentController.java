@@ -1,10 +1,11 @@
 package org.example.p3.controller.API;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.p3.model.PaymentModel;
 import org.example.p3.service.PaymentService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.p3.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,41 +15,49 @@ import java.util.List;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/payment")
+@RequiredArgsConstructor
 public class PaymentController {
 
-    @Autowired
-    private PaymentService paymentService;
-    @Autowired
-    private UserService userService;
-
-    public PaymentController(PaymentService service) {
-        this.paymentService = service;
-    }
+    private final PaymentService paymentService;
+    private final UserService userService;
 
     @Tag(name = "Добавление", description = "Добавляет запись")
     @PutMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus registerPayment(@RequestParam LocalDate date, @RequestParam Double cost, @RequestParam int userID) {
+    public HttpStatus registerPayment(
+            @RequestParam LocalDate date,
+            @RequestParam Double cost,
+            @RequestParam int userId
+    ) {
         try {
-            PaymentModel paymentTypeModel = new PaymentModel(0, date, cost, userService.findByID(userID).get(0));
+            PaymentModel paymentTypeModel = new PaymentModel(0, date, cost, userService.findById(userId).get(0));
             paymentService.addPayment(paymentTypeModel);
             return HttpStatus.OK;
         } catch (Exception e) {
-            System.out.println(e);
+            log.error("e: ", e);
             return HttpStatus.BAD_REQUEST;
         }
     }
 
     @Tag(name = "Изменение", description = "Изменяет запись")
     @PostMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus updatePayment(@RequestParam int id, @RequestParam LocalDate date, @RequestParam Double cost, @RequestParam int userID) {
-        if (paymentService.findByID(id).isEmpty() || userService.findByID(userID).isEmpty()) return HttpStatus.NOT_FOUND;
-        PaymentModel paymentTypeModel = paymentService.findByID(id).get(0);
-        paymentTypeModel.setPayment_date(date);
-        paymentTypeModel.setCost(cost);
-        paymentTypeModel.setUser_ID(userService.findByID(userID).get(0));
-        paymentService.updatePayment(paymentTypeModel);
+    public HttpStatus updatePayment(
+            @RequestParam int id,
+            @RequestParam LocalDate date,
+            @RequestParam Double cost,
+            @RequestParam int userId
+    ) {
+        if (paymentService.findById(id).isEmpty() || userService.findById(userId).isEmpty()) {
+            return HttpStatus.NOT_FOUND;
+        }
+
+        PaymentModel paymentModel = paymentService.findById(id).get(0);
+        paymentModel.setPaymentDate(date);
+        paymentModel.setCost(cost);
+        paymentModel.setUser(userService.findById(userId).get(0));
+        paymentService.updatePayment(paymentModel);
         return HttpStatus.OK;
     }
 
@@ -84,6 +93,6 @@ public class PaymentController {
     @Tag(name = "Нахождение по ID", description = "Находит запись по ID")
     @GetMapping(value="/findID/{id}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<PaymentModel>> findById(@PathVariable int id) {
-        return ResponseEntity.ok(paymentService.findByID(id));
+        return ResponseEntity.ok(paymentService.findById(id));
     }
 }

@@ -5,11 +5,11 @@ import org.example.p3.model.PaymentModel;
 import java.util.List;
 
 public interface PaymentService {
-    public List<PaymentModel> findByID(long id);
-    public List<PaymentModel> findAll();
-    public PaymentModel addPayment(PaymentModel Payment);
-    public PaymentModel updatePayment(PaymentModel Payment);
-    public void deletePayment(long id);
-    public List<PaymentModel> findPage(int page);
-    public int getPages();
+    List<PaymentModel> findById(long id);
+    List<PaymentModel> findAll();
+    void addPayment(PaymentModel Payment);
+    void updatePayment(PaymentModel Payment);
+    void deletePayment(long id);
+    List<PaymentModel> findPage(int page);
+    int getPages();
 }

@@ -2,8 +2,6 @@ package org.example.p3.controller;
 
 import org.example.p3.model.DonationTypeModel;
 import org.example.p3.model.UserModel;
-import org.example.p3.service.UserService;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -11,7 +9,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -25,12 +22,12 @@ import java.util.Map;
 
 @Controller
 @PreAuthorize("hasAnyAuthority('USER')")
-public class UserPermController {
+public class UserPermissionController {
 
     private final RestTemplate restTemplate;
 
 
-    public UserPermController() {
+    public UserPermissionController() {
         this.restTemplate = new RestTemplate();
     }
 

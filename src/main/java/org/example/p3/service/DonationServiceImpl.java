@@ -1,68 +1,63 @@
 package org.example.p3.service;
 
+import lombok.RequiredArgsConstructor;
 import org.example.p3.model.DonationModel;
 import org.example.p3.model.DonationTypeModel;
 import org.example.p3.repository.DonationRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.example.p3.service.DonationTypeService;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class DonationServiceImpl implements DonationService {
-    private final DonationRepository DonationRepository;
 
-    public DonationServiceImpl(DonationRepository DonationRepository) {
-        this.DonationRepository = DonationRepository;
-    }
+    private final DonationRepository donationRepository;
 
     @Override
-    public List<DonationModel> findByID(long id) {
-        return DonationRepository.findById(id).stream().toList();
+    public List<DonationModel> findById(long id) {
+        return donationRepository.findById(id).stream().toList();
     }
 
     @Override
     public List<DonationModel> findByType(DonationTypeModel dt) {
-        return DonationRepository.findAllByDonationTypeIs(dt);
+        return donationRepository.findAllByDonationTypeIs(dt);
     }
 
     @Override
     public List<DonationModel> findAll() {
-        return DonationRepository.findAll();
+        return donationRepository.findAll();
     }
 
     @Override
-    public DonationModel addDonation(DonationModel Donation) {
-        return DonationRepository.save(Donation);
+    public void addDonation(DonationModel Donation) {
+        donationRepository.save(Donation);
     }
 
     @Override
-    public DonationModel updateDonation(DonationModel Donation) {
-        return DonationRepository.save(Donation);
+    public void updateDonation(DonationModel Donation) {
+        donationRepository.save(Donation);
     }
 
     @Override
     public void deleteDonation(long id) {
-        DonationRepository.deleteById(id);
+        donationRepository.deleteById(id);
     }
+
     @Override
-    public List<DonationModel> findPage(int page){
-        List<DonationModel> Donations = DonationRepository.findAll();
-        if (Donations.isEmpty()){
-            return new ArrayList<>();
-        } else if (Donations.size() <page*5-5 || page < 1) {
-            return new ArrayList<>();
+    public List<DonationModel> findPage(int page) {
+        if (page < 1) {
+            return List.of();
         }
-        if (page*5 < Donations.size()){
-            return Donations.subList(page*5-5, page*5);
-        }
-        else{
-            return Donations.subList(page*5-5, Donations.size());
-        }
+        Pageable pageable = PageRequest.of(page - 1, 5);
+        return donationRepository.findAll(pageable).getContent();
     }
+
     @Override
     public int getPages() {
-        return (DonationRepository.findAll().size()-1)/5+1;
+        Pageable pageable = PageRequest.of(0, 5);
+        return donationRepository.findAll(pageable).getTotalPages();
     }
 }

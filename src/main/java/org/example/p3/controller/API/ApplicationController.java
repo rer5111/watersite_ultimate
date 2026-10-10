@@ -1,10 +1,10 @@
 package org.example.p3.controller.API;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.example.p3.model.ApplicationModel;
 import org.example.p3.service.ApplicationService;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.p3.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,22 +16,28 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
 @RequestMapping("/api/application")
+@RequiredArgsConstructor
 public class ApplicationController {
 
-    @Autowired
-    private ApplicationService applicationService;
-    @Autowired
-    private UserService userService;
-
-    public ApplicationController(ApplicationService service) {
-        this.applicationService = service;
-    }
+    private final ApplicationService applicationService;
+    private final UserService userService;
 
     @Tag(name = "Добавление", description = "Добавляет запись")
     @PutMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus registerApplication(@RequestParam String text, @RequestParam LocalDate date, @RequestParam String status, @RequestParam int userID) {
+    public HttpStatus registerApplication(
+            @RequestParam String text,
+            @RequestParam LocalDate date,
+            @RequestParam String status,
+            @RequestParam long userId
+    ) {
         try {
-            ApplicationModel applicationTypeModel = new ApplicationModel(0, text, date, status, userService.findByID(userID).get(0));
+            ApplicationModel applicationTypeModel = new ApplicationModel(
+                    0L,
+                    text,
+                    date,
+                    status,
+                    userService.findById(userId).get(0)
+            );
             applicationService.addApplication(applicationTypeModel);
             return HttpStatus.OK;
         } catch (Exception e) {
@@ -41,23 +47,34 @@ public class ApplicationController {
 
     @Tag(name = "Изменение", description = "Изменяет запись")
     @PostMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus updateApplication(@RequestParam int id, @RequestParam String text, @RequestParam LocalDate date, @RequestParam String status, @RequestParam int userID) {
-        if (applicationService.findByID(id).isEmpty() || userService.findByID(userID).isEmpty()) return HttpStatus.NOT_FOUND;
-        ApplicationModel applicationTypeModel = applicationService.findByID(id).get(0);
-        applicationTypeModel.setText(text);
-        applicationTypeModel.setDate(date);
-        applicationTypeModel.setStatus(status);
-        applicationTypeModel.setUser_ID(userService.findByID(userID).get(0));
-        applicationService.updateApplication(applicationTypeModel);
+    public HttpStatus updateApplication(
+            @RequestParam long id,
+            @RequestParam String text,
+            @RequestParam LocalDate date,
+            @RequestParam String status,
+            @RequestParam long userId
+    ) {
+        if (applicationService.findById(id).isEmpty() || userService.findById(userId).isEmpty()) {
+            return HttpStatus.NOT_FOUND;
+        }
+
+        ApplicationModel applicationModel = applicationService.findById(id).get(0);
+        applicationModel.setText(text);
+        applicationModel.setDate(date);
+        applicationModel.setStatus(status);
+        applicationModel.setUser(userService.findById(userId).get(0));
+
+        applicationService.updateApplication(applicationModel);
+
         return HttpStatus.OK;
     }
 
     @Tag(name = "Удаление", description = "Удаляет запись")
     @DeleteMapping(value = "/{key}", produces = APPLICATION_JSON_VALUE)
-    public HttpStatus deleteDonation(@PathVariable int key) {
+    public HttpStatus deleteDonation(@PathVariable long key) {
         try {
             applicationService.deleteApplication(key);
-        }catch (Exception e){
+        } catch (Exception e) {
             return HttpStatus.NOT_FOUND;
         }
         return HttpStatus.OK;
@@ -70,20 +87,20 @@ public class ApplicationController {
     }
 
     @Tag(name = "Нахождение всех", description = "Находит все записи")
-    @GetMapping(path="/all", produces = APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/all", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ApplicationModel>> getAll() {
         return ResponseEntity.ok(applicationService.findAll());
     }
 
     @Tag(name = "Нахождение страницы", description = "Находит страницу")
-    @GetMapping(path="/findPage/{page}", produces = APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/findPage/{page}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<ApplicationModel>> getPage(@PathVariable int page) {
         return ResponseEntity.ok(applicationService.findPage(page));
     }
 
     @Tag(name = "Нахождение по ID", description = "Находит запись по ID")
-    @GetMapping(value="/findID/{id}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<ApplicationModel>> findById(@PathVariable int id) {
-        return ResponseEntity.ok(applicationService.findByID(id));
+    @GetMapping(value = "/findID/{id}", produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<ApplicationModel>> findById(@PathVariable long id) {
+        return ResponseEntity.ok(applicationService.findById(id));
     }
 }

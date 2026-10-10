@@ -1,68 +1,62 @@
 package org.example.p3.service;
 
-import org.example.p3.model.SeasonModel;
+import lombok.RequiredArgsConstructor;
 import org.example.p3.model.UserModel;
 import org.example.p3.repository.UserRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-    private final UserRepository UserRepository;
 
-    public UserServiceImpl(UserRepository UserRepository) {
-        this.UserRepository = UserRepository;
-    }
+    private final UserRepository userRepository;
 
     @Override
-    public List<UserModel> findByID(long id) {
-        return UserRepository.findById(id).stream().toList();
+    public List<UserModel> findById(long id) {
+        return userRepository.findById(id).stream().toList();
     }
 
     @Override
     public List<UserModel> findByName(String name) {
-        return UserRepository.findAllByName(name);
+        return userRepository.findAllByName(name);
     }
 
     @Override
     public List<UserModel> findAll() {
-        return UserRepository.findAll();
+        return userRepository.findAll();
     }
 
     @Override
-    public UserModel addUser(UserModel User) {
-        return UserRepository.save(User);
+    public void addUser(UserModel User) {
+        userRepository.save(User);
     }
 
     @Override
-    public UserModel updateUser(UserModel User) {
-        return UserRepository.save(User);
+    public void updateUser(UserModel User) {
+        userRepository.save(User);
     }
 
     @Override
     public void deleteUser(long id) {
-        UserRepository.deleteById(id);
+        userRepository.deleteById(id);
     }
-    
+
     @Override
-    public List<UserModel> findPage(int page){
-        List<UserModel> Users = UserRepository.findAll();
-        if (Users.isEmpty()){
-            return new ArrayList<>();
-        } else if (Users.size() <page*5-5 || page < 1) {
-            return new ArrayList<>();
+    public List<UserModel> findPage(int page) {
+        if (page < 1) {
+            return List.of();
         }
-        if (page*5 < Users.size()){
-            return Users.subList(page*5-5, page*5);
-        }
-        else{
-            return Users.subList(page*5-5, Users.size());
-        }
+        Pageable pageable = PageRequest.of(page - 1, 5);
+        return userRepository.findAll(pageable).getContent();
     }
+
     @Override
-    public int getPages(){
-        return (UserRepository.findAll().size()-1)/5+1;
+    public int getPages() {
+        Pageable pageable = PageRequest.of(0, 5);
+        return userRepository.findAll(pageable).getTotalPages();
     }
 }
