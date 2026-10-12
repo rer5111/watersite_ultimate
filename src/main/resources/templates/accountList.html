@@ -23,7 +23,7 @@
 </div>
 <form method="post" action="accounts/add">
     <input type="text" placeholder="имя" name="username" required>
-    <input type="date" placeholder="дата захода" name="join_date" required>
+    <input type="date" placeholder="дата захода" name="joinDate" required>
     <input type="submit" value="Добавить">
 </form>
 <form method="post" action="/accountListSID">
@@ -37,11 +37,11 @@
 <ul>
     <th:block th:each="account : ${accounts}">
         <li>
-            <span th:text="${account.username} + ' ' + ${account.join_date}"></span>
+            <span th:text="${account.username} + ' ' + ${account.joinDate}"></span>
             <form method="post" action="accounts/update">
                 <input type="hidden" name="id" th:value="${account.id}">
                 <input type="text" name="username" value="имя">
-                <input type="date" placeholder="дата захода" name="join_date">
+                <input type="date" placeholder="дата захода" name="joinDate">
                 <input type="submit" value="Изменить">
             </form>
             <form method="post" action="accounts/delete">

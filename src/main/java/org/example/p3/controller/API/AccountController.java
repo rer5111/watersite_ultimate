@@ -22,9 +22,9 @@ public class AccountController {
 
     @Tag(name = "Добавление", description = "Добавляет запись")
     @PutMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus registerAccount(@RequestParam String name, @RequestParam LocalDate date) {
+    public HttpStatus registerAccount(@RequestParam String name, @RequestParam LocalDate joinDate) {
         try {
-            AccountModel accountModel = new AccountModel(0, name, date);
+            AccountModel accountModel = new AccountModel(0, name, joinDate);
             service.addAccount(accountModel);
             return HttpStatus.OK;
         } catch (Exception e) {
@@ -34,11 +34,11 @@ public class AccountController {
 
     @Tag(name = "Изменение", description = "Изменяет запись")
     @PostMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus updateAccount(@RequestParam int id, @RequestParam String name, @RequestParam LocalDate date) {
+    public HttpStatus updateAccount(@RequestParam int id, @RequestParam String name, @RequestParam LocalDate joinDate) {
         if (service.findById(id).isEmpty()) return HttpStatus.NOT_FOUND;
         AccountModel accountModel = service.findById(id).get(0);
         accountModel.setUsername(name);
-        accountModel.setJoinDate(date);
+        accountModel.setJoinDate(joinDate);
         service.updateAccount(accountModel);
         return HttpStatus.OK;
     }

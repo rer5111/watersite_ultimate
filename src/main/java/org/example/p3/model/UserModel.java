@@ -1,5 +1,6 @@
 package org.example.p3.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -28,7 +29,6 @@ public class UserModel {
     private String name;
 
     @NotBlank(message = "Password is required")
-    @ToString.Exclude
     private String password;
 
     @ElementCollection(targetClass = RoleEnum.class, fetch = FetchType.EAGER)
@@ -41,12 +41,15 @@ public class UserModel {
     private AccountModel account;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnore
     private Collection<ApplicationModel> applications;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnore
     private Collection<PaymentModel> payments;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnore
     private Collection<DonationModel> donations;
 
     @ManyToMany

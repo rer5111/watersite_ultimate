@@ -22,7 +22,7 @@
   </div>
 </div>
 <form method="post" action="applications/add">
-  <input type="date" placeholder="Дата" name="application_date" required>
+  <input type="date" placeholder="Дата" name="applicationDate" required>
   <input type="text" placeholder="Текст" name="text" required>
   <input type="text" placeholder="Статус" name="status" required>
   <select name="account_id">
@@ -43,13 +43,13 @@
     <li>
       <span th:text="${app.date} + ' ' + ${app.status}"></span>
       <span th:each="usr : ${users}"
-            th:if="${usr.id == app.user_ID}"
+            th:if="${usr.id == app.user.id}"
             th:text="${usr.name}">
             </span>
       <span th:text="${app.text}"></span>
       <form method="post" action="applications/update">
         <input type="hidden" name="id" th:value="${app.id}" required>
-        <input type="date" placeholder="Дата" name="application_date" required>
+        <input type="date" placeholder="Дата" name="applicationDate" required>
         <input type="text" placeholder="Текст" name="text" required>
         <input type="text" placeholder="Статус" name="status" required>
         <select name="account_id">

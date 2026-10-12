@@ -24,7 +24,7 @@
 <form method="post" action="users/add">
     <input type="text" placeholder="Имя" name="username" required>
     <input type="password" placeholder="Пароль" name="password" required>
-    <select name="account_id" required>
+    <select name="accountId" required>
         <option th:each="account: ${accounts}" th:value="${account.id}" th:text="${account.username}"></option>
     </select>
     <div th:each="role : ${roles}">
@@ -48,7 +48,7 @@
     <th:block th:each="user : ${users}">
         <li>
             <span th:text="${user.name}"></span>
-            <span th:text="${user.getAccount_ID().username}"></span>
+            <span th:text="${user.getAccount().getUsername()}"></span>
             <span th:text="${user.getRoles()}"></span>
             <span> Сезоны: </span>
             <span th:each="season : ${user.seasons}" th:text="${season.id} + ' сезон '"></span>
@@ -56,7 +56,7 @@
                 <input type="hidden" name="id" th:value="${user.id}">
                 <input type="text" placeholder="Имя" name="username" required>
                 <input type="password" placeholder="Пароль" name="password" required>
-                <select name="account_id" required>
+                <select name="accountId" required>
                     <option th:each="account: ${accounts}" th:value="${account.id}" th:text="${account.username}"></option>
                 </select>
                 <div th:each="role : ${roles}">

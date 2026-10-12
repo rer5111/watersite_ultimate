@@ -23,10 +23,10 @@
 </div>
 <form method="post" action="donations/add">
     <input type="date" placeholder="Дата" name="date" required>
-    <select name="user_id" required>
+    <select name="userId" required>
         <option th:each="user: ${users}" th:value="${user.id}" th:text="${user.name}"></option>
     </select>
-    <select name="type_id" required>
+    <select name="typeId" required>
         <option th:each="type: ${donation_types}" th:value="${type.id}" th:text="${type.name}"></option>
     </select>
     <input type="submit" value="Добавить">
@@ -44,20 +44,20 @@
         <li>
             <span th:text="${donation.date}"></span>
             <span th:each="usr : ${users}"
-                  th:if="${usr.id == donation.user_ID}"
+                  th:if="${usr.id == donation.user.id}"
                   th:text="${usr.name}">
             </span>
             <span th:each="dt : ${donation_types}"
-                  th:if="${dt.id == donation.type_ID}"
+                  th:if="${dt.id == donation.donationType.id}"
                   th:text="${dt.name} + ' ' + ${dt.cost}">
             </span>
             <form method="post" action="donations/update">
                 <input type="hidden" name="id" th:value="${donation.id}">
                 <input type="date" placeholder="Дата" name="date" required>
-                <select name="user_id" required>
+                <select name="userId" required>
                     <option th:each="user: ${users}" th:value="${user.id}" th:text="${user.name}"></option>
                 </select>
-                <select name="type_id" required>
+                <select name="typeId" required>
                     <option th:each="type: ${donation_types}" th:value="${type.id}" th:text="${type.name}"></option>
                 </select>
                 <input type="submit" value="Изменить">

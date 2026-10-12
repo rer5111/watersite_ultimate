@@ -89,11 +89,11 @@ public class UserPermissionController {
     }
 
     @PostMapping("/donate/do")
-    public String DonationPage(Model model, Principal principal, @RequestParam int type_id){
+    public String DonationPage(Model model, Principal principal, @RequestParam int typeId){
         String username;
         username = principal.getName();
         int user_id = (int) fetchFromApi("user/findName/%s".formatted(username), new ParameterizedTypeReference<List<UserModel>>() {}).get(0).getId();
-        sendParamsToApi("donation/", HttpMethod.PUT, Map.of("date", LocalDate.now(), "typeID", type_id, "userID", user_id));
+        sendParamsToApi("donation/", HttpMethod.PUT, Map.of("date", LocalDate.now(), "typeId", typeId, "userId", user_id));
         return "redirect:/donate";
     }
 
@@ -102,7 +102,7 @@ public class UserPermissionController {
         String username;
         username = principal.getName();
         int user_id = (int) fetchFromApi("user/findName/%s".formatted(username), new ParameterizedTypeReference<List<UserModel>>() {}).get(0).getId();
-        sendParamsToApi("application/", HttpMethod.PUT, Map.of("text", text, "date", LocalDate.now(), "status", "На рассмотрении", "userID", user_id));
+        sendParamsToApi("application/", HttpMethod.PUT, Map.of("text", text, "date", LocalDate.now(), "status", "На рассмотрении", "userId", user_id));
         return "redirect:/players";
     }
 }
