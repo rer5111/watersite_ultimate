@@ -1,69 +1,62 @@
 package org.example.p3.service;
 
-import org.example.p3.model.DonationModel;
-import org.example.p3.model.DonationTypeModel;
-import org.example.p3.model.DonationTypeModel;
-import org.example.p3.model.DonationTypeModel;
+import lombok.RequiredArgsConstructor;
+import org.example.p3.model.*;
 import org.example.p3.repository.DonationTypeRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class DonationTypeServiceImpl implements DonationTypeService {
-    private final DonationTypeRepository DonationTypeRepository;
 
-    public DonationTypeServiceImpl(DonationTypeRepository DonationTypeRepository) {
-        this.DonationTypeRepository = DonationTypeRepository;
-    }
+    private final DonationTypeRepository donationTypeRepository;
 
     @Override
-    public List<DonationTypeModel> findByID(long id) {
-        return DonationTypeRepository.findById(id).stream().toList();
+    public List<DonationTypeModel> findById(long id) {
+        return donationTypeRepository.findById(id).stream().toList();
     }
 
     @Override
     public List<DonationTypeModel> findByName(String name) {
-        return DonationTypeRepository.findAllByName(name);
+        return donationTypeRepository.findAllByName(name);
     }
 
     @Override
     public List<DonationTypeModel> findAll() {
-        return DonationTypeRepository.findAll();
+        return donationTypeRepository.findAll();
     }
 
     @Override
-    public DonationTypeModel addDonationType(DonationTypeModel DonationType) {
-        return DonationTypeRepository.save(DonationType);
+    public void addDonationType(DonationTypeModel DonationType) {
+        donationTypeRepository.save(DonationType);
     }
 
     @Override
-    public DonationTypeModel updateDonationType(DonationTypeModel DonationType) {
-        return DonationTypeRepository.save(DonationType);
+    public void updateDonationType(DonationTypeModel DonationType) {
+        donationTypeRepository.save(DonationType);
     }
 
     @Override
     public void deleteDonationType(long id) {
-        DonationTypeRepository.deleteById(id);
+        donationTypeRepository.deleteById(id);
     }
+
     @Override
-    public List<DonationTypeModel> findPage(int page){
-        List<DonationTypeModel> Donations = DonationTypeRepository.findAll();
-        if (Donations.isEmpty()){
-            return new ArrayList<>();
-        } else if (Donations.size() <page*5-5 || page < 1) {
-            return new ArrayList<>();
+    public List<DonationTypeModel> findPage(int page) {
+        if (page < 1) {
+            return List.of();
         }
-        if (page*5 < Donations.size()){
-            return Donations.subList(page*5-5, page*5);
-        }
-        else{
-            return Donations.subList(page*5-5, Donations.size());
-        }
+        Pageable pageable = PageRequest.of(page - 1, 5);
+        return donationTypeRepository.findAll(pageable).getContent();
     }
+
     @Override
-    public int getPages(){
-        return (DonationTypeRepository.findAll().size()-1)/5+1;
+    public int getPages() {
+        Pageable pageable = PageRequest.of(0, 5);
+        return donationTypeRepository.findAll(pageable).getTotalPages();
     }
 }

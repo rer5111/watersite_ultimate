@@ -28,7 +28,7 @@
             <h1 th:text="${donation.name}"></h1>
             <h2 th:text="${donation.cost}+'₽'"></h2>
             <form action="donate/do" method="post">
-                <input name="type_id" th:value="${donation.getId()}" hidden>
+                <input name="typeId" th:value="${donation.getId()}" hidden>
                 <div class="center">
                 <button class="button" style="width: 150px; height: 50px">Купить</button>
                 </div>

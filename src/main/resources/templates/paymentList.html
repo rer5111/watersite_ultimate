@@ -22,9 +22,9 @@
     </div>
 </div>
 <form method="post" action="payments/add">
-    <input type="date" placeholder="Дата" name="payment_date" required>
+    <input type="date" placeholder="Дата" name="paymentDate" required>
     <input type="number" placeholder="Цена" name="cost" required>
-    <select name="account_id">
+    <select name="accountId">
         <option th:each="user: ${users}" th:value="${user.id}" th:text="${user.name}"></option>
     </select>
     <input type="submit" value="Добавить">
@@ -40,16 +40,16 @@
 <ul>
     <th:block th:each="payment : ${payments}">
         <li>
-            <span th:text="${payment.payment_date} + ' ' + ${payment.cost}"></span>
+            <span th:text="${payment.paymentDate} + ' ' + ${payment.cost}"></span>
             <span th:each="usr : ${users}"
-                  th:if="${usr.id == payment.user_ID}"
+                  th:if="${usr.id == payment.user.id}"
                   th:text="${usr.name}">
             </span>
             <form method="post" action="payments/update">
                 <input type="hidden" name="id" th:value="${payment.id}">
-                <input type="date" placeholder="Дата" name="payment_date" required>
+                <input type="date" placeholder="Дата" name="paymentDate" required>
                 <input type="number" placeholder="Цена" name="cost" required>
-                <select name="account_id">
+                <select name="userId">
                     <option th:each="user: ${users}" th:value="${user.id}" th:text="${user.name}"></option>
                 </select>
                 <input type="submit" value="Изменить">

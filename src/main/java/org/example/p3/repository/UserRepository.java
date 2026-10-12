@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Repository
 public interface UserRepository extends JpaRepository<UserModel, Long> {
-    List<UserModel> findAllById(int id);
+    List<UserModel> findAllById(long id);
     List<UserModel> findAllByName(String name);
 
     String account(AccountModel account);

@@ -1,10 +1,9 @@
 package org.example.p3.controller.API;
 
+import lombok.RequiredArgsConstructor;
 import org.example.p3.model.SeasonModel;
 import org.example.p3.service.SeasonService;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.example.p3.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,18 +15,19 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
 @RequestMapping("/api/season")
+@RequiredArgsConstructor
 public class SeasonController {
 
-    @Autowired
-    private SeasonService seasonService;
-
-    public SeasonController(SeasonService service) {
-        this.seasonService = service;
-    }
+    private final SeasonService seasonService;
 
     @Tag(name = "Добавление", description = "Добавляет запись")
     @PutMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus registerSeason(@RequestParam LocalDate startDate, @RequestParam LocalDate endDate, @RequestParam String desc, @RequestParam String img) {
+    public HttpStatus registerSeason(
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate,
+            @RequestParam String desc,
+            @RequestParam String img
+    ) {
         try {
             SeasonModel seasonTypeModel = new SeasonModel(0, startDate, endDate, desc, img);
             seasonService.addSeason(seasonTypeModel);
@@ -39,11 +39,17 @@ public class SeasonController {
 
     @Tag(name = "Изменение", description = "Изменяет запись")
     @PostMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus updateSeason(@RequestParam int id, @RequestParam LocalDate startDate, @RequestParam LocalDate endDate, @RequestParam String desc, @RequestParam String img) {
-        if (seasonService.findByID(id).isEmpty()) return HttpStatus.NOT_FOUND;
-        SeasonModel seasonTypeModel = seasonService.findByID(id).get(0);
-        seasonTypeModel.setStart_date(startDate);
-        seasonTypeModel.setEnd_date(endDate);
+    public HttpStatus updateSeason(
+            @RequestParam int id,
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate,
+            @RequestParam String desc,
+            @RequestParam String img
+    ) {
+        if (seasonService.findById(id).isEmpty()) return HttpStatus.NOT_FOUND;
+        SeasonModel seasonTypeModel = seasonService.findById(id).get(0);
+        seasonTypeModel.setStartDate(startDate);
+        seasonTypeModel.setEndDate(endDate);
         seasonTypeModel.setDescription(desc);
         seasonTypeModel.setImage(img);
         seasonService.updateSeason(seasonTypeModel);
@@ -82,6 +88,6 @@ public class SeasonController {
     @Tag(name = "Нахождение по ID", description = "Находит запись по ID")
     @GetMapping(value="/findID/{id}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<SeasonModel>> findById(@PathVariable int id) {
-        return ResponseEntity.ok(seasonService.findByID(id));
+        return ResponseEntity.ok(seasonService.findById(id));
     }
 }

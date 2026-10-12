@@ -1,7 +1,6 @@
 package org.example.p3.controller.API;
 
 import org.example.p3.model.RoleEnum;
-import org.example.p3.model.SeasonModel;
 import org.example.p3.model.UserModel;
 import org.example.p3.service.AccountService;
 import org.example.p3.service.SeasonService;
@@ -13,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -38,9 +36,20 @@ public class UserController {
 
     @Tag(name = "Добавление", description = "Добавляет запись")
     @PutMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus registerUser(@RequestParam String name, @RequestParam String password, @RequestParam Set<RoleEnum> roles, @RequestParam int accountId) {
+    public HttpStatus registerUser(
+            @RequestParam String name,
+            @RequestParam String password,
+            @RequestParam Set<RoleEnum> roles,
+            @RequestParam int accountId
+    ) {
         try {
-            UserModel userModel = new UserModel(0, name, passwordEncoder.encode(password), roles ,accountService.findByID(accountId).get(0));
+            UserModel userModel = new UserModel(
+                    0,
+                    name,
+                    passwordEncoder.encode(password),
+                    roles,
+                    accountService.findById(accountId).get(0)
+            );
             userService.addUser(userModel);
             return HttpStatus.OK;
         } catch (Exception e) {
@@ -50,14 +59,23 @@ public class UserController {
 
     @Tag(name = "Изменение", description = "Изменяет запись")
     @PostMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus updateUser(@RequestParam int id, @RequestParam String name, @RequestParam String password, @RequestParam Set<RoleEnum> roles, @RequestParam int accountId) {
-        if (userService.findByID(id).isEmpty() || accountService.findByID(accountId).isEmpty()) return HttpStatus.NOT_FOUND;
+    public HttpStatus updateUser(
+            @RequestParam int id,
+            @RequestParam String name,
+            @RequestParam String password,
+            @RequestParam Set<RoleEnum> roles,
+            @RequestParam int accountId
+    ) {
+        if (userService.findById(id).isEmpty() || accountService.findById(accountId).isEmpty()) {
+            return HttpStatus.NOT_FOUND;
+        }
+
         try {
-            UserModel userModel = userService.findByID(id).get(0);
+            UserModel userModel = userService.findById(id).get(0);
             userModel.setName(name);
             userModel.setPassword(passwordEncoder.encode(password));
             userModel.setRoles(roles);
-            userModel.setAccount_ID(accountService.findByID(accountId).get(0));
+            userModel.setAccount(accountService.findById(accountId).get(0));
             userService.updateUser(userModel);
             return HttpStatus.OK;
         } catch (Exception e) {
@@ -69,8 +87,8 @@ public class UserController {
     @DeleteMapping(value = "/{key}", produces = APPLICATION_JSON_VALUE)
     public HttpStatus deleteDonation(@PathVariable int key) {
         try {
-            accountService.deleteAccount(userService.findByID(key).get(0).getAccount_ID().getId());
-        }catch (Exception e){
+            accountService.deleteAccount(userService.findById(key).get(0).getAccount().getId());
+        } catch (Exception e){
             return HttpStatus.NOT_FOUND;
         }
         return HttpStatus.OK;
@@ -97,7 +115,7 @@ public class UserController {
     @Tag(name = "Нахождение по ID", description = "Находит запись по ID")
     @GetMapping(value="/findID/{id}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserModel>> findById(@PathVariable int id) {
-        return ResponseEntity.ok(userService.findByID(id));
+        return ResponseEntity.ok(userService.findById(id));
     }
 
     @Tag(name = "Нахождение по имени", description = "Находит запись по имени")
@@ -111,9 +129,9 @@ public class UserController {
     public HttpStatus deleteFromSeason(@PathVariable int id, @PathVariable int s_id) {
         System.out.println("we deleting");
         try{
-            if (userService.findByID(id).isEmpty() || seasonService.findByID(s_id).isEmpty()) return HttpStatus.NOT_FOUND;
-            UserModel userModel = userService.findByID(id).get(0);
-            userModel.removeSeason(seasonService.findByID(s_id).get(0));
+            if (userService.findById(id).isEmpty() || seasonService.findById(s_id).isEmpty()) return HttpStatus.NOT_FOUND;
+            UserModel userModel = userService.findById(id).get(0);
+            userModel.removeSeason(seasonService.findById(s_id).get(0));
             userService.updateUser(userModel);
         return HttpStatus.OK;
         }
@@ -126,10 +144,12 @@ public class UserController {
     @GetMapping(value="/addSeason/{id}/{s_id}", produces = APPLICATION_JSON_VALUE)
     public HttpStatus addToSeason(@PathVariable int id, @PathVariable int s_id) {
         System.out.println("we adding");
-        try{
-            if (userService.findByID(id).isEmpty() || seasonService.findByID(s_id).isEmpty()) return HttpStatus.NOT_FOUND;
-            UserModel userModel = userService.findByID(id).get(0);
-            userModel.addSeason(seasonService.findByID(s_id).get(0));
+        try {
+            if (userService.findById(id).isEmpty() || seasonService.findById(s_id).isEmpty()) {
+                return HttpStatus.NOT_FOUND;
+            }
+            UserModel userModel = userService.findById(id).get(0);
+            userModel.addSeason(seasonService.findById(s_id).get(0));
             userService.updateUser(userModel);
             System.out.println("we succeeded");
             return HttpStatus.OK;

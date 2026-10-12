@@ -96,14 +96,14 @@ public class AdminController {
     }
 
     @PostMapping("/applications/add")
-    public String addApplication(Model model, @RequestParam LocalDate application_date, @RequestParam String status, @RequestParam String text, @RequestParam int account_id){
-        sendParamsToApi("application/", HttpMethod.PUT, Map.of("date", application_date, "status", status, "text", text, "account_id", account_id));
+    public String addApplication(Model model, @RequestParam LocalDate applicationDate, @RequestParam String status, @RequestParam String text, @RequestParam int accountId){
+        sendParamsToApi("application/", HttpMethod.PUT, Map.of("date", applicationDate, "status", status, "text", text, "account_id", accountId));
         return "redirect:/applicationList";
     }
 
     @PostMapping("/applications/update")
-    public String updateApplication(Model model, @RequestParam int id, @RequestParam LocalDate application_date, @RequestParam String status, @RequestParam String text, @RequestParam int account_id){
-        sendParamsToApi("application/", HttpMethod.POST, Map.of("id", id, "date", application_date, "status", status, "text", text, "account_id", account_id));
+    public String updateApplication(Model model, @RequestParam int id, @RequestParam LocalDate applicationDate, @RequestParam String status, @RequestParam String text, @RequestParam int accountId){
+        sendParamsToApi("application/", HttpMethod.POST, Map.of("id", id, "date", applicationDate, "status", status, "text", text, "account_id", accountId));
         return "redirect:/applicationList";
     }
 
@@ -138,14 +138,14 @@ public class AdminController {
     }
 
     @PostMapping("/payments/add")
-    public String addPayment(Model model, @RequestParam LocalDate payment_date, @RequestParam double cost, @RequestParam int account_id){
-        sendParamsToApi("payment/", HttpMethod.PUT, Map.of("date", payment_date, "cost", cost, "user_id", account_id));
+    public String addPayment(Model model, @RequestParam LocalDate paymentDate, @RequestParam double cost, @RequestParam int accountId){
+        sendParamsToApi("payment/", HttpMethod.PUT, Map.of("date", paymentDate, "cost", cost, "userId", accountId));
         return "redirect:/paymentList";
     }
 
     @PostMapping("/payments/update")
-    public String updatePayment(Model model, @RequestParam int id, @RequestParam LocalDate payment_date, @RequestParam double cost, @RequestParam int account_id){
-        sendParamsToApi("payment/", HttpMethod.POST, Map.of("id", id, "date", payment_date, "cost", cost, "user_id", account_id));
+    public String updatePayment(Model model, @RequestParam int id, @RequestParam LocalDate paymentDate, @RequestParam double cost, @RequestParam int accountId){
+        sendParamsToApi("payment/", HttpMethod.POST, Map.of("id", id, "date", paymentDate, "cost", cost, "user_id", accountId));
         return "redirect:/paymentList";
     }
 
@@ -183,14 +183,14 @@ public class AdminController {
     }
 
     @PostMapping("/accounts/add")
-    public String addAccount(@RequestParam String username, @RequestParam LocalDate join_date){
-        sendParamsToApi("account/", HttpMethod.PUT, Map.of("name", username, "date", join_date));
+    public String addAccount(@RequestParam String username, @RequestParam LocalDate joinDate){
+        sendParamsToApi("account/", HttpMethod.PUT, Map.of("name", username, "joinDate", joinDate));
         return "redirect:/accountList";
     }
 
     @PostMapping("/accounts/update")
-    public String updateAccount(@RequestParam int id, @RequestParam String username, @RequestParam LocalDate join_date){
-        sendParamsToApi("account/", HttpMethod.POST, Map.of("id", id, "name", username, "date", join_date));
+    public String updateAccount(@RequestParam int id, @RequestParam String username, @RequestParam LocalDate joinDate){
+        sendParamsToApi("account/", HttpMethod.POST, Map.of("id", id, "name", username, "joinDate", joinDate));
         return "redirect:/accountList";
     }
 
@@ -239,7 +239,7 @@ public class AdminController {
     }
 
     @PostMapping("/users/add")
-    public String addUser(@RequestParam String username, @RequestParam String password, @RequestParam int account_id, @RequestParam String[] roles){
+    public String addUser(@RequestParam String username, @RequestParam String password, @RequestParam int accountId, @RequestParam String[] roles){
         List<RoleEnum> roleList = new java.util.ArrayList<>();
         if (roles!= null){
             for (String role : roles){
@@ -249,12 +249,12 @@ public class AdminController {
         else{
             roleList = List.of(RoleEnum.USER);
         }
-        sendParamsToApi("user/", HttpMethod.PUT, Map.of("name", username, "password", password, "roles", roleList, "accountId", account_id));
+        sendParamsToApi("user/", HttpMethod.PUT, Map.of("name", username, "password", password, "roles", roleList, "accountId", accountId));
         return "redirect:/userList";
     }
 
     @PostMapping("/users/update")
-    public String updateUser(@RequestParam int id, @RequestParam String username, @RequestParam String password, @RequestParam int account_id, @RequestParam String[] roles){
+    public String updateUser(@RequestParam int id, @RequestParam String username, @RequestParam String password, @RequestParam int accountId, @RequestParam String[] roles){
         List<RoleEnum> roleList = new java.util.ArrayList<>();
         if (roles!= null){
             for (String role : roles){
@@ -264,7 +264,7 @@ public class AdminController {
         else {
             roleList = List.of(RoleEnum.USER);
         }
-        sendParamsToApi("user/", HttpMethod.POST, Map.of("id", id, "name", username, "password", password, "roles", roleList, "accountId", account_id));
+        sendParamsToApi("user/", HttpMethod.POST, Map.of("id", id, "name", username, "password", password, "roles", roleList, "accountId", accountId));
         return "redirect:/userList";
     }
 
@@ -351,14 +351,14 @@ public class AdminController {
     }
 
     @PostMapping("/donations/add")
-    public String addDonation(Model model, @RequestParam LocalDate date, @RequestParam int user_id, @RequestParam int type_id){
-        sendParamsToApi("donation/", HttpMethod.PUT, Map.of("date", date, "userID", user_id, "typeID", type_id));
+    public String addDonation(Model model, @RequestParam LocalDate date, @RequestParam int userId, @RequestParam int typeId){
+        sendParamsToApi("donation/", HttpMethod.PUT, Map.of("date", date, "userId", userId, "typeId", typeId));
         return "redirect:/donationList";
     }
 
     @PostMapping("/donations/update")
-    public String updateDonation(Model model, @RequestParam int id, @RequestParam LocalDate date, @RequestParam int user_id, @RequestParam int type_id){
-        sendParamsToApi("donation/", HttpMethod.POST, Map.of("id", id, "date", date, "userID", user_id, "typeID", type_id));
+    public String updateDonation(Model model, @RequestParam int id, @RequestParam LocalDate date, @RequestParam int userId, @RequestParam int typeId){
+        sendParamsToApi("donation/", HttpMethod.POST, Map.of("id", id, "date", date, "userId", userId, "typeId", typeId));
         return "redirect:/donationList";
     }
 
@@ -390,14 +390,14 @@ public class AdminController {
     }
 
     @PostMapping("/seasons/add")
-    public String addSeason(@RequestParam LocalDate start_date, @RequestParam LocalDate end_date, @RequestParam String description, @RequestParam String image){
-        sendParamsToApi("season/", HttpMethod.PUT, Map.of("startDate", start_date, "endDate", end_date, "desc", description, "img", image));
+    public String addSeason(@RequestParam LocalDate startDate, @RequestParam LocalDate endDate, @RequestParam String description, @RequestParam String image){
+        sendParamsToApi("season/", HttpMethod.PUT, Map.of("startDate", startDate, "endDate", endDate, "desc", description, "img", image));
         return "redirect:/seasonList";
     }
 
     @PostMapping("/seasons/update")
-    public String updateSeason(@RequestParam int id, @RequestParam LocalDate start_date, @RequestParam LocalDate end_date, @RequestParam String description, @RequestParam String image){
-        sendParamsToApi("season/", HttpMethod.POST, Map.of("id", id, "startDate", start_date, "endDate", end_date, "desc", description, "img", image));
+    public String updateSeason(@RequestParam int id, @RequestParam LocalDate start_date, @RequestParam LocalDate endDate, @RequestParam String description, @RequestParam String image){
+        sendParamsToApi("season/", HttpMethod.POST, Map.of("id", id, "startDate", start_date, "endDate", endDate, "desc", description, "img", image));
         return "redirect:/seasonList";
     }
 

@@ -22,8 +22,8 @@
     </div>
 </div>
 <form method="post" action="seasons/add">
-    <input type="date" placeholder="Начало" name="start_date" required>
-    <input type="date" placeholder="Конец" name="end_date" required>
+    <input type="date" placeholder="Начало" name="startDate" required>
+    <input type="date" placeholder="Конец" name="endDate" required>
     <input type="text" placeholder="Описание" name="description">
     <input type="text" placeholder="Изображение" name="image">
     <input type="submit" value="Добавить">
@@ -35,12 +35,12 @@
 <ul>
     <th:block th:each="season : ${seasons}">
         <li>
-            <span th:text="${season.start_date} + ' ' + ${season.end_date}"></span>
+            <span th:text="${season.startDate} + ' ' + ${season.endDate}"></span>
             <span th:text="${season.image}"></span>
             <form method="post" action="seasons/update">
                 <input type="hidden" name="id" th:value="${season.id}">
-                <input type="date" placeholder="Начало" name="start_date" required>
-                <input type="date" placeholder="Конец" name="end_date" required>
+                <input type="date" placeholder="Начало" name="startDate" required>
+                <input type="date" placeholder="Конец" name="endDate" required>
                 <input type="text" placeholder="Описание" name="description">
                 <input type="text" placeholder="Изображение" name="image">
                 <input type="submit" value="Изменить">
