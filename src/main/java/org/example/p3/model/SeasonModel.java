@@ -24,6 +24,9 @@ public class SeasonModel {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
 
+    @NotBlank(message =  "Title is required")
+    private String title;
+
     private LocalDate startDate;
 
     private LocalDate endDate;
@@ -42,8 +45,9 @@ public class SeasonModel {
     )
     private List<UserModel> users = new ArrayList<>();
 
-    public SeasonModel(long id, LocalDate startDate, LocalDate endDate, String description, String image) {
+    public SeasonModel(long id, String title, LocalDate startDate, LocalDate endDate, String description, String image) {
         this.id = id;
+        this.title = title;
         this.startDate = startDate;
         this.endDate = endDate;
         this.description = description;

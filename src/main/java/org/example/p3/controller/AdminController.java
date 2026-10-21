@@ -389,15 +389,22 @@ public class AdminController {
         return "seasonList";
     }
 
+    @PostMapping("/seasonListTitle")
+    public String seasonListID(Model model, @RequestParam String title){
+        model.addAttribute("seasons", fetchFromApi("season/findTitle/%s".formatted(title), new ParameterizedTypeReference<List<SeasonModel>>() {}));
+        model.addAttribute("pages", fetchFromApi("season/pages", Integer.class));
+        return "seasonList";
+    }
+
     @PostMapping("/seasons/add")
-    public String addSeason(@RequestParam LocalDate startDate, @RequestParam LocalDate endDate, @RequestParam String description, @RequestParam String image){
-        sendParamsToApi("season/", HttpMethod.PUT, Map.of("startDate", startDate, "endDate", endDate, "desc", description, "img", image));
+    public String addSeason(@RequestParam String title, @RequestParam LocalDate startDate, @RequestParam LocalDate endDate, @RequestParam String description, @RequestParam String image){
+        sendParamsToApi("season/", HttpMethod.PUT, Map.of("title", title, "startDate", startDate, "endDate", endDate, "desc", description, "img", image));
         return "redirect:/seasonList";
     }
 
     @PostMapping("/seasons/update")
-    public String updateSeason(@RequestParam int id, @RequestParam LocalDate start_date, @RequestParam LocalDate endDate, @RequestParam String description, @RequestParam String image){
-        sendParamsToApi("season/", HttpMethod.POST, Map.of("id", id, "startDate", start_date, "endDate", endDate, "desc", description, "img", image));
+    public String updateSeason(@RequestParam int id, @RequestParam String title, @RequestParam LocalDate startDate, @RequestParam LocalDate endDate, @RequestParam String description, @RequestParam String image){
+        sendParamsToApi("season/", HttpMethod.POST, Map.of("id", id, "title", title, "startDate", startDate, "endDate", endDate, "desc", description, "img", image));
         return "redirect:/seasonList";
     }
 

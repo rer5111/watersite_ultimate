@@ -25,6 +25,8 @@ public class SeasonServiceImpl implements SeasonService {
         return seasonRepository.findAll();
     }
 
+    public List<SeasonModel> findByTitle(String title) {return seasonRepository.findByTitle(title);}
+
     @Override
     public void addSeason(SeasonModel Season) {
         seasonRepository.save(Season);
