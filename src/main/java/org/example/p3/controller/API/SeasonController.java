@@ -23,13 +23,14 @@ public class SeasonController {
     @Tag(name = "Добавление", description = "Добавляет запись")
     @PutMapping(produces = APPLICATION_JSON_VALUE)
     public HttpStatus registerSeason(
+            @RequestParam String title,
             @RequestParam LocalDate startDate,
             @RequestParam LocalDate endDate,
             @RequestParam String desc,
             @RequestParam String img
     ) {
         try {
-            SeasonModel seasonTypeModel = new SeasonModel(0, startDate, endDate, desc, img);
+            SeasonModel seasonTypeModel = new SeasonModel(0, title, startDate, endDate, desc, img);
             seasonService.addSeason(seasonTypeModel);
             return HttpStatus.OK;
         } catch (Exception e) {
@@ -41,6 +42,7 @@ public class SeasonController {
     @PostMapping(produces = APPLICATION_JSON_VALUE)
     public HttpStatus updateSeason(
             @RequestParam int id,
+            @RequestParam String title,
             @RequestParam LocalDate startDate,
             @RequestParam LocalDate endDate,
             @RequestParam String desc,
@@ -48,6 +50,7 @@ public class SeasonController {
     ) {
         if (seasonService.findById(id).isEmpty()) return HttpStatus.NOT_FOUND;
         SeasonModel seasonTypeModel = seasonService.findById(id).get(0);
+        seasonTypeModel.setTitle(title);
         seasonTypeModel.setStartDate(startDate);
         seasonTypeModel.setEndDate(endDate);
         seasonTypeModel.setDescription(desc);
@@ -89,5 +92,11 @@ public class SeasonController {
     @GetMapping(value="/findID/{id}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<SeasonModel>> findById(@PathVariable int id) {
         return ResponseEntity.ok(seasonService.findById(id));
+    }
+
+    @Tag(name = "Нахождение по имени", description = "Находит запись по имени")
+    @GetMapping(value="/findTitle/{title}", produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<SeasonModel>> findByTitle(@PathVariable String title) {
+        return ResponseEntity.ok(seasonService.findByTitle(title));
     }
 }

@@ -7,6 +7,7 @@ import java.util.List;
 public interface SeasonService {
     List<SeasonModel> findById(long id);
     List<SeasonModel> findAll();
+    List<SeasonModel> findByTitle(String title);
     void addSeason(SeasonModel Season);
     void updateSeason(SeasonModel Season);
     void deleteSeason(long id);

@@ -8,5 +8,6 @@ import java.util.List;
 
 @Repository
 public interface SeasonRepository extends JpaRepository<SeasonModel, Long> {
+    List<SeasonModel> findByTitle(String title);
     List<SeasonModel> findAllById(long id);
 }
