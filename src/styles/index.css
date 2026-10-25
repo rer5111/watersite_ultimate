@@ -1,0 +1,41 @@
+@import 'tailwindcss';
+
+@font-face {
+  font-family: 'Minecrafter';
+  src: url('../assets/fonts/Minecrafter.ttf') format('truetype');
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: 'Rubik Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-brand: 'Minecrafter', monospace;
+
+  --color-background: #141414;
+  --color-surface: #262626;
+  --color-card: #202020;
+  --color-foreground: #ffffff;
+  --color-foreground-muted: #cecece;
+  --color-foreground-subtle: #b0b0b0;
+  --color-border: #494949;
+
+  --color-primary: #00aa00;
+  --color-primary-hover: #008800;
+  --color-primary-active: #006600;
+
+  --color-secondary: #404040;
+  --color-secondary-hover: #595959;
+  --color-secondary-active: #333333;
+  --color-input: #343434;
+
+  --color-tertiary-hover: #4d4d4d;
+  --color-tertiary-active: #343232;
+
+  --color-disabled: #999999;
+  --color-disabled-foreground: #666666;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "autoBarrel.enable": true,
+  "autoBarrel.files.disableRecursiveBarrelling": true,
+  "autoBarrel.files.includeExtensionOnExport": ["ts", "tsx"],
+  "autoBarrel.files.keepExtensionOnExport": false,
+  "autoBarrel.files.useNamedExports": false,
+  "autoBarrel.formatting.useSingleQuotes": true,
+  "autoBarrel.formatting.excludeSemiColonAtEndOfLine": false,
+  "exportall.config.folderListener": [
+    "/src/pages/home/components",
+    "/src/pages/home/sections",
+    "/src/pages/home",
+    "/src/pages",
+    "/src/types",
+    "/src/api",
+    "/src/components/ui/button",
+    "/src/components/layout/footer",
+    "/src/components/layout",
+    "/src/pages/admins/sections",
+    "/src/pages/auth",
+    "/src/pages/donations",
+    "/src/pages/donations/components"
+  ]
+}
