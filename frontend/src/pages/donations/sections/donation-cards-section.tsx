@@ -1,17 +1,17 @@
 import { DonationCard, type DonationCardProps } from '../components';
 const donations: DonationCardProps[] = [
   {
-    image: 'src/assets/images/iron-block.png',
+    image: 'public/images/donations/iron-block.png',
     title: 'Поддержать проект',
     price: 100,
   },
   {
-    image: 'src/assets/images/gold-block.png',
+    image: 'public/images/donations/gold-block.png',
     title: 'Помочь серверу',
     price: 250,
   },
   {
-    image: 'src/assets/images/diamond-block.png',
+    image: 'public/images/donations/diamond-block.png',
     title: 'Большая поддержка',
     price: 500,
   },
