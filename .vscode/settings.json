@@ -7,18 +7,18 @@
   "autoBarrel.formatting.useSingleQuotes": true,
   "autoBarrel.formatting.excludeSemiColonAtEndOfLine": false,
   "exportall.config.folderListener": [
-    "/src/pages/home/components",
-    "/src/pages/home/sections",
-    "/src/pages/home",
-    "/src/pages",
-    "/src/types",
-    "/src/api",
-    "/src/components/ui/button",
-    "/src/components/layout/footer",
-    "/src/components/layout",
-    "/src/pages/admins/sections",
-    "/src/pages/auth",
-    "/src/pages/donations",
-    "/src/pages/donations/components"
+    "/frontend/src/pages/home/components",
+    "/frontend/src/pages/home/sections",
+    "/frontend/src/pages/home",
+    "/frontend/src/pages",
+    "/frontend/src/types",
+    "/frontend/src/api",
+    "/frontend/src/components/ui/button",
+    "/frontend/src/components/layout/footer",
+    "/frontend/src/components/layout",
+    "/frontend/src/pages/admins/sections",
+    "/frontend/src/pages/auth",
+    "/frontend/src/pages/donations",
+    "/frontend/src/pages/donations/components"
   ]
 }
