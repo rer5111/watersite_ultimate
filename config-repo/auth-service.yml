@@ -1,0 +1,41 @@
+server:
+  port: ${SERVER_PORT:8090}
+  shutdown: graceful
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+  mvc:
+    problemdetails:
+      enabled: true
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+auth:
+  jwt:
+    issuer: ${AUTH_JWT_ISSUER:https://auth.waltercraft.ru}
+    private-key-base64: ${AUTH_JWT_PRIVATE_KEY_BASE64:}
+    allow-ephemeral-key: ${AUTH_JWT_ALLOW_EPHEMERAL_KEY:true}
+    access-token-ttl: ${AUTH_ACCESS_TOKEN_TTL:PT15M}
+    refresh-token-ttl: ${AUTH_REFRESH_TOKEN_TTL:P7D}
+
+player-service:
+  base-url: ${PLAYER_SERVICE_BASE_URL:http://localhost:8081}
+
+security:
+  auth-service:
+    shared-secret: ${AUTH_SERVICE_SHARED_SECRET:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState

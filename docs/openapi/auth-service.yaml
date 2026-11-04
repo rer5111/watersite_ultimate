@@ -1,0 +1,137 @@
+openapi: 3.0.3
+info:
+  title: Waltercraft Auth Service
+  version: 1.0.0
+  description: Аутентификация пользователей и выдача JWT. Учётные записи хранятся в player-service.
+servers:
+  - url: http://localhost:8080
+    description: API Gateway
+paths:
+  /api/auth-service/auth/login:
+    post:
+      operationId: login
+      summary: Войти и получить пару токенов
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Пара токенов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '503':
+          $ref: '#/components/responses/Problem'
+  /api/auth-service/auth/refresh:
+    post:
+      operationId: refreshTokens
+      summary: Обновить пару токенов
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Новая пара токенов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+  /api/auth-service/.well-known/jwks.json:
+    get:
+      operationId: getJwks
+      summary: Получить публичные ключи проверки JWT
+      responses:
+        '200':
+          description: Публичный набор ключей RSA
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [keys]
+                properties:
+                  keys:
+                    type: array
+                    items:
+                      type: object
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          maxLength: 64
+        password:
+          type: string
+          format: password
+          maxLength: 72
+    RefreshRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+    TokenResponse:
+      type: object
+      required: [accessToken, refreshToken, tokenType, expiresIn]
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          format: int64
+          description: Срок действия access token в секундах
+    Problem:
+      type: object
+      required: [type, title, status, detail, code, message, details]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            type: string
+  responses:
+    Problem:
+      description: RFC 9457 Problem Details
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'

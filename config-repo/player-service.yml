@@ -21,3 +21,7 @@ spring:
     user:
       name: ${SECURITY_USER_NAME:user}
       password: ${SECURITY_USER_PASSWORD:}
+
+security:
+  auth-service:
+    shared-secret: ${AUTH_SERVICE_SHARED_SECRET:}

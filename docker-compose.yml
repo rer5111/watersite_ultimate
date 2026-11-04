@@ -74,6 +74,8 @@ services:
       DB_USER: ${PLAYER_DB_USER:-postgres}
       DB_PASSWORD: ${PLAYER_DB_PASSWORD:-0}
       ADMIN_INITIAL_PASSWORD_HASH: ${ADMIN_INITIAL_PASSWORD_HASH:-*LOCKED*}
+      AUTH_SERVICE_SHARED_SECRET: ${AUTH_SERVICE_SHARED_SECRET:-}
+      JWT_JWK_SET_URI: http://auth-service:8090/.well-known/jwks.json
       SECURITY_USER_NAME: ${PLAYER_SERVICE_USER:-user}
       SECURITY_USER_PASSWORD: ${PLAYER_SERVICE_PASSWORD:-}
       EUREKA_URL: http://discovery-server:8761/eureka/
@@ -81,6 +83,38 @@ services:
       CONFIG_SERVER_URL: http://config-server:8888
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8081/api/user/admins"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 25s
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.java
+      args:
+        SERVICE_DIR: microservices/auth-service
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      player-service:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8090
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URL: http://discovery-server:8761/eureka/
+      PLAYER_SERVICE_BASE_URL: http://player-service:8081
+      AUTH_SERVICE_SHARED_SECRET: ${AUTH_SERVICE_SHARED_SECRET:-}
+      AUTH_JWT_PRIVATE_KEY_BASE64: ${AUTH_JWT_PRIVATE_KEY_BASE64:-}
+      AUTH_JWT_ALLOW_EPHEMERAL_KEY: ${AUTH_JWT_ALLOW_EPHEMERAL_KEY:-true}
+      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.waltercraft.ru}
+      AUTH_ACCESS_TOKEN_TTL: ${AUTH_ACCESS_TOKEN_TTL:-PT15M}
+      AUTH_REFRESH_TOKEN_TTL: ${AUTH_REFRESH_TOKEN_TTL:-P7D}
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8090/actuator/health"]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -122,6 +156,8 @@ services:
         condition: service_healthy
       player-service:
         condition: service_healthy
+      auth-service:
+        condition: service_healthy
       skin-service:
         condition: service_healthy
     environment:
@@ -130,8 +166,8 @@ services:
       EUREKA_URL: http://discovery-server:8761/eureka/
       EUREKA_CLIENT_REGISTRY_FETCH_INTERVAL_SECONDS: 5
       FRONTEND_ORIGIN: http://localhost:8080
-      GATEWAY_JWT_ENABLED: ${GATEWAY_JWT_ENABLED:-false}
-      JWT_JWK_SET_URI: ${JWT_JWK_SET_URI:-http://localhost:8090/.well-known/jwks.json}
+      GATEWAY_JWT_ENABLED: ${GATEWAY_JWT_ENABLED:-true}
+      JWT_JWK_SET_URI: ${JWT_JWK_SET_URI:-http://auth-service:8090/.well-known/jwks.json}
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     ports:
       - "8080:8080"
