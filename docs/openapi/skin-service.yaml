@@ -1,0 +1,109 @@
+openapi: 3.0.3
+info:
+  title: Waltercraft Skin Service
+  version: 1.0.0
+  description: Сервис получения скинов Minecraft игроков по UUID, никнейму или шаблону (VZGE)
+paths:
+  /api/skin/{uuid}/full:
+    get:
+      operationId: getFullByUuid
+      summary: Получить 3D полное тело игрока по UUID
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Изображение 3D полного тела в формате PNG
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Скин не найден
+  /api/skin/subject/{subject}/full:
+    get:
+      operationId: getFullBySubject
+      summary: Получить 3D полное тело по имени шаблона или игрока (например, X-Ghost)
+      parameters:
+        - name: subject
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Изображение 3D полного тела в формате PNG
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Скин не найден
+  /api/skin/{uuid}/bust:
+    get:
+      operationId: getBustByUuid
+      summary: Получить 3D бюст игрока по UUID
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Изображение 3D бюста в формате PNG
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Скин не найден
+  /api/skin/{uuid}/face:
+    get:
+      operationId: getFaceByUuid
+      summary: Получить лицо (2D аватар) игрока по UUID
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Изображение лица в формате PNG
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Скин не найден
+  /api/skin/username/{username}/face:
+    get:
+      operationId: getFaceByUsername
+      summary: Получить лицо (2D аватар) игрока по никнейму
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Изображение лица в формате PNG
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Скин не найден
