@@ -96,6 +96,7 @@ Waltercraft — сайт игрового сервера Minecraft с микро
 
 - Один сервис = одна зона ответственности (bounded context).
 - **У каждого сервиса своя база данных.** Читать или писать в БД другого сервиса запрещено.
+- **Переменные окружения баз данных изолированы**: каждый сервис объявляет свои переменные подключения с префиксом сервиса (например, `PLAYER_DB_USER`, `PLAYER_DB_PASSWORD`, `PLAYER_DB_NAME`), запрещено использовать единый глобальный `POSTGRES_*`.
 - Сервисы общаются только через REST/HTTP API (или брокер сообщений, если он есть в проекте), не через общий код или общую БД.
 - **Межсервисные вызовы**: использовать `RestClient` или HTTP Interface Clients (`@HttpExchange`). Использование устаревшего `RestTemplate` запрещено.
 - Общие библиотеки между сервисами не создавать. Допустимы только контракты (DTO/OpenAPI), и только по согласованию.
@@ -103,12 +104,15 @@ Waltercraft — сайт игрового сервера Minecraft с микро
 - Каждый сервис должен собираться, запускаться и тестироваться независимо от остальных.
 - Конфигурация через `application.yml` и переменные окружения, секреты в коде не хранить.
 - Внешние запросы идут через Gateway, а внутренние адреса сервисов не светятся на фронтенде.
+- **Сортировка и иерархия данных**: сортировка и упорядочивание коллекций производятся строго на стороне бэкенда (`ORDER BY` в репозитории/БД). Запрещено зашивать словари приоритетов и ручную сортировку на клиенте.
+- **Внешние вызовы из микросервисов**: при обращении к внешним провайдерам (например, API скинов Mojang/VZGE) обязательно указывать честный кастомный заголовок `User-Agent: Waltercraft<Service>/1.0 (+https://waltercraft.ru)`. Без него внешние CDN возвращают HTTP 400/403.
 
 ---
 
 ## api-gateway
 
 - Spring Cloud Gateway на WebFlux, `spring-boot-starter-web` не добавлять.
+- Обязательно подключать зависимость `spring-cloud-starter-loadbalancer` для корректной маршрутизации `lb://<service>`. Без нее gateway возвращает `503 Service Unavailable`.
 - Только маршрутизация, проверка JWT, CORS, rate limiting. Бизнес-логики нет.
 - Новый сервис = новый route в `config-repo/api-gateway.yml`, префикс `/api/<имя>/**`.
 - Публичные пути (логин, регистрация, список сезонов, скины и т.п.) перечислены в `SecurityConfig`. Новые добавлять только по явной просьбе.
@@ -132,12 +136,19 @@ Waltercraft — сайт игрового сервера Minecraft с микро
   - Наружу отдаём только DTO, JPA-сущности из контроллеров никогда не возвращаются.
 - **База данных и JPA**:
   - Схема управляется исключительно миграциями **Flyway** в `src/main/resources/db/migration/`.
-  - В конфигах `spring.jpa.hibernate.ddl-auto: validate`.
+  - **Правила миграций Flyway**:
+    - Никогда не модифицировать уже примененные миграции `V<n>__*.sql` (вызывает `FlywayValidateException: Migration checksum mismatch`).
+    - Не зашивать пароли и секреты в SQL — использовать Flyway placeholders `${placeholderName}`, конфигурируемые через `spring.flyway.placeholders.*`.
+    - Для локальной разработки включать `spring.flyway.baseline-on-migrate: true` и `spring.flyway.validate-on-migrate: ${FLYWAY_VALIDATE:false}`.
+    - SQL-скрипты миграций должны быть ANSI-совместимыми (`WHERE NOT EXISTS (...)` вместо специфичного `ON CONFLICT DO NOTHING`), чтобы не ломать встроенный H2 в юнит-тестах.
+  - В конфигах `spring.jpa.hibernate.ddl-auto: ${JPA_DDL_AUTO:validate}` (с возможностью переопределения на `update` в dev).
   - Избегать проблемы N+1 (`@EntityGraph`, `JOIN FETCH`).
+  - При `open-in-view: false` все обращения к связанным сущностям (`@OneToOne`, `@ManyToOne`) в контроллерах/сервисах должны быть обернуты в `@Transactional` или использовать `@EntityGraph`.
   - Оптимистические блокировки через `@Version` для критичных сущностей.
-- **Валидация и ошибки**:
+- **Валидация, безопасность и мониторинг**:
   - Валидация входных данных через `jakarta.validation`.
   - Обработка ошибок через `@RestControllerAdvice` в формате RFC 9457 Problem Details (расширенном под контракт `{ "code", "message", "details" }`).
+  - Эндпоинты `/actuator/health/**` и `/actuator/info` обязаны быть в `permitAll()` в `SecurityConfig` каждого сервиса, иначе healthcheck контейнеров будет падать.
 - **Тестирование**:
   - Юнит-тесты: JUnit 5 + Mockito.
   - Интеграционные тесты с реальными БД: **Testcontainers** с аннотацией `@ServiceConnection` (без устаревшего `@DynamicPropertySource`).
@@ -151,6 +162,22 @@ Waltercraft — сайт игрового сервера Minecraft с микро
   - Java-пакеты: `lowercase` (`com.waltercraft.player`).
   - Таблицы и колонки в БД: `snake_case`.
   - Поля Java и JSON: `camelCase`.
+
+---
+
+## Контейнеризация и окружение (Podman / Docker Compose)
+
+- **Многоэтапная сборка (`Dockerfile.java`)**:
+  - Базовый образ этапа сборки: `maven:3.9-eclipse-temurin-21-alpine` (Maven предустановлен, исключает скачивание wrapper при каждой сборке).
+  - Кэширование слоёв: сначала копируется `pom.xml`, используется `--mount=type=cache,target=/root/.m2`, затем копируется `src`.
+  - Директива `HEALTHCHECK` внутри Dockerfile не используется (вызывает `WARN: HEALTHCHECK is not supported for OCI image format` в Podman). Все healthcheck настраиваются в `docker-compose.yml`.
+- **Тома баз данных PostgreSQL**:
+  - Образ PostgreSQL при наличии существующего тома (`volume`) игнорирует новые `POSTGRES_USER` и `POSTGRES_PASSWORD`. При изменении учетных данных в `.env` старый том нужно пересоздавать командой `podman compose down -v`.
+  - Проверка готовности БД в healthcheck: `test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]`.
+- **Управление секретами**:
+  - Файлы `.env`, `.env.local`, `.env.*.local` строго внесены в `.gitignore`.
+  - В корне репозитория обязателен актуальный `.env.example` с переменными для каждого сервиса и каждой БД.
+  - Запрещено использовать жестко зашитые дефолтные пароли (вроде `0`, `admin`, `secret`) в коде и `application.properties`.
 
 ---
 
