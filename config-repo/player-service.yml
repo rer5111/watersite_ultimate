@@ -1,0 +1,23 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${PLAYER_DB_HOST:${DB_HOST:localhost}}:${PLAYER_DB_PORT:${DB_PORT:5432}}/${PLAYER_DB_NAME:${DB_NAME:player_db}}
+    username: ${PLAYER_DB_USER:${DB_USER:${SPRING_DATASOURCE_USERNAME:postgres}}}
+    password: ${PLAYER_DB_PASSWORD:${DB_PASSWORD:${SPRING_DATASOURCE_PASSWORD:0}}}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:false}
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    validate-on-migrate: false
+    placeholders:
+      adminPasswordHash: ${ADMIN_INITIAL_PASSWORD_HASH:*LOCKED*}
+  security:
+    user:
+      name: ${SECURITY_USER_NAME:user}
+      password: ${SECURITY_USER_PASSWORD:}

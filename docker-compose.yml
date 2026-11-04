@@ -1,0 +1,152 @@
+services:
+  player-db:
+    image: docker.io/library/postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${PLAYER_DB_NAME:-player_db}
+      POSTGRES_USER: ${PLAYER_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${PLAYER_DB_PASSWORD:-0}
+    volumes:
+      - player-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER:-postgres}\" -d \"$${POSTGRES_DB:-player_db}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  config-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.java
+      args:
+        SERVICE_DIR: microservices/config-server
+    volumes:
+      - ./config-repo:/config-repo:ro,Z
+    environment:
+      CONFIG_REPO_LOCATION: file:/config-repo
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8888/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+
+  discovery-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.java
+      args:
+        SERVICE_DIR: microservices/discovery-server
+    depends_on:
+      config-server:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8761
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
+      EUREKA_CLIENT_FETCH_REGISTRY: "false"
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE:-http://localhost:8761/eureka/}
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8761/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+
+  player-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.java
+      args:
+        SERVICE_DIR: microservices/player-service
+    depends_on:
+      player-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8081
+      DB_HOST: ${PLAYER_DB_HOST:-player-db}
+      DB_PORT: ${PLAYER_DB_PORT:-5432}
+      DB_NAME: ${PLAYER_DB_NAME:-player_db}
+      DB_USER: ${PLAYER_DB_USER:-postgres}
+      DB_PASSWORD: ${PLAYER_DB_PASSWORD:-0}
+      ADMIN_INITIAL_PASSWORD_HASH: ${ADMIN_INITIAL_PASSWORD_HASH:-*LOCKED*}
+      SECURITY_USER_NAME: ${PLAYER_SERVICE_USER:-user}
+      SECURITY_USER_PASSWORD: ${PLAYER_SERVICE_PASSWORD:-}
+      EUREKA_URL: http://discovery-server:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      CONFIG_SERVER_URL: http://config-server:8888
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/api/user/admins"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 25s
+
+  skin-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.java
+      args:
+        SERVICE_DIR: microservices/skin-service
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8082
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URL: http://discovery-server:8761/eureka/
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8082/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 25s
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.java
+      args:
+        SERVICE_DIR: microservices/api-gateway
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      player-service:
+        condition: service_healthy
+      skin-service:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URL: http://discovery-server:8761/eureka/
+      EUREKA_CLIENT_REGISTRY_FETCH_INTERVAL_SECONDS: 5
+      FRONTEND_ORIGIN: http://localhost:8080
+      GATEWAY_JWT_ENABLED: ${GATEWAY_JWT_ENABLED:-false}
+      JWT_JWK_SET_URI: ${JWT_JWK_SET_URI:-http://localhost:8090/.well-known/jwks.json}
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 25s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8080
+
+volumes:
+  player-db-data:

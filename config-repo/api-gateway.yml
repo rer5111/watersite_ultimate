@@ -1,0 +1,30 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: player-service
+          order: 10
+          uri: lb://player-service
+          predicates:
+            - Path=/api/player-service/**
+          filters:
+            - StripPrefix=2
+        - id: skin-service
+          order: 20
+          uri: lb://skin-service
+          predicates:
+            - Path=/api/skin-service/**
+          filters:
+            - StripPrefix=2
+        - id: frontend
+          order: 100
+          uri: http://frontend:80
+          predicates:
+            - Path=/**
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins: ${FRONTEND_ORIGIN:http://localhost:5173}
+            allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+            allowed-headers: '*'
+            allow-credentials: true

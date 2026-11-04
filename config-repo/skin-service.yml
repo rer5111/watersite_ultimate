@@ -1,0 +1,18 @@
+server:
+  port: ${SERVER_PORT:8082}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+skin:
+  provider:
+    vzge-url: ${VZGE_BASE_URL:https://vzge.me}
+    crafatar-url: ${CRAFATAR_BASE_URL:https://crafatar.com}
+    visage-url: ${VISAGE_BASE_URL:https://visage.surgeplay.com}
+    user-agent: WaltercraftSkinService/1.0 (+https://waltercraft.ru; admin@waltercraft.ru)
+    cache-ttl-minutes: 1440
+    connect-timeout-ms: 3000
+    read-timeout-ms: 5000
