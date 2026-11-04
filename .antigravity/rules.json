@@ -1,0 +1,11 @@
+{
+  "rules": [
+    ".antigravity/rules/spring-conventions.md",
+    ".antigravity/rules/jpa-patterns.md",
+    ".antigravity/rules/testing-patterns.md"
+  ],
+  "agents": {
+    "rolesDir": ".agents/roles",
+    "skillsDir": ".agents/skills"
+  }
+}
