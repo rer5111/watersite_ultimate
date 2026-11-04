@@ -1,0 +1,133 @@
+openapi: 3.1.0
+info:
+  title: Waltercraft Chat Service API
+  version: 1.0.0
+servers:
+  - url: /api/chat-service
+tags:
+  - name: Chat
+paths:
+  /api/v1/chat/status:
+    get:
+      operationId: getChatStatus
+      tags: [Chat]
+      summary: Get Discord bridge status
+      security: []
+      responses:
+        '200':
+          description: Whether the Discord bot is configured and connected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatStatus'
+  /api/v1/chat/messages:
+    get:
+      operationId: listChatMessages
+      tags: [Chat]
+      summary: Poll in-memory chat history
+      security: []
+      parameters:
+        - name: afterId
+          in: query
+          description: Return messages with a greater sequence ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Up to the last 100 messages, oldest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChatMessage'
+    post:
+      operationId: sendChatMessage
+      tags: [Chat]
+      summary: Send a website message to the configured Discord channel
+      security:
+        - bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatMessageRequest'
+      responses:
+        '202':
+          description: Message accepted for delivery to Discord
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          description: Discord bot is disabled or disconnected
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ChatStatus:
+      type: object
+      required: [discordConfigured, discordConnected]
+      properties:
+        discordConfigured: { type: boolean }
+        discordConnected: { type: boolean }
+    ChatMessageRequest:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 500
+    ChatMessage:
+      type: object
+      required: [id, user, message, origin, sentAt]
+      properties:
+        id: { type: integer, format: int64 }
+        user: { type: string }
+        message: { type: string }
+        origin:
+          type: string
+          enum: [WEB, DISCORD, MINECRAFT]
+        sentAt: { type: string, format: date-time }
+    Problem:
+      type: object
+      properties:
+        type: { type: string, format: uri-reference }
+        title: { type: string }
+        status: { type: integer }
+        code: { type: string }
+        message: { type: string }
+        details: { type: object, additionalProperties: true }
+  responses:
+    BadRequest:
+      description: Invalid message or query parameter
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Unauthorized:
+      description: Access token required
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Forbidden:
+      description: User role required
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'

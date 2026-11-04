@@ -1,0 +1,35 @@
+server:
+  port: ${SERVER_PORT:8086}
+  shutdown: graceful
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+chat:
+  jwt:
+    jwk-set-uri: ${JWT_JWK_SET_URI:http://auth-service:8090/.well-known/jwks.json}
+    issuer: ${AUTH_JWT_ISSUER:https://auth.waltercraft.ru}
+
+discord:
+  bot:
+    enabled: ${DISCORD_BOT_ENABLED:false}
+    token: ${DISCORD_BOT_TOKEN:}
+    channel-id: ${DISCORD_CHAT_CHANNEL_ID:}
+    minecraft-bot-user-id: ${DISCORD_MINECRAFT_BOT_USER_ID:1042883408596062298}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState

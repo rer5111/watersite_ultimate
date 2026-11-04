@@ -37,6 +37,13 @@ spring:
             - Path=/api/donation-service/**
           filters:
             - StripPrefix=2
+        - id: chat-service
+          order: 16
+          uri: lb://chat-service
+          predicates:
+            - Path=/api/chat-service/**
+          filters:
+            - StripPrefix=2
         - id: skin-service
           order: 20
           uri: lb://skin-service

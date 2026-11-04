@@ -25,6 +25,7 @@ public class SecurityConfig {
                 .pathMatchers("/api/application-service/**").denyAll()
                 .pathMatchers("/api/payment-service/**").denyAll()
                 .pathMatchers("/api/donation-service/**").denyAll()
+                .pathMatchers("/api/chat-service/**").denyAll()
                 .anyExchange().permitAll()
                 .and()
                 .build();
