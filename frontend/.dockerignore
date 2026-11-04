@@ -1,0 +1,8 @@
+.env
+.env.*
+.git/
+dist/
+dist-ssr/
+node_modules/
+*.local
+*.log

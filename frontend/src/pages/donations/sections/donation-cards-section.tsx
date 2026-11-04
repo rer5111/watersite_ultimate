@@ -1,23 +1,15 @@
 import { DonationCard, type DonationCardProps } from '../components';
-const donations: DonationCardProps[] = [
-  {
-    image: '/images/donations/iron-block.png',
-    title: 'Поддержать проект',
-    price: 100,
-  },
-  {
-    image: '/images/donations/gold-block.png',
-    title: 'Помочь серверу',
-    price: 250,
-  },
-  {
-    image: '/images/donations/diamond-block.png',
-    title: 'Большая поддержка',
-    price: 500,
-  },
-];
+import { useDonationTypes } from '@/api';
+
+const donationImages: Record<string, string> = {
+  'support-project': '/images/donations/iron-block.png',
+  'help-server': '/images/donations/gold-block.png',
+  'major-support': '/images/donations/diamond-block.png',
+};
 
 export function DonationCardSection() {
+  const { data: donationTypes = [], isLoading, isError } = useDonationTypes();
+
   return (
     <section className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-32 py-16">
       <div className="flex flex-col items-center gap-4 py-4 text-center">
@@ -28,11 +20,22 @@ export function DonationCardSection() {
         </p>
       </div>
       <div className="mx-auto flex max-w-300 flex-wrap justify-center gap-8 py-4">
-        {donations.map((donation) => (
-          <div key={donation.title} className="w-80">
-            <DonationCard {...donation} />
-          </div>
-        ))}
+        {isLoading && <p role="status">Загружаем варианты пожертвования…</p>}
+        {isError && <p role="alert">Не удалось загрузить варианты пожертвования. Попробуйте позже.</p>}
+        {!isLoading && !isError && donationTypes.length === 0 && <p>Пока нет доступных вариантов пожертвования.</p>}
+        {!isLoading && !isError && donationTypes.map((donation) => {
+          const card: DonationCardProps = {
+            image: donationImages[donation.code] ?? '/images/donations/diamond-block.png',
+            title: donation.name,
+            price: donation.priceRub,
+          };
+
+          return (
+            <div key={donation.id} className="w-80">
+              <DonationCard {...card} />
+            </div>
+          );
+        })}
       </div>
     </section>
   );

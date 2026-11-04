@@ -1,0 +1,386 @@
+openapi: 3.1.0
+info:
+  title: Waltercraft Donation Service API
+  version: 1.0.0
+servers:
+  - url: /api/donation-service
+tags:
+  - name: Donation Types
+  - name: Donations
+security:
+  - bearer: []
+paths:
+  /api/v1/donation-types:
+    get:
+      operationId: listDonationTypes
+      tags: [Donation Types]
+      security: []
+      summary: List active donation types
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+        - $ref: '#/components/parameters/sort'
+      responses:
+        '200':
+          description: Active donation types in display order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DonationTypePage'
+  /api/v1/admin/donation-types:
+    get:
+      operationId: listAllDonationTypes
+      tags: [Donation Types]
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+        - $ref: '#/components/parameters/sort'
+      responses:
+        '200':
+          description: All donation types
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DonationTypePage'
+    post:
+      operationId: createDonationType
+      tags: [Donation Types]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DonationTypeCreateRequest'
+      responses:
+        '201':
+          description: Created donation type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DonationType'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/admin/donation-types/{id}:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getDonationType
+      tags: [Donation Types]
+      responses:
+        '200':
+          description: Donation type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DonationType'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: updateDonationType
+      tags: [Donation Types]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DonationTypeUpdateRequest'
+      responses:
+        '200':
+          description: Updated donation type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DonationType'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      operationId: deleteDonationType
+      tags: [Donation Types]
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/admin/donations:
+    get:
+      operationId: listDonations
+      tags: [Donations]
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+        - $ref: '#/components/parameters/sort'
+      responses:
+        '200':
+          description: Donations newest first
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DonationPage'
+    post:
+      operationId: createDonation
+      tags: [Donations]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DonationCreateRequest'
+      responses:
+        '201':
+          description: Created donation record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Donation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/admin/donations/{id}:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getDonation
+      tags: [Donations]
+      responses:
+        '200':
+          description: Donation record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Donation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: deleteDonation
+      tags: [Donations]
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    size:
+      name: size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    sort:
+      name: sort
+      in: query
+      description: Backend database sort; defaults to display order or newest first.
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+  responses:
+    BadRequest:
+      description: Validation failed or a referenced type does not exist
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: Resource not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: Unique value, referenced type, or version conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    DonationTypeCreateRequest:
+      type: object
+      required: [code, name, priceRub]
+      properties:
+        code:
+          type: string
+          pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+          maxLength: 64
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: [string, 'null']
+          maxLength: 500
+        priceRub:
+          type: number
+          exclusiveMinimum: 0
+          multipleOf: 0.01
+        displayOrder:
+          type: integer
+          minimum: 0
+          default: 0
+        active:
+          type: [boolean, 'null']
+    DonationTypeUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/DonationTypeCreateRequest'
+        - type: object
+          required: [active, version]
+          properties:
+            version:
+              type: integer
+              format: int64
+              minimum: 0
+    DonationType:
+      type: object
+      required: [id, code, name, priceRub, displayOrder, active, version, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: [string, 'null']
+        priceRub:
+          type: number
+        displayOrder:
+          type: integer
+        active:
+          type: boolean
+        version:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    DonationCreateRequest:
+      type: object
+      required: [playerId, donationTypeId]
+      properties:
+        playerId:
+          type: integer
+          format: int64
+          minimum: 1
+        donationTypeId:
+          type: integer
+          format: int64
+          minimum: 1
+        paymentReference:
+          type: [string, 'null']
+          maxLength: 128
+    Donation:
+      type: object
+      required: [id, playerId, donationTypeId, donationTypeName, amountRub, donatedAt, version]
+      properties:
+        id:
+          type: integer
+          format: int64
+        playerId:
+          type: integer
+          format: int64
+        donationTypeId:
+          type: integer
+          format: int64
+        donationTypeName:
+          type: string
+        amountRub:
+          type: number
+        paymentReference:
+          type: [string, 'null']
+        donatedAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          format: int64
+    DonationTypePage:
+      type: object
+      required: [content, page]
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/DonationType'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+    DonationPage:
+      type: object
+      required: [content, page]
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Donation'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+    PageMetadata:
+      type: object
+      required: [size, number, totalElements, totalPages]
+      properties:
+        size:
+          type: integer
+        number:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+    Problem:
+      type: object
+      required: [type, title, status, detail, code, message, details]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            type: string

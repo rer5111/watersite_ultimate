@@ -18,9 +18,11 @@ public class SecurityConfig {
                 .authorizeExchange()
                 .pathMatchers(HttpMethod.GET, "/api/player-service/api/user/admins").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/skin-service/**").permitAll()
+                .pathMatchers(HttpMethod.GET, "/api/donation-service/api/v1/donation-types").permitAll()
                 .pathMatchers("/actuator/health/**", "/actuator/info").permitAll()
                 .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .pathMatchers("/api/player-service/**").denyAll()
+                .pathMatchers("/api/donation-service/**").denyAll()
                 .anyExchange().permitAll()
                 .and()
                 .build();

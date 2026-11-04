@@ -13,6 +13,20 @@ services:
       timeout: 3s
       retries: 20
 
+  donation-db:
+    image: docker.io/library/postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DONATION_DB_NAME:-donation_db}
+      POSTGRES_USER: ${DONATION_DB_USER:-donation_user}
+      POSTGRES_PASSWORD: ${DONATION_DB_PASSWORD:?Set DONATION_DB_PASSWORD in .env}
+    volumes:
+      - donation-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   config-server:
     build:
       context: .
@@ -143,6 +157,40 @@ services:
       retries: 30
       start_period: 25s
 
+  donation-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.java
+      args:
+        SERVICE_DIR: microservices/donation-service
+    depends_on:
+      donation-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8083
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URL: http://discovery-server:8761/eureka/
+      DONATION_DB_HOST: ${DONATION_DB_HOST:-donation-db}
+      DONATION_DB_PORT: ${DONATION_DB_PORT:-5432}
+      DONATION_DB_NAME: ${DONATION_DB_NAME:-donation_db}
+      DONATION_DB_USER: ${DONATION_DB_USER:-donation_user}
+      DONATION_DB_PASSWORD: ${DONATION_DB_PASSWORD:?Set DONATION_DB_PASSWORD in .env}
+      JWT_JWK_SET_URI: http://auth-service:8090/.well-known/jwks.json
+      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.waltercraft.ru}
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8083/actuator/health/readiness"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
+
   api-gateway:
     build:
       context: .
@@ -159,6 +207,8 @@ services:
       auth-service:
         condition: service_healthy
       skin-service:
+        condition: service_healthy
+      donation-service:
         condition: service_healthy
     environment:
       SERVER_PORT: 8080
@@ -186,3 +236,4 @@ services:
 
 volumes:
   player-db-data:
+  donation-db-data:

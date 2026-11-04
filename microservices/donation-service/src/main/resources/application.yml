@@ -1,0 +1,63 @@
+server:
+  port: ${SERVER_PORT:8083}
+  shutdown: graceful
+
+spring:
+  application:
+    name: donation-service
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+  threads:
+    virtual:
+      enabled: true
+  mvc:
+    problemdetails:
+      enabled: true
+  data:
+    web:
+      pageable:
+        max-page-size: 100
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  datasource:
+    url: ${DONATION_DB_URL:jdbc:postgresql://${DONATION_DB_HOST:localhost}:${DONATION_DB_PORT:5432}/${DONATION_DB_NAME:donation_db}}
+    username: ${DONATION_DB_USER:donation_user}
+    password: ${DONATION_DB_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+  flyway:
+    baseline-on-migrate: true
+    validate-on-migrate: ${FLYWAY_VALIDATE:false}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8090/.well-known/jwks.json}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+
+donation:
+  jwt:
+    issuer: ${AUTH_JWT_ISSUER:https://auth.waltercraft.ru}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,db
