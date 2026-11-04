@@ -5,6 +5,8 @@ import org.example.userservice.model.RoleEnum;
 import org.example.userservice.model.SeasonModel;
 import org.example.userservice.model.UserModel;
 import org.example.userservice.dto.AdminProfileResponse;
+import org.example.userservice.dto.CreateUserRequest;
+import org.example.userservice.dto.UpdateUserRequest;
 import org.example.userservice.service.AccountService;
 import org.example.userservice.service.SeasonService;
 import org.example.userservice.service.UserService;
@@ -18,9 +20,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
 
 import java.util.List;
 import java.util.Set;
@@ -50,17 +55,22 @@ public class UserController {
         this.seasonService = seasonService;
     }
 
-    @PutMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus registerUser(
+    @PutMapping(consumes = APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> registerUserJson(@RequestBody @Valid CreateUserRequest request) {
+        return registerUser(request.name(), request.password(), request.roles(), request.accountId());
+    }
+
+    @PutMapping
+    public ResponseEntity<Void> registerUser(
             @RequestParam String name,
             @RequestParam String password,
             @RequestParam Set<RoleEnum> roles,
-            @RequestParam int accountId
+            @RequestParam long accountId
     ) {
         try {
             List<AccountModel> accounts = accountService.findById(accountId);
             if (accounts.isEmpty()) {
-                return HttpStatus.BAD_REQUEST;
+                return ResponseEntity.badRequest().build();
             }
             UserModel userModel = new UserModel(
                     0,
@@ -70,25 +80,30 @@ public class UserController {
                     accounts.get(0)
             );
             userService.addUser(userModel);
-            return HttpStatus.OK;
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
             log.error("Failed to register user: {}", e.getMessage());
-            return HttpStatus.BAD_REQUEST;
+            return ResponseEntity.badRequest().build();
         }
     }
 
-    @PostMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus updateUser(
-            @RequestParam int id,
+    @PostMapping(consumes = APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> updateUserJson(@RequestBody @Valid UpdateUserRequest request) {
+        return updateUser(request.id(), request.name(), request.password(), request.roles(), request.accountId());
+    }
+
+    @PostMapping
+    public ResponseEntity<Void> updateUser(
+            @RequestParam long id,
             @RequestParam String name,
             @RequestParam String password,
             @RequestParam Set<RoleEnum> roles,
-            @RequestParam int accountId
+            @RequestParam long accountId
     ) {
         List<UserModel> users = userService.findById(id);
         List<AccountModel> accounts = accountService.findById(accountId);
         if (users.isEmpty() || accounts.isEmpty()) {
-            return HttpStatus.NOT_FOUND;
+            return ResponseEntity.notFound().build();
         }
 
         try {
@@ -98,25 +113,25 @@ public class UserController {
             userModel.setRoles(roles);
             userModel.setAccount(accounts.get(0));
             userService.updateUser(userModel);
-            return HttpStatus.OK;
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
             log.error("Failed to update user: {}", e.getMessage());
-            return HttpStatus.BAD_REQUEST;
+            return ResponseEntity.badRequest().build();
         }
     }
 
-    @DeleteMapping(value = "/{key}", produces = APPLICATION_JSON_VALUE)
-    public HttpStatus deleteUser(@PathVariable int key) {
+    @DeleteMapping("/{key}")
+    public ResponseEntity<Void> deleteUser(@PathVariable long key) {
         try {
             List<UserModel> users = userService.findById(key);
             if (users.isEmpty()) {
-                return HttpStatus.NOT_FOUND;
+                return ResponseEntity.notFound().build();
             }
-            accountService.deleteAccount(users.get(0).getAccount().getId());
-            return HttpStatus.OK;
+            userService.deleteUser(key);
+            return ResponseEntity.noContent().build();
         } catch (Exception e) {
             log.error("Failed to delete user: {}", e.getMessage());
-            return HttpStatus.NOT_FOUND;
+            return ResponseEntity.notFound().build();
         }
     }
 
@@ -147,7 +162,7 @@ public class UserController {
     }
 
     @GetMapping(value = "/findID/{id}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<UserModel>> findById(@PathVariable int id) {
+    public ResponseEntity<List<UserModel>> findById(@PathVariable long id) {
         return ResponseEntity.ok(userService.findById(id));
     }
 
@@ -156,42 +171,42 @@ public class UserController {
         return ResponseEntity.ok(userService.findByName(name));
     }
 
-    @GetMapping(value = "/deleteSeason/{id}/{s_id}", produces = APPLICATION_JSON_VALUE)
-    public HttpStatus deleteFromSeason(@PathVariable int id, @PathVariable int s_id) {
+    @DeleteMapping(value = {"/season/{id}/{s_id}", "/deleteSeason/{id}/{s_id}"})
+    public ResponseEntity<Void> deleteFromSeason(@PathVariable long id, @PathVariable long s_id) {
         log.info("Deleting user {} from season {}", id, s_id);
         try {
             List<UserModel> users = userService.findById(id);
             List<SeasonModel> seasons = seasonService.findById(s_id);
             if (users.isEmpty() || seasons.isEmpty()) {
-                return HttpStatus.NOT_FOUND;
+                return ResponseEntity.notFound().build();
             }
             UserModel userModel = users.get(0);
             userModel.removeSeason(seasons.get(0));
             userService.updateUser(userModel);
-            return HttpStatus.OK;
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
             log.error("Failed to delete user from season: {}", e.getMessage());
-            return HttpStatus.BAD_REQUEST;
+            return ResponseEntity.badRequest().build();
         }
     }
 
-    @GetMapping(value = "/addSeason/{id}/{s_id}", produces = APPLICATION_JSON_VALUE)
-    public HttpStatus addToSeason(@PathVariable int id, @PathVariable int s_id) {
+    @PostMapping(value = {"/season/{id}/{s_id}", "/addSeason/{id}/{s_id}"})
+    public ResponseEntity<Void> addToSeason(@PathVariable long id, @PathVariable long s_id) {
         log.info("Adding user {} to season {}", id, s_id);
         try {
             List<UserModel> users = userService.findById(id);
             List<SeasonModel> seasons = seasonService.findById(s_id);
             if (users.isEmpty() || seasons.isEmpty()) {
-                return HttpStatus.NOT_FOUND;
+                return ResponseEntity.notFound().build();
             }
             UserModel userModel = users.get(0);
             userModel.addSeason(seasons.get(0));
             userService.updateUser(userModel);
             log.info("User {} added to season {}", id, s_id);
-            return HttpStatus.OK;
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
             log.error("Failed to add user to season: {}", e.getMessage());
-            return HttpStatus.BAD_REQUEST;
+            return ResponseEntity.badRequest().build();
         }
     }
 }

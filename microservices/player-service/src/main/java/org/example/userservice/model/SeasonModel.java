@@ -41,12 +41,7 @@ public class SeasonModel {
     private String image;
 
     @JsonIgnore
-    @ManyToMany
-    @JoinTable(
-            name = "season_extra",
-            joinColumns = @JoinColumn(name = "season_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
+    @ManyToMany(mappedBy = "seasons")
     private List<UserModel> users = new ArrayList<>();
 
     public SeasonModel() {

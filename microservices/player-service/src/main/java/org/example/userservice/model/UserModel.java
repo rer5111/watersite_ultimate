@@ -1,5 +1,6 @@
 package org.example.userservice.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.CollectionTable;
@@ -34,6 +35,7 @@ public class UserModel {
     private String name;
 
     @NotBlank(message = "Password is required")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @ElementCollection(targetClass = RoleEnum.class, fetch = FetchType.EAGER)

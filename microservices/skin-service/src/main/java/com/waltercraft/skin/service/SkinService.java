@@ -11,21 +11,30 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class SkinService {
 
     private static final Logger log = LoggerFactory.getLogger(SkinService.class);
+    private static final int MAX_CACHE_ENTRIES = 1000;
 
     private record CachedSkin(byte[] data, Instant expiresAt) {}
 
     private final HttpClient httpClient;
     private final SkinProperties properties;
-    private final Map<String, CachedSkin> imageCache = new ConcurrentHashMap<>();
+    private final Map<String, CachedSkin> imageCache = Collections.synchronizedMap(
+            new LinkedHashMap<String, CachedSkin>(128, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, CachedSkin> eldest) {
+                    return size() > MAX_CACHE_ENTRIES;
+                }
+            }
+    );
 
     public SkinService(SkinProperties properties) {
         this.properties = properties;
@@ -73,8 +82,12 @@ public class SkinService {
 
     private Optional<byte[]> getOrFetch(String cacheKey, String[] urls) {
         CachedSkin cached = imageCache.get(cacheKey);
-        if (cached != null && cached.expiresAt().isAfter(Instant.now())) {
-            return Optional.of(cached.data());
+        if (cached != null) {
+            if (cached.expiresAt().isAfter(Instant.now())) {
+                return Optional.of(cached.data());
+            } else {
+                imageCache.remove(cacheKey);
+            }
         }
 
         for (String url : urls) {

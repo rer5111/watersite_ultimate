@@ -5,7 +5,7 @@ import { Fragment } from 'react/jsx-runtime';
 const seasons: Season[] = [
   {
     id: 1,
-    image: '/images/seasons/season-1.png',
+    image: '/images/seasons/season-1.webp',
     title: '1 сезон',
     startDate: '2022',
     endDate: '2022',
@@ -14,7 +14,7 @@ const seasons: Season[] = [
   },
   {
     id: 2,
-    image: '/images/seasons/season-2.png',
+    image: '/images/seasons/season-2.webp',
     title: '2 сезон',
     startDate: '2022',
     endDate: '2023',
@@ -23,7 +23,7 @@ const seasons: Season[] = [
   },
   {
     id: 3,
-    image: '/images/seasons/season-3.png',
+    image: '/images/seasons/season-3.webp',
     title: '3 сезон',
     startDate: '2023',
     endDate: '2024',
@@ -32,7 +32,7 @@ const seasons: Season[] = [
   },
   {
     id: 4,
-    image: '/images/seasons/season-4.png',
+    image: '/images/seasons/season-4.webp',
     title: '4 сезон',
     startDate: '2024',
     endDate: '2025',
@@ -41,7 +41,7 @@ const seasons: Season[] = [
   },
   {
     id: 5,
-    image: '/images/seasons/season-5.png',
+    image: '/images/seasons/season-5.webp',
     title: '5 сезон',
     startDate: '2025',
     endDate: 'н. в.',

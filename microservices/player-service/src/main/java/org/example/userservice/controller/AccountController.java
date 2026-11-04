@@ -29,8 +29,8 @@ public class AccountController {
         this.service = service;
     }
 
-    @PutMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus registerAccount(
+    @PutMapping
+    public ResponseEntity<Void> registerAccount(
             @RequestParam String name,
             @RequestParam LocalDate joinDate,
             @RequestParam(required = false) UUID uuid
@@ -39,22 +39,22 @@ public class AccountController {
             AccountModel accountModel = new AccountModel(0, name, joinDate);
             accountModel.setUuid(uuid);
             service.addAccount(accountModel);
-            return HttpStatus.OK;
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
-            return HttpStatus.BAD_REQUEST;
+            return ResponseEntity.badRequest().build();
         }
     }
 
-    @PostMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus updateAccount(
-            @RequestParam int id,
+    @PostMapping
+    public ResponseEntity<Void> updateAccount(
+            @RequestParam long id,
             @RequestParam String name,
             @RequestParam LocalDate joinDate,
             @RequestParam(required = false) UUID uuid
     ) {
         List<AccountModel> accounts = service.findById(id);
         if (accounts.isEmpty()) {
-            return HttpStatus.NOT_FOUND;
+            return ResponseEntity.notFound().build();
         }
         AccountModel accountModel = accounts.get(0);
         accountModel.setUsername(name);
@@ -63,16 +63,20 @@ public class AccountController {
             accountModel.setUuid(uuid);
         }
         service.updateAccount(accountModel);
-        return HttpStatus.OK;
+        return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping(value = "/{key}", produces = APPLICATION_JSON_VALUE)
-    public HttpStatus deleteDonation(@PathVariable int key) {
+    @DeleteMapping("/{key}")
+    public ResponseEntity<Void> deleteAccount(@PathVariable long key) {
         try {
+            List<AccountModel> accounts = service.findById(key);
+            if (accounts.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
             service.deleteAccount(key);
-            return HttpStatus.OK;
+            return ResponseEntity.noContent().build();
         } catch (Exception e) {
-            return HttpStatus.NOT_FOUND;
+            return ResponseEntity.notFound().build();
         }
     }
 
@@ -92,7 +96,7 @@ public class AccountController {
     }
 
     @GetMapping(value = "/findID/{id}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<AccountModel>> findById(@PathVariable int id) {
+    public ResponseEntity<List<AccountModel>> findById(@PathVariable long id) {
         return ResponseEntity.ok(service.findById(id));
     }
 

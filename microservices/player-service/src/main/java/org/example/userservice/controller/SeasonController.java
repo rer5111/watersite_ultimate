@@ -28,8 +28,8 @@ public class SeasonController {
         this.seasonService = seasonService;
     }
 
-    @PutMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus registerSeason(
+    @PutMapping
+    public ResponseEntity<Void> registerSeason(
             @RequestParam String title,
             @RequestParam LocalDate startDate,
             @RequestParam LocalDate endDate,
@@ -39,15 +39,15 @@ public class SeasonController {
         try {
             SeasonModel seasonTypeModel = new SeasonModel(0, title, startDate, endDate, desc, img);
             seasonService.addSeason(seasonTypeModel);
-            return HttpStatus.OK;
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
-            return HttpStatus.BAD_REQUEST;
+            return ResponseEntity.badRequest().build();
         }
     }
 
-    @PostMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus updateSeason(
-            @RequestParam int id,
+    @PostMapping
+    public ResponseEntity<Void> updateSeason(
+            @RequestParam long id,
             @RequestParam String title,
             @RequestParam LocalDate startDate,
             @RequestParam LocalDate endDate,
@@ -56,7 +56,7 @@ public class SeasonController {
     ) {
         List<SeasonModel> seasons = seasonService.findById(id);
         if (seasons.isEmpty()) {
-            return HttpStatus.NOT_FOUND;
+            return ResponseEntity.notFound().build();
         }
         SeasonModel seasonTypeModel = seasons.get(0);
         seasonTypeModel.setTitle(title);
@@ -65,16 +65,20 @@ public class SeasonController {
         seasonTypeModel.setDescription(desc);
         seasonTypeModel.setImage(img);
         seasonService.updateSeason(seasonTypeModel);
-        return HttpStatus.OK;
+        return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping(value = "/{key}", produces = APPLICATION_JSON_VALUE)
-    public HttpStatus deleteSeason(@PathVariable int key) {
+    @DeleteMapping("/{key}")
+    public ResponseEntity<Void> deleteSeason(@PathVariable long key) {
         try {
+            List<SeasonModel> seasons = seasonService.findById(key);
+            if (seasons.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
             seasonService.deleteSeason(key);
-            return HttpStatus.OK;
+            return ResponseEntity.noContent().build();
         } catch (Exception e) {
-            return HttpStatus.NOT_FOUND;
+            return ResponseEntity.notFound().build();
         }
     }
 
@@ -94,7 +98,7 @@ public class SeasonController {
     }
 
     @GetMapping(value = "/findID/{id}", produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<SeasonModel>> findById(@PathVariable int id) {
+    public ResponseEntity<List<SeasonModel>> findById(@PathVariable long id) {
         return ResponseEntity.ok(seasonService.findById(id));
     }
 
