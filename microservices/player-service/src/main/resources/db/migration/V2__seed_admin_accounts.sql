@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS season_extra (
 );
 
 INSERT INTO account (id, username, uuid, join_date)
-SELECT v.id, v.username, v.uuid, v.join_date
+SELECT v.id, v.username, CAST(v.uuid AS UUID), v.join_date
 FROM (VALUES
     (1, 'LeadCone_TNF', 'ccb40ba9-e0af-4939-9c80-3ce15fb417ed', CURRENT_DATE),
     (2, 'rer_5111', 'ce03a881-7be7-4cbe-940c-25b254a7a2a9', CURRENT_DATE),
