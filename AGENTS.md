@@ -15,16 +15,17 @@ Waltercraft — сайт игрового сервера Minecraft с микро
 
 При выполнении задач опирайся на специализированные роли и конвенции из каталога `.agents/`:
 
-- **Роли агентов (`.agents/roles/`)**:
-  - `spring-boot-engineer.md` — генерация слоёв сервисов, контроллеров, DTO, сущностей и миграций.
-  - `code-reviewer.md` — аудит диффа перед коммитом (проверка контрактов, утечек, N+1).
-  - `security-engineer.md` — безопасность, валидация входных данных, работа с JWT и ролями.
-  - `docker-expert.md` / `devops-engineer.md` — сборка multi-stage Dockerfile, Paketo Buildpacks, CI/CD.
-- **Скиллы и паттерны (`.agents/skills/`)**:
-  - `conventions/` — глобальные инженерные правила кода.
-  - `jpa-patterns/` — защита от N+1, `OSIV: false`, оптимистические блокировки (`@Version`).
-  - `testing-patterns/` — интеграционные тесты с Testcontainers и `@ServiceConnection`.
-  - `java-modern/` — использование Java 21+ (records, pattern matching, sealed classes).
+- **Роли агентов (`.agents/agents/<name>/agent.md` и симлинки в `.agents/roles/`)**:
+  - `spring-boot-engineer` — генерация слоёв сервисов, контроллеров, DTO, сущностей и миграций.
+  - `code-reviewer` — аудит диффа перед коммитом (проверка контрактов, утечек, N+1).
+  - `security-engineer` — безопасность, валидация входных данных, работа с JWT и ролями.
+  - `docker-expert` / `devops-engineer` — сборка multi-stage Dockerfile, Paketo Buildpacks, CI/CD.
+- **Скиллы и паттерны (`.agents/skills/<name>/SKILL.md`)**:
+  - `conventions/SKILL.md` — глобальные инженерные правила кода, Problem Details, No-Lombok.
+  - `spring-boot/SKILL.md` — REST API, JPA, Security, тестирование, облачные паттерны.
+  - `jpa-patterns/SKILL.md` — защита от N+1, `OSIV: false`, блокировки (`@Version`).
+  - `testing-patterns/SKILL.md` — тесты с Testcontainers и `@ServiceConnection`.
+  - `code-quality/SKILL.md`, `java-modern/SKILL.md`, `design-patterns/SKILL.md`, `logging-patterns/SKILL.md`.
 
 ---
 
