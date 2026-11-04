@@ -8,6 +8,8 @@ export function HeroSection() {
         src={heroImage}
         alt=""
         aria-hidden="true"
+        decoding="async"
+        fetchPriority="high"
         className="absolute inset-0 size-full object-cover brightness-75 select-none"
       />
 

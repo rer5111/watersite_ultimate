@@ -97,6 +97,7 @@ export function AuthLayout() {
             src={slide.image}
             alt=""
             aria-hidden="true"
+            decoding="async"
             className={cn(
               'pointer-events-none absolute inset-0 size-full object-cover object-center brightness-75 transition-opacity duration-300 ease-out select-none',
               slideIndex === activeIndex ? 'opacity-100' : 'opacity-0'

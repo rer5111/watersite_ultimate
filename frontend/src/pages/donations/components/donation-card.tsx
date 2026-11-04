@@ -19,8 +19,10 @@ export function DonationCard({ image, title, price }: DonationCardProps) {
       <img
         src={image}
         alt={title}
-        loading="lazy"
-        className="mb-4 aspect-1/2 h-40 w-auto object-scale-down"
+        decoding="async"
+        width={80}
+        height={160}
+        className="mb-4 aspect-1/2 h-40 w-auto shrink-0 object-scale-down text-transparent text-[0px]"
       />
       <div className="flex flex-col gap-4">
         <h4 className="text-center text-xl font-medium">{title}</h4>

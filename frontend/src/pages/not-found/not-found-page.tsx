@@ -5,7 +5,7 @@ import teto404 from '@/assets/images/teto-404.png';
 export function NotFoundPage() {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-10">
-      <img src={teto404} alt="" className="h-40" />
+      <img src={teto404} alt="" decoding="async" className="h-40 shrink-0" />
       <div className="mb-4 flex flex-col items-center gap-4">
         <span className="text-primary text-9xl font-black tracking-tighter">404</span>
         <h1 className="max-w-120 text-center text-2xl font-medium">
