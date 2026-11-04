@@ -1,0 +1,306 @@
+openapi: 3.1.0
+info:
+  title: Waltercraft Payment Service API
+  version: 1.0.0
+servers:
+  - url: /api/payment-service
+tags:
+  - name: Payments
+security:
+  - bearer: []
+paths:
+  /api/v1/admin/payments:
+    get:
+      operationId: listPayments
+      tags: [Payments]
+      summary: List payment records (ADMIN only)
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+        - $ref: '#/components/parameters/sort'
+      responses:
+        '200':
+          description: Payment records ordered by payment date, newest first by default
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      operationId: createPayment
+      tags: [Payments]
+      summary: Record a payment (ADMIN only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCreateRequest'
+      responses:
+        '201':
+          description: Payment record created
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri-reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/admin/payments/{id}:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getPayment
+      tags: [Payments]
+      summary: Get a payment record (ADMIN only)
+      responses:
+        '200':
+          description: Payment record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: updatePayment
+      tags: [Payments]
+      summary: Replace a payment record with an expected version (ADMIN only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentUpdateRequest'
+      responses:
+        '200':
+          description: Updated payment record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      operationId: deletePayment
+      tags: [Payments]
+      summary: Delete a payment record (ADMIN only)
+      responses:
+        '204':
+          description: Payment record deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    size:
+      name: size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+    sort:
+      name: sort
+      in: query
+      description: Database property and direction. Defaults to paymentDate desc, id desc.
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+  responses:
+    BadRequest:
+      description: Validation failed, invalid page/sort, or malformed input
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Unauthorized:
+      description: A valid access token is required
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Forbidden:
+      description: The operation is reserved for ADMIN
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: Payment record not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: Duplicate external reference or stale version
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    PaymentCreateRequest:
+      type: object
+      required: [payerUsername, paymentDate, amountRub]
+      properties:
+        payerUsername:
+          type: string
+          minLength: 1
+          maxLength: 120
+        paymentDate:
+          type: string
+          format: date
+          description: The payment date cannot be in the future.
+        amountRub:
+          type: number
+          exclusiveMinimum: 0
+          multipleOf: 0.01
+        externalReference:
+          type: [string, 'null']
+          maxLength: 128
+    PaymentUpdateRequest:
+      type: object
+      required: [payerUsername, paymentDate, amountRub, version]
+      properties:
+        payerUsername:
+          type: string
+          minLength: 1
+          maxLength: 120
+        paymentDate:
+          type: string
+          format: date
+          description: The payment date cannot be in the future.
+        amountRub:
+          type: number
+          exclusiveMinimum: 0
+          multipleOf: 0.01
+        externalReference:
+          type: [string, 'null']
+          maxLength: 128
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+    Payment:
+      type: object
+      required: [id, payerUsername, paymentDate, amountRub, createdAt, updatedAt, version]
+      properties:
+        id:
+          type: integer
+          format: int64
+        payerUsername:
+          type: string
+        paymentDate:
+          type: string
+          format: date
+        amountRub:
+          type: number
+        externalReference:
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          format: int64
+    PaymentPage:
+      type: object
+      required: [content, page]
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Payment'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+    PageMetadata:
+      type: object
+      required: [size, number, totalElements, totalPages]
+      properties:
+        size:
+          type: integer
+        number:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+    Problem:
+      type: object
+      required: [type, title, status, detail, code, message, details]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            type: string

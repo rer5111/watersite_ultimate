@@ -23,6 +23,7 @@ public class SecurityConfig {
                 .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .pathMatchers("/api/player-service/**").denyAll()
                 .pathMatchers("/api/application-service/**").denyAll()
+                .pathMatchers("/api/payment-service/**").denyAll()
                 .pathMatchers("/api/donation-service/**").denyAll()
                 .anyExchange().permitAll()
                 .and()

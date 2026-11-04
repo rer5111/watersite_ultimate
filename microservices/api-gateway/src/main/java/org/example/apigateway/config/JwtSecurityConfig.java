@@ -27,6 +27,7 @@ public class JwtSecurityConfig {
                 .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .pathMatchers("/api/player-service/**").authenticated()
                 .pathMatchers("/api/application-service/**").authenticated()
+                .pathMatchers("/api/payment-service/**").authenticated()
                 .pathMatchers("/api/donation-service/**").authenticated()
                 .anyExchange().permitAll()
                 .and()
