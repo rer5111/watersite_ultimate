@@ -26,6 +26,7 @@ public class JwtSecurityConfig {
                 .pathMatchers("/actuator/health/**", "/actuator/info").permitAll()
                 .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .pathMatchers("/api/player-service/**").authenticated()
+                .pathMatchers("/api/application-service/**").authenticated()
                 .pathMatchers("/api/donation-service/**").authenticated()
                 .anyExchange().permitAll()
                 .and()

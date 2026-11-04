@@ -27,6 +27,20 @@ services:
       timeout: 3s
       retries: 20
 
+  application-db:
+    image: docker.io/library/postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${APPLICATION_DB_NAME:-application_db}
+      POSTGRES_USER: ${APPLICATION_DB_USER:-application_user}
+      POSTGRES_PASSWORD: ${APPLICATION_DB_PASSWORD:?Set APPLICATION_DB_PASSWORD in .env}
+    volumes:
+      - application-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   config-server:
     build:
       context: .
@@ -191,6 +205,40 @@ services:
       retries: 30
       start_period: 30s
 
+  application-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.java
+      args:
+        SERVICE_DIR: microservices/application-service
+    depends_on:
+      application-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8084
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URL: http://discovery-server:8761/eureka/
+      APPLICATION_DB_HOST: ${APPLICATION_DB_HOST:-application-db}
+      APPLICATION_DB_PORT: ${APPLICATION_DB_PORT:-5432}
+      APPLICATION_DB_NAME: ${APPLICATION_DB_NAME:-application_db}
+      APPLICATION_DB_USER: ${APPLICATION_DB_USER:-application_user}
+      APPLICATION_DB_PASSWORD: ${APPLICATION_DB_PASSWORD:?Set APPLICATION_DB_PASSWORD in .env}
+      JWT_JWK_SET_URI: http://auth-service:8090/.well-known/jwks.json
+      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.waltercraft.ru}
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8084/actuator/health/readiness"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
+
   api-gateway:
     build:
       context: .
@@ -209,6 +257,8 @@ services:
       skin-service:
         condition: service_healthy
       donation-service:
+        condition: service_healthy
+      application-service:
         condition: service_healthy
     environment:
       SERVER_PORT: 8080
@@ -237,3 +287,4 @@ services:
 volumes:
   player-db-data:
   donation-db-data:
+  application-db-data:

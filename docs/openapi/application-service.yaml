@@ -1,0 +1,280 @@
+openapi: 3.1.0
+info:
+  title: Waltercraft Application Service API
+  version: 1.0.0
+servers:
+  - url: /api/application-service
+tags:
+  - name: Applications
+security:
+  - bearer: []
+paths:
+  /api/v1/applications:
+    get:
+      operationId: listApplications
+      tags: [Applications]
+      summary: List applications visible to the authenticated user
+      description: USER sees their own applications; ADMIN sees every application.
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+        - $ref: '#/components/parameters/sort'
+      responses:
+        '200':
+          description: Applications ordered by creation time, newest first by default
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createApplication
+      tags: [Applications]
+      summary: Submit an application for the authenticated user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationCreateRequest'
+      responses:
+        '201':
+          description: Application created with PENDING status
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri-reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/v1/applications/{id}:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    get:
+      operationId: getApplication
+      tags: [Applications]
+      summary: Get an application owned by the user or any application as ADMIN
+      responses:
+        '200':
+          description: Application
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: updateApplication
+      tags: [Applications]
+      summary: Replace application text and status (ADMIN only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationUpdateRequest'
+      responses:
+        '200':
+          description: Updated application
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      operationId: deleteApplication
+      tags: [Applications]
+      summary: Withdraw a pending application or delete as ADMIN
+      responses:
+        '204':
+          description: Application deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    size:
+      name: size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+    sort:
+      name: sort
+      in: query
+      description: Database property and direction. Defaults to createdAt desc, id desc.
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+  responses:
+    BadRequest:
+      description: Invalid fields, pagination, sort, or status value
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Unauthorized:
+      description: A valid access token is required
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Forbidden:
+      description: The operation is reserved for ADMIN
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: Application not found or not visible to the caller
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: Stale version or application is no longer pending
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    ApplicationCreateRequest:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+          minLength: 1
+          maxLength: 4000
+          description: Application text. Username and status are set by the server.
+    ApplicationUpdateRequest:
+      type: object
+      required: [text, status, version]
+      properties:
+        text:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        status:
+          $ref: '#/components/schemas/ApplicationStatus'
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+    Application:
+      type: object
+      required: [id, applicantUsername, text, status, createdAt, updatedAt, version]
+      properties:
+        id:
+          type: integer
+          format: int64
+        applicantUsername:
+          type: string
+        text:
+          type: string
+        status:
+          $ref: '#/components/schemas/ApplicationStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          format: int64
+    ApplicationStatus:
+      type: string
+      enum: [PENDING, APPROVED, REJECTED]
+    ApplicationPage:
+      type: object
+      required: [content, page]
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Application'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+    PageMetadata:
+      type: object
+      required: [size, number, totalElements, totalPages]
+      properties:
+        size:
+          type: integer
+        number:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+    Problem:
+      type: object
+      required: [type, title, status, detail, code, message, details]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            type: string

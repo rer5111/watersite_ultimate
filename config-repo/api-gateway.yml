@@ -16,6 +16,13 @@ spring:
             - Path=/api/player-service/**
           filters:
             - StripPrefix=2
+        - id: application-service
+          order: 12
+          uri: lb://application-service
+          predicates:
+            - Path=/api/application-service/**
+          filters:
+            - StripPrefix=2
         - id: donation-service
           order: 15
           uri: lb://donation-service

@@ -1,0 +1,59 @@
+server:
+  port: ${SERVER_PORT:8084}
+  shutdown: graceful
+
+spring:
+  application:
+    name: application-service
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+  threads:
+    virtual:
+      enabled: true
+  mvc:
+    problemdetails:
+      enabled: true
+  data:
+    web:
+      pageable:
+        max-page-size: 100
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  datasource:
+    url: ${APPLICATION_DB_URL:jdbc:postgresql://${APPLICATION_DB_HOST:localhost}:${APPLICATION_DB_PORT:5432}/${APPLICATION_DB_NAME:application_db}}
+    username: ${APPLICATION_DB_USER:application_user}
+    password: ${APPLICATION_DB_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+  flyway:
+    baseline-on-migrate: true
+    validate-on-migrate: ${FLYWAY_VALIDATE:false}
+
+application:
+  jwt:
+    jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8090/.well-known/jwks.json}
+    issuer: ${AUTH_JWT_ISSUER:https://auth.waltercraft.ru}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,db

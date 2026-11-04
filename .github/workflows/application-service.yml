@@ -1,0 +1,45 @@
+name: application-service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/application-service.yml'
+      - '.env.example'
+      - 'microservices/application-service/**'
+      - 'config-repo/application-service.yml'
+      - 'config-repo/api-gateway.yml'
+      - 'docker-compose.yml'
+      - 'docs/openapi/application-service.yaml'
+      - 'microservices/api-gateway/src/main/java/org/example/apigateway/config/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/application-service.yml'
+      - '.env.example'
+      - 'microservices/application-service/**'
+      - 'config-repo/application-service.yml'
+      - 'config-repo/api-gateway.yml'
+      - 'docker-compose.yml'
+      - 'docs/openapi/application-service.yaml'
+      - 'microservices/api-gateway/src/main/java/org/example/apigateway/config/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7.0.1
+      - name: Set up Java 21
+        uses: actions/setup-java@v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Verify application-service
+        working-directory: microservices/application-service
+        run: ./mvnw -B -ntp clean verify
