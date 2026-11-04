@@ -1,19 +1,23 @@
-package org.example.p3.service;
+package org.example.userservice.service;
 
-import lombok.RequiredArgsConstructor;
-import org.example.p3.model.AccountModel;
-import org.example.p3.repository.AccountRepository;
+import org.example.userservice.model.AccountModel;
+import org.example.userservice.repository.AccountRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
-@RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;
+
+    public AccountServiceImpl(AccountRepository accountRepository) {
+        this.accountRepository = accountRepository;
+    }
 
     @Override
     public List<AccountModel> findById(long id) {
@@ -31,13 +35,13 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public void addAccount(AccountModel account) {
-        accountRepository.save(account);
+    public void addAccount(@NonNull AccountModel account) {
+        accountRepository.save(Objects.requireNonNull(account));
     }
 
     @Override
-    public void updateAccount(AccountModel account) {
-        accountRepository.save(account);
+    public void updateAccount(@NonNull AccountModel account) {
+        accountRepository.save(Objects.requireNonNull(account));
     }
 
     @Override

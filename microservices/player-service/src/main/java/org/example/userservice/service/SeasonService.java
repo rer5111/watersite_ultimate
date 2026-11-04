@@ -1,6 +1,7 @@
-package org.example.p3.service;
+package org.example.userservice.service;
 
-import org.example.p3.model.SeasonModel;
+import org.example.userservice.model.SeasonModel;
+import org.springframework.lang.NonNull;
 
 import java.util.List;
 
@@ -8,8 +9,8 @@ public interface SeasonService {
     List<SeasonModel> findById(long id);
     List<SeasonModel> findAll();
     List<SeasonModel> findByTitle(String title);
-    void addSeason(SeasonModel Season);
-    void updateSeason(SeasonModel Season);
+    void addSeason(@NonNull SeasonModel season);
+    void updateSeason(@NonNull SeasonModel season);
     void deleteSeason(long id);
     List<SeasonModel> findPage(int page);
     int getPages();

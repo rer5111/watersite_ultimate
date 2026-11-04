@@ -1,19 +1,23 @@
-package org.example.p3.service;
+package org.example.userservice.service;
 
-import lombok.RequiredArgsConstructor;
-import org.example.p3.model.UserModel;
-import org.example.p3.repository.UserRepository;
+import org.example.userservice.model.UserModel;
+import org.example.userservice.repository.UserRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
-@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+
+    public UserServiceImpl(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @Override
     public List<UserModel> findById(long id) {
@@ -31,13 +35,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void addUser(UserModel User) {
-        userRepository.save(User);
+    public void addUser(@NonNull UserModel user) {
+        userRepository.save(Objects.requireNonNull(user));
     }
 
     @Override
-    public void updateUser(UserModel User) {
-        userRepository.save(User);
+    public void updateUser(@NonNull UserModel user) {
+        userRepository.save(Objects.requireNonNull(user));
     }
 
     @Override

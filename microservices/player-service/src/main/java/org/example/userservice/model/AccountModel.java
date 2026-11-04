@@ -1,24 +1,22 @@
-package org.example.p3.model;
-
-import javax.persistence.Entity;
-import javax.validation.constraints.NotBlank;
+package org.example.userservice.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.lang.Nullable;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
-import javax.persistence.*;
+import java.util.Objects;
 
 @Entity
 @Table(name = "account")
-@Getter
-@Setter
-@NoArgsConstructor
-@ToString(exclude = "user")
 public class AccountModel {
 
     @Id
@@ -32,12 +30,71 @@ public class AccountModel {
     private LocalDate joinDate;
 
     @OneToOne(mappedBy = "account", cascade = CascadeType.ALL)
-    @JsonIgnore()
+    @JsonIgnore
+    @Nullable
     private UserModel user;
 
-    public AccountModel(int id, String username, LocalDate joinDate) {
+    public AccountModel() {
+    }
+
+    public AccountModel(long id, String username, LocalDate joinDate) {
         this.id = id;
         this.username = username;
         this.joinDate = joinDate;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public LocalDate getJoinDate() {
+        return joinDate;
+    }
+
+    public void setJoinDate(LocalDate joinDate) {
+        this.joinDate = joinDate;
+    }
+
+    @Nullable
+    public UserModel getUser() {
+        return user;
+    }
+
+    public void setUser(@Nullable UserModel user) {
+        this.user = user;
+    }
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AccountModel that = (AccountModel) o;
+        return id == that.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "AccountModel{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", joinDate=" + joinDate +
+                '}';
     }
 }

@@ -1,19 +1,23 @@
-package org.example.p3.service;
+package org.example.userservice.service;
 
-import lombok.RequiredArgsConstructor;
-import org.example.p3.model.SeasonModel;
-import org.example.p3.repository.SeasonRepository;
+import org.example.userservice.model.SeasonModel;
+import org.example.userservice.repository.SeasonRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
-@RequiredArgsConstructor
 public class SeasonServiceImpl implements SeasonService {
 
     private final SeasonRepository seasonRepository;
+
+    public SeasonServiceImpl(SeasonRepository seasonRepository) {
+        this.seasonRepository = seasonRepository;
+    }
 
     @Override
     public List<SeasonModel> findById(long id) {
@@ -25,16 +29,19 @@ public class SeasonServiceImpl implements SeasonService {
         return seasonRepository.findAll();
     }
 
-    public List<SeasonModel> findByTitle(String title) {return seasonRepository.findByTitle(title);}
-
     @Override
-    public void addSeason(SeasonModel Season) {
-        seasonRepository.save(Season);
+    public List<SeasonModel> findByTitle(String title) {
+        return seasonRepository.findByTitle(title);
     }
 
     @Override
-    public void updateSeason(SeasonModel Season) {
-        seasonRepository.save(Season);
+    public void addSeason(@NonNull SeasonModel season) {
+        seasonRepository.save(Objects.requireNonNull(season));
+    }
+
+    @Override
+    public void updateSeason(@NonNull SeasonModel season) {
+        seasonRepository.save(Objects.requireNonNull(season));
     }
 
     @Override

@@ -1,24 +1,29 @@
-package org.example.p3.model;
+package org.example.userservice.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import org.springframework.lang.Nullable;
 
-import javax.persistence.*;
+import javax.persistence.CollectionTable;
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
 @Table(name = "users")
-@Getter
-@Setter
-@NoArgsConstructor
-@ToString(exclude = {"account", "applications", "payments", "donations", "seasons"})
 public class UserModel {
 
     @Id
@@ -40,18 +45,6 @@ public class UserModel {
     @JoinColumn(name = "account_id")
     private AccountModel account;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JsonIgnore
-    private Collection<ApplicationModel> applications;
-
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JsonIgnore
-    private Collection<PaymentModel> payments;
-
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JsonIgnore
-    private Collection<DonationModel> donations;
-
     @ManyToMany
     @JoinTable(
             name = "season_extra",
@@ -59,6 +52,9 @@ public class UserModel {
             inverseJoinColumns = @JoinColumn(name = "season_id")
     )
     private List<SeasonModel> seasons = new ArrayList<>();
+
+    public UserModel() {
+    }
 
     public UserModel(long id, String name, String password, Set<RoleEnum> roles, AccountModel account) {
         this.id = id;
@@ -68,11 +64,80 @@ public class UserModel {
         this.account = account;
     }
 
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public Set<RoleEnum> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<RoleEnum> roles) {
+        this.roles = roles;
+    }
+
+    public AccountModel getAccount() {
+        return account;
+    }
+
+    public void setAccount(AccountModel account) {
+        this.account = account;
+    }
+
+    public List<SeasonModel> getSeasons() {
+        return seasons;
+    }
+
+    public void setSeasons(List<SeasonModel> seasons) {
+        this.seasons = seasons;
+    }
+
     public void addSeason(SeasonModel season) {
         this.seasons.add(season);
     }
 
     public void removeSeason(SeasonModel season) {
         this.seasons.remove(season);
+    }
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UserModel userModel = (UserModel) o;
+        return id == userModel.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "UserModel{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                '}';
     }
 }

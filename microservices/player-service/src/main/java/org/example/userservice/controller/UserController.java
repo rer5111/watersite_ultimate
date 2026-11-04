@@ -1,16 +1,25 @@
-package org.example.p3.controller.API;
+package org.example.userservice.controller;
 
-import org.example.p3.model.RoleEnum;
-import org.example.p3.model.UserModel;
-import org.example.p3.service.AccountService;
-import org.example.p3.service.SeasonService;
-import org.example.p3.service.UserService;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.example.userservice.model.AccountModel;
+import org.example.userservice.model.RoleEnum;
+import org.example.userservice.model.SeasonModel;
+import org.example.userservice.model.UserModel;
+import org.example.userservice.service.AccountService;
+import org.example.userservice.service.SeasonService;
+import org.example.userservice.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Set;
@@ -21,20 +30,25 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequestMapping("/api/user")
 public class UserController {
 
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private AccountService accountService;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private SeasonService seasonService;
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
-    public UserController(UserService service) {
-        this.userService = service;
+    private final UserService userService;
+    private final AccountService accountService;
+    private final PasswordEncoder passwordEncoder;
+    private final SeasonService seasonService;
+
+    public UserController(
+            UserService userService,
+            AccountService accountService,
+            PasswordEncoder passwordEncoder,
+            SeasonService seasonService
+    ) {
+        this.userService = userService;
+        this.accountService = accountService;
+        this.passwordEncoder = passwordEncoder;
+        this.seasonService = seasonService;
     }
 
-    @Tag(name = "Добавление", description = "Добавляет запись")
     @PutMapping(produces = APPLICATION_JSON_VALUE)
     public HttpStatus registerUser(
             @RequestParam String name,
@@ -43,21 +57,25 @@ public class UserController {
             @RequestParam int accountId
     ) {
         try {
+            List<AccountModel> accounts = accountService.findById(accountId);
+            if (accounts.isEmpty()) {
+                return HttpStatus.BAD_REQUEST;
+            }
             UserModel userModel = new UserModel(
                     0,
                     name,
                     passwordEncoder.encode(password),
                     roles,
-                    accountService.findById(accountId).get(0)
+                    accounts.get(0)
             );
             userService.addUser(userModel);
             return HttpStatus.OK;
         } catch (Exception e) {
+            log.error("Failed to register user: {}", e.getMessage());
             return HttpStatus.BAD_REQUEST;
         }
     }
 
-    @Tag(name = "Изменение", description = "Изменяет запись")
     @PostMapping(produces = APPLICATION_JSON_VALUE)
     public HttpStatus updateUser(
             @RequestParam int id,
@@ -66,98 +84,102 @@ public class UserController {
             @RequestParam Set<RoleEnum> roles,
             @RequestParam int accountId
     ) {
-        if (userService.findById(id).isEmpty() || accountService.findById(accountId).isEmpty()) {
+        List<UserModel> users = userService.findById(id);
+        List<AccountModel> accounts = accountService.findById(accountId);
+        if (users.isEmpty() || accounts.isEmpty()) {
             return HttpStatus.NOT_FOUND;
         }
 
         try {
-            UserModel userModel = userService.findById(id).get(0);
+            UserModel userModel = users.get(0);
             userModel.setName(name);
             userModel.setPassword(passwordEncoder.encode(password));
             userModel.setRoles(roles);
-            userModel.setAccount(accountService.findById(accountId).get(0));
+            userModel.setAccount(accounts.get(0));
             userService.updateUser(userModel);
             return HttpStatus.OK;
         } catch (Exception e) {
+            log.error("Failed to update user: {}", e.getMessage());
             return HttpStatus.BAD_REQUEST;
         }
     }
 
-    @Tag(name = "Удаление", description = "Удаляет запись")
     @DeleteMapping(value = "/{key}", produces = APPLICATION_JSON_VALUE)
-    public HttpStatus deleteDonation(@PathVariable int key) {
+    public HttpStatus deleteUser(@PathVariable int key) {
         try {
-            accountService.deleteAccount(userService.findById(key).get(0).getAccount().getId());
-        } catch (Exception e){
+            List<UserModel> users = userService.findById(key);
+            if (users.isEmpty()) {
+                return HttpStatus.NOT_FOUND;
+            }
+            accountService.deleteAccount(users.get(0).getAccount().getId());
+            return HttpStatus.OK;
+        } catch (Exception e) {
+            log.error("Failed to delete user: {}", e.getMessage());
             return HttpStatus.NOT_FOUND;
         }
-        return HttpStatus.OK;
     }
 
-    @Tag(name = "Нахождение всех страниц", description = "Находит страницы")
     @GetMapping(path = "/pages", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Integer> getPages() {
         return ResponseEntity.ok(userService.getPages());
     }
 
-    @Tag(name = "Нахождение всех", description = "Находит все записи")
-    @GetMapping(path="/all", produces = APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/all", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserModel>> getAll() {
         return ResponseEntity.ok(userService.findAll());
     }
 
-    @Tag(name = "Нахождение страницы", description = "Находит страницу")
-    @GetMapping(path="/findPage/{page}", produces = APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/findPage/{page}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserModel>> getPage(@PathVariable int page) {
         return ResponseEntity.ok(userService.findPage(page));
     }
 
-    @Tag(name = "Нахождение по ID", description = "Находит запись по ID")
-    @GetMapping(value="/findID/{id}", produces = APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/findID/{id}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserModel>> findById(@PathVariable int id) {
         return ResponseEntity.ok(userService.findById(id));
     }
 
-    @Tag(name = "Нахождение по имени", description = "Находит запись по имени")
-    @GetMapping(value="/findName/{name}", produces = APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/findName/{name}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserModel>> findByName(@PathVariable String name) {
         return ResponseEntity.ok(userService.findByName(name));
     }
 
-    @Tag(name = "Удаление пользователя из сезона", description = "Удаляет из сезона")
-    @GetMapping(value="/deleteSeason/{id}/{s_id}", produces = APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/deleteSeason/{id}/{s_id}", produces = APPLICATION_JSON_VALUE)
     public HttpStatus deleteFromSeason(@PathVariable int id, @PathVariable int s_id) {
-        System.out.println("we deleting");
-        try{
-            if (userService.findById(id).isEmpty() || seasonService.findById(s_id).isEmpty()) return HttpStatus.NOT_FOUND;
-            UserModel userModel = userService.findById(id).get(0);
-            userModel.removeSeason(seasonService.findById(s_id).get(0));
-            userService.updateUser(userModel);
-        return HttpStatus.OK;
-        }
-        catch (Exception e) {
-            return HttpStatus.BAD_REQUEST;
-        }
-    }
-
-    @Tag(name = "Добавление пользователя в сезон", description = "Добавляет в сезон")
-    @GetMapping(value="/addSeason/{id}/{s_id}", produces = APPLICATION_JSON_VALUE)
-    public HttpStatus addToSeason(@PathVariable int id, @PathVariable int s_id) {
-        System.out.println("we adding");
+        log.info("Deleting user {} from season {}", id, s_id);
         try {
-            if (userService.findById(id).isEmpty() || seasonService.findById(s_id).isEmpty()) {
+            List<UserModel> users = userService.findById(id);
+            List<SeasonModel> seasons = seasonService.findById(s_id);
+            if (users.isEmpty() || seasons.isEmpty()) {
                 return HttpStatus.NOT_FOUND;
             }
-            UserModel userModel = userService.findById(id).get(0);
-            userModel.addSeason(seasonService.findById(s_id).get(0));
+            UserModel userModel = users.get(0);
+            userModel.removeSeason(seasons.get(0));
             userService.updateUser(userModel);
-            System.out.println("we succeeded");
             return HttpStatus.OK;
-        }
-        catch (Exception e) {
-            System.out.println("we failed");
+        } catch (Exception e) {
+            log.error("Failed to delete user from season: {}", e.getMessage());
             return HttpStatus.BAD_REQUEST;
         }
     }
 
+    @GetMapping(value = "/addSeason/{id}/{s_id}", produces = APPLICATION_JSON_VALUE)
+    public HttpStatus addToSeason(@PathVariable int id, @PathVariable int s_id) {
+        log.info("Adding user {} to season {}", id, s_id);
+        try {
+            List<UserModel> users = userService.findById(id);
+            List<SeasonModel> seasons = seasonService.findById(s_id);
+            if (users.isEmpty() || seasons.isEmpty()) {
+                return HttpStatus.NOT_FOUND;
+            }
+            UserModel userModel = users.get(0);
+            userModel.addSeason(seasons.get(0));
+            userService.updateUser(userModel);
+            log.info("User {} added to season {}", id, s_id);
+            return HttpStatus.OK;
+        } catch (Exception e) {
+            log.error("Failed to add user to season: {}", e.getMessage());
+            return HttpStatus.BAD_REQUEST;
+        }
+    }
 }

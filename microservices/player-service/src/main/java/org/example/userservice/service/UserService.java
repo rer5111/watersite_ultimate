@@ -1,6 +1,7 @@
-package org.example.p3.service;
+package org.example.userservice.service;
 
-import org.example.p3.model.UserModel;
+import org.example.userservice.model.UserModel;
+import org.springframework.lang.NonNull;
 
 import java.util.List;
 
@@ -8,8 +9,8 @@ public interface UserService {
     List<UserModel> findById(long id);
     List<UserModel> findByName(String name);
     List<UserModel> findAll();
-    void addUser(UserModel User);
-    void updateUser(UserModel User);
+    void addUser(@NonNull UserModel user);
+    void updateUser(@NonNull UserModel user);
     void deleteUser(long id);
     List<UserModel> findPage(int page);
     int getPages();
