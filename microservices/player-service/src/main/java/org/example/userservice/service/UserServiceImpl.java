@@ -1,6 +1,7 @@
 package org.example.userservice.service;
 
 import org.example.userservice.model.UserModel;
+import org.example.userservice.model.RoleEnum;
 import org.example.userservice.repository.UserRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +33,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserModel> findAll() {
         return userRepository.findAll();
+    }
+
+    @Override
+    public List<UserModel> findAdmins() {
+        return userRepository.findByRolesContainingOrderByAccount_IdAsc(RoleEnum.ADMIN);
     }
 
     @Override

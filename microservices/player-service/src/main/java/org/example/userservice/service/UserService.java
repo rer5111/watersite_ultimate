@@ -9,6 +9,7 @@ public interface UserService {
     List<UserModel> findById(long id);
     List<UserModel> findByName(String name);
     List<UserModel> findAll();
+    List<UserModel> findAdmins();
     void addUser(@NonNull UserModel user);
     void updateUser(@NonNull UserModel user);
     void deleteUser(long id);

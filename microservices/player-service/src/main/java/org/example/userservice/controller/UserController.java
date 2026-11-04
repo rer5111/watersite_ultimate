@@ -4,6 +4,7 @@ import org.example.userservice.model.AccountModel;
 import org.example.userservice.model.RoleEnum;
 import org.example.userservice.model.SeasonModel;
 import org.example.userservice.model.UserModel;
+import org.example.userservice.dto.AdminProfileResponse;
 import org.example.userservice.service.AccountService;
 import org.example.userservice.service.SeasonService;
 import org.example.userservice.service.UserService;
@@ -122,6 +123,17 @@ public class UserController {
     @GetMapping(path = "/pages", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<Integer> getPages() {
         return ResponseEntity.ok(userService.getPages());
+    }
+
+    @GetMapping(path = "/admins", produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<AdminProfileResponse>> getAdmins() {
+        List<AdminProfileResponse> admins = userService.findAdmins().stream()
+                .map(user -> new AdminProfileResponse(
+                        user.getAccount() != null ? user.getAccount().getUsername() : user.getName(),
+                        user.getAccount() != null ? user.getAccount().getUuid() : null
+                ))
+                .toList();
+        return ResponseEntity.ok(admins);
     }
 
     @GetMapping(path = "/all", produces = APPLICATION_JSON_VALUE)

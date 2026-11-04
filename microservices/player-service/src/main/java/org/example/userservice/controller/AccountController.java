@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -29,9 +30,14 @@ public class AccountController {
     }
 
     @PutMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus registerAccount(@RequestParam String name, @RequestParam LocalDate joinDate) {
+    public HttpStatus registerAccount(
+            @RequestParam String name,
+            @RequestParam LocalDate joinDate,
+            @RequestParam(required = false) UUID uuid
+    ) {
         try {
             AccountModel accountModel = new AccountModel(0, name, joinDate);
+            accountModel.setUuid(uuid);
             service.addAccount(accountModel);
             return HttpStatus.OK;
         } catch (Exception e) {
@@ -40,7 +46,12 @@ public class AccountController {
     }
 
     @PostMapping(produces = APPLICATION_JSON_VALUE)
-    public HttpStatus updateAccount(@RequestParam int id, @RequestParam String name, @RequestParam LocalDate joinDate) {
+    public HttpStatus updateAccount(
+            @RequestParam int id,
+            @RequestParam String name,
+            @RequestParam LocalDate joinDate,
+            @RequestParam(required = false) UUID uuid
+    ) {
         List<AccountModel> accounts = service.findById(id);
         if (accounts.isEmpty()) {
             return HttpStatus.NOT_FOUND;
@@ -48,6 +59,9 @@ public class AccountController {
         AccountModel accountModel = accounts.get(0);
         accountModel.setUsername(name);
         accountModel.setJoinDate(joinDate);
+        if (uuid != null) {
+            accountModel.setUuid(uuid);
+        }
         service.updateAccount(accountModel);
         return HttpStatus.OK;
     }

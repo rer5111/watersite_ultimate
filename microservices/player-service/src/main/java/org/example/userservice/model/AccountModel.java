@@ -5,6 +5,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -14,6 +15,7 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.util.Objects;
+import java.util.UUID;
 
 @Entity
 @Table(name = "account")
@@ -25,6 +27,10 @@ public class AccountModel {
 
     @NotBlank(message = "Username is required")
     private String username;
+
+    @Column(nullable = true, unique = true)
+    @Nullable
+    private UUID uuid;
 
     @DateTimeFormat(pattern = "dd-MM-yyyy")
     private LocalDate joinDate;
@@ -57,6 +63,15 @@ public class AccountModel {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    @Nullable
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(@Nullable UUID uuid) {
+        this.uuid = uuid;
     }
 
     public LocalDate getJoinDate() {
