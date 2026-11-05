@@ -36,7 +36,7 @@ class VerificationCodeServiceTest {
 
     @BeforeEach
     void setUp() {
-        verificationCodeService = new VerificationCodeService(codeRepository, emailSenderService);
+        verificationCodeService = new VerificationCodeService(codeRepository, emailSenderService, "");
     }
 
     @Test

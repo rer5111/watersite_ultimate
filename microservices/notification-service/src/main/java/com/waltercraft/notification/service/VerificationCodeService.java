@@ -45,13 +45,6 @@ public class VerificationCodeService {
         this.sharedSecret = sharedSecret == null || sharedSecret.isBlank() ? DEFAULT_PEPPER : sharedSecret;
     }
 
-    public VerificationCodeService(
-            EmailVerificationCodeRepository codeRepository,
-            EmailSenderService emailSenderService
-    ) {
-        this(codeRepository, emailSenderService, DEFAULT_PEPPER);
-    }
-
     @Transactional
     public SendCodeResponse generateAndSendCode(String email, String purpose) {
         String normalizedEmail = email.trim().toLowerCase();
