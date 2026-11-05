@@ -2,6 +2,8 @@ package com.waltercraft.event.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -42,8 +44,18 @@ public class Event {
     @Column(name = "display_order", nullable = false)
     private int displayOrder;
 
+    @Column(name = "starts_at")
+    private Instant startsAt;
+
     @Column(nullable = false)
     private boolean active = true;
+
+    @Column(nullable = false, length = 120)
+    private String organizer = "";
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private EventStatus status = EventStatus.PUBLISHED;
 
     @Version
     @Column(nullable = false)
@@ -59,7 +71,7 @@ public class Event {
     }
 
     public Event(String code, String title, String description, String startDate, String endDate,
-                 String image, int displayOrder, boolean active) {
+                 String image, int displayOrder, String organizer, EventStatus status) {
         this.code = code;
         this.title = title;
         this.description = description;
@@ -67,7 +79,9 @@ public class Event {
         this.endDate = endDate;
         this.image = image;
         this.displayOrder = displayOrder;
-        this.active = active;
+        this.organizer = organizer;
+        this.status = status;
+        this.active = status == EventStatus.PUBLISHED;
     }
 
     @PrePersist
@@ -87,7 +101,7 @@ public class Event {
     }
 
     public void replace(String code, String title, String description, String startDate, String endDate,
-                        String image, int displayOrder, boolean active) {
+                        String image, int displayOrder, String organizer, EventStatus status) {
         this.code = code;
         this.title = title;
         this.description = description;
@@ -95,7 +109,9 @@ public class Event {
         this.endDate = endDate;
         this.image = image;
         this.displayOrder = displayOrder;
-        this.active = active;
+        this.organizer = organizer;
+        this.status = status;
+        this.active = status == EventStatus.PUBLISHED;
     }
 
     public Long getId() {
@@ -162,12 +178,36 @@ public class Event {
         this.displayOrder = displayOrder;
     }
 
+    public Instant getStartsAt() {
+        return startsAt;
+    }
+
+    public void setStartsAt(Instant startsAt) {
+        this.startsAt = startsAt;
+    }
+
     public boolean isActive() {
         return active;
     }
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public String getOrganizer() {
+        return organizer;
+    }
+
+    public void setOrganizer(String organizer) {
+        this.organizer = organizer;
+    }
+
+    public EventStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(EventStatus status) {
+        this.status = status;
     }
 
     public Long getVersion() {

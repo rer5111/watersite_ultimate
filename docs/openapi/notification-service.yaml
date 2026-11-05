@@ -70,8 +70,56 @@ paths:
         '401':
           description: Не передан или не совпадает внутренний секрет авторизации (X-Internal-Auth)
 
+  /api/broadcasts:
+    get:
+      operationId: listBroadcasts
+      summary: История рассылок
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Рассылки, отсортированные по времени отправки (сначала новые)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BroadcastResponse'
+        '401':
+          description: Не авторизован
+        '403':
+          description: Требуется роль ADMIN
+    post:
+      operationId: dispatchBroadcast
+      summary: Отправить рассылку
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BroadcastRequest'
+      responses:
+        '201':
+          description: Рассылка сохранена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BroadcastResponse'
+        '400':
+          description: Ошибка валидации
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+
 components:
   securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
     InternalAuth:
       type: apiKey
       in: header
@@ -79,6 +127,66 @@ components:
       description: Общий секрет для межсервисной аутентификации микросервисов
 
   schemas:
+    BroadcastRequest:
+      type: object
+      required:
+        - subject
+        - category
+        - audience
+        - message
+        - recipients
+      properties:
+        subject:
+          type: string
+          maxLength: 120
+        category:
+          type: string
+          enum: [INFO, WARNING, SUCCESS]
+        audience:
+          type: string
+          enum: [ALL, ORGANIZERS, MODERATORS, ADMINS]
+        message:
+          type: string
+          minLength: 10
+          maxLength: 2000
+        recipients:
+          type: integer
+          minimum: 0
+
+    BroadcastResponse:
+      type: object
+      required:
+        - id
+        - subject
+        - category
+        - audience
+        - message
+        - sentAt
+        - recipients
+        - status
+      properties:
+        id:
+          type: integer
+          format: int64
+        subject:
+          type: string
+        category:
+          type: string
+          enum: [INFO, WARNING, SUCCESS]
+        audience:
+          type: string
+          enum: [ALL, ORGANIZERS, MODERATORS, ADMINS]
+        message:
+          type: string
+        sentAt:
+          type: string
+          format: date-time
+        recipients:
+          type: integer
+        status:
+          type: string
+          enum: [SENT, SCHEDULED, FAILED]
+
     SendCodeRequest:
       type: object
       required:

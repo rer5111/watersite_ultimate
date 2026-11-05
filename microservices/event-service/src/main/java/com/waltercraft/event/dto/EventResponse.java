@@ -1,6 +1,7 @@
 package com.waltercraft.event.dto;
 
 import com.waltercraft.event.entity.Event;
+import com.waltercraft.event.entity.EventStatus;
 import java.time.Instant;
 
 public record EventResponse(
@@ -12,7 +13,10 @@ public record EventResponse(
         String endDate,
         String image,
         int displayOrder,
+        Instant startsAt,
         boolean active,
+        String organizer,
+        EventStatus status,
         long version,
         Instant createdAt,
         Instant updatedAt
@@ -27,7 +31,10 @@ public record EventResponse(
                 event.getEndDate(),
                 event.getImage(),
                 event.getDisplayOrder(),
+                event.getStartsAt(),
                 event.isActive(),
+                event.getOrganizer(),
+                event.getStatus(),
                 event.getVersion(),
                 event.getCreatedAt(),
                 event.getUpdatedAt()

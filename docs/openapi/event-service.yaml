@@ -205,6 +205,8 @@ components:
         - image
         - displayOrder
         - active
+        - organizer
+        - status
         - version
         - createdAt
         - updatedAt
@@ -234,9 +236,21 @@ components:
         displayOrder:
           type: integer
           example: 10
+        startsAt:
+          type: string
+          format: date-time
+          nullable: true
         active:
           type: boolean
           example: true
+        organizer:
+          type: string
+          maxLength: 120
+          example: LeadCone_TNF
+        status:
+          type: string
+          enum: [DRAFT, PUBLISHED, CANCELLED]
+          example: PUBLISHED
         version:
           type: integer
           format: int64
@@ -287,6 +301,17 @@ components:
           type: integer
           minimum: 0
           example: 60
+        startsAt:
+          type: string
+          format: date-time
+        organizer:
+          type: string
+          maxLength: 120
+          example: LeadCone_TNF
+        status:
+          type: string
+          enum: [DRAFT, PUBLISHED, CANCELLED]
+          default: PUBLISHED
         active:
           type: boolean
           default: true
@@ -325,6 +350,15 @@ components:
         displayOrder:
           type: integer
           minimum: 0
+        startsAt:
+          type: string
+          format: date-time
+        organizer:
+          type: string
+          maxLength: 120
+        status:
+          type: string
+          enum: [DRAFT, PUBLISHED, CANCELLED]
         active:
           type: boolean
         version:

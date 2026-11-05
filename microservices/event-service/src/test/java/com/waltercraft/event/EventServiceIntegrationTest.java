@@ -97,12 +97,17 @@ class EventServiceIntegrationTest {
                                   "endDate": "2027",
                                   "image": "/images/seasons/season-5.webp",
                                   "displayOrder": 90,
+                                  "organizer": "LeadCone_TNF",
+                                  "status": "DRAFT",
                                   "active": true
                                 }
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.code").value("new-event"))
-                .andExpect(jsonPath("$.title").value("Новое событие"));
+                .andExpect(jsonPath("$.title").value("Новое событие"))
+                .andExpect(jsonPath("$.organizer").value("LeadCone_TNF"))
+                .andExpect(jsonPath("$.status").value("DRAFT"))
+                .andExpect(jsonPath("$.active").value(false));
 
         // Duplicate code triggers conflict 409
         mockMvc.perform(post("/api/v1/admin/events")

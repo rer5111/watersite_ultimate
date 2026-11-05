@@ -1,3 +1,4 @@
+export * from './admin';
 export * from './admins';
 export * from './chat';
 export * from './donation-types';

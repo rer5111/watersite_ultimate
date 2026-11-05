@@ -5,11 +5,16 @@ import org.example.userservice.model.RoleEnum;
 import org.example.userservice.model.SeasonModel;
 import org.example.userservice.model.UserModel;
 import org.example.userservice.dto.AdminProfileResponse;
+import org.example.userservice.dto.AdminUserResponse;
+import org.example.userservice.dto.AdminUserUpdateRequest;
 import org.example.userservice.dto.CreateUserRequest;
+import org.example.userservice.dto.RoleRejectRequest;
+import org.example.userservice.dto.RoleRequestResponse;
 import org.example.userservice.dto.UpdateMinecraftNicknameRequest;
 import org.example.userservice.dto.UpdateUserRequest;
 import org.example.userservice.dto.UserProfileResponse;
 import org.example.userservice.service.AccountService;
+import org.example.userservice.service.AdminUserService;
 import org.example.userservice.service.SeasonService;
 import org.example.userservice.service.UserService;
 import org.slf4j.Logger;
@@ -47,17 +52,20 @@ public class UserController {
     private final AccountService accountService;
     private final PasswordEncoder passwordEncoder;
     private final SeasonService seasonService;
+    private final AdminUserService adminUserService;
 
     public UserController(
             UserService userService,
             AccountService accountService,
             PasswordEncoder passwordEncoder,
-            SeasonService seasonService
+            SeasonService seasonService,
+            AdminUserService adminUserService
     ) {
         this.userService = userService;
         this.accountService = accountService;
         this.passwordEncoder = passwordEncoder;
         this.seasonService = seasonService;
+        this.adminUserService = adminUserService;
     }
 
     @PutMapping(consumes = APPLICATION_JSON_VALUE)
@@ -159,6 +167,53 @@ public class UserController {
     @GetMapping(path = "/all", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<UserModel>> getAll() {
         return ResponseEntity.ok(userService.findAll());
+    }
+
+    @GetMapping(path = "/admin/users", produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<AdminUserResponse>> getAdminUsers() {
+        return ResponseEntity.ok(adminUserService.listUsers());
+    }
+
+    @PutMapping(path = "/admin/users/{id}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<AdminUserResponse> updateAdminUser(
+            @PathVariable long id,
+            @Valid @RequestBody AdminUserUpdateRequest request
+    ) {
+        try {
+            return ResponseEntity.ok(adminUserService.updateUser(id, request));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping(path = "/admin/role-requests", produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<RoleRequestResponse>> getRoleRequests() {
+        return ResponseEntity.ok(adminUserService.listRoleRequests());
+    }
+
+    @PostMapping(path = "/admin/role-requests/{id}/approve", produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<RoleRequestResponse> approveRoleRequest(@PathVariable long id) {
+        try {
+            return ResponseEntity.ok(adminUserService.approveRoleRequest(id));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+    }
+
+    @PostMapping(path = "/admin/role-requests/{id}/reject", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<RoleRequestResponse> rejectRoleRequest(
+            @PathVariable long id,
+            @Valid @RequestBody RoleRejectRequest request
+    ) {
+        try {
+            return ResponseEntity.ok(adminUserService.rejectRoleRequest(id, request.reason()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
     }
 
     @GetMapping(path = "/findPage/{page}", produces = APPLICATION_JSON_VALUE)

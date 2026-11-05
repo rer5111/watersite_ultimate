@@ -17,6 +17,11 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8090/.well-known/jwks.json}
   mail:
     host: ${SMTP_HOST:${MAIL_HOST:smtp.gmail.com}}
     port: ${SMTP_PORT:${MAIL_PORT:465}}
@@ -65,3 +70,7 @@ eureka:
 security:
   notification-service:
     shared-secret: ${NOTIFICATION_SERVICE_SHARED_SECRET:waltercraft-internal-auth-secret-key-32-chars}
+
+notification:
+  jwt:
+    issuer: ${AUTH_JWT_ISSUER:https://auth.waltercraft.ru}

@@ -18,6 +18,7 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
 
   const displayName = profile?.minecraftNickname || user.username;
   const displayUuid = profile?.minecraftUuid ?? user.uuid;
+  const isAdmin = user.roles.some((role) => role.toUpperCase() === 'ADMIN');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -135,6 +136,32 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
             </svg>
             <span>Уведомления</span>
           </Link>
+
+          {isAdmin && (
+            <Link
+              to={paths.admin}
+              role="menuitem"
+              onClick={() => setIsOpen(false)}
+              className="text-foreground hover:bg-secondary/60 flex items-center gap-3 rounded-none px-4 py-2.5 text-sm font-medium transition-colors"
+            >
+              <svg
+                className="size-5 shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 2L4 5V11C4 16.5 7.4 21.3 12 22C16.6 21.3 20 16.5 20 11V5L12 2Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="square"
+                  strokeLinejoin="miter"
+                />
+              </svg>
+              <span>Админ-панель</span>
+            </Link>
+          )}
 
           <Link
             to={paths.chat}

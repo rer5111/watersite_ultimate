@@ -34,6 +34,7 @@ public class JwtSecurityConfig {
                 .pathMatchers("/api/payment-service/**").authenticated()
                 .pathMatchers("/api/donation-service/**").authenticated()
                 .pathMatchers("/api/chat-service/**").authenticated()
+                .pathMatchers("/api/notification-service/**").authenticated()
                 .pathMatchers("/api/auth-service/auth/microsoft/link").authenticated()
                 .pathMatchers("/api/auth-service/auth/microsoft/device-link").authenticated()
                 .pathMatchers("/api/auth-service/auth/change-email/**").authenticated()

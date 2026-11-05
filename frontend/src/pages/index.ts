@@ -1,3 +1,4 @@
+export * from './admin';
 export * from './admins';
 export * from './auth';
 export * from './chat';

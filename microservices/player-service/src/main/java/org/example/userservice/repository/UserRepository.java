@@ -3,6 +3,7 @@ package org.example.userservice.repository;
 import org.example.userservice.model.AccountModel;
 import org.example.userservice.model.RoleEnum;
 import org.example.userservice.model.UserModel;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +13,10 @@ import java.util.List;
 
 @Repository
 public interface UserRepository extends JpaRepository<UserModel, Long> {
+    @EntityGraph(attributePaths = {"account", "roles"})
+    @Query("SELECT u FROM UserModel u ORDER BY u.id")
+    List<UserModel> findAllForAdmin();
+
     List<UserModel> findAllById(long id);
     List<UserModel> findAllByName(String name);
     List<UserModel> findByAccount(AccountModel account);

@@ -1,5 +1,9 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Navigate } from 'react-router';
 import {
+  AdminBroadcastPage,
+  AdminEventsPage,
+  AdminRequestsPage,
+  AdminUsersPage,
   AdminsPage,
   ChatPage,
   DonationsPage,
@@ -12,7 +16,8 @@ import {
   VerifyEmailPage,
 } from '@/pages';
 import { paths } from './paths';
-import { AuthLayout, RootLayout } from '@/components';
+import { AdminRoute } from './admin-route';
+import { AdminLayout, AuthLayout, RootLayout } from '@/components';
 import { queryClient } from '@/lib';
 import { donationTypesQueryOptions, eventsQueryOptions } from '@/api';
 
@@ -41,6 +46,37 @@ export const router = createBrowserRouter([
       {
         path: paths.profile,
         element: <ProfilePage />,
+      },
+    ],
+  },
+  {
+    element: <AdminRoute />,
+    children: [
+      {
+        path: paths.admin,
+        element: <AdminLayout />,
+        children: [
+          {
+            index: true,
+            element: <Navigate to={paths.adminUsers} replace />,
+          },
+          {
+            path: 'users',
+            element: <AdminUsersPage />,
+          },
+          {
+            path: 'events',
+            element: <AdminEventsPage />,
+          },
+          {
+            path: 'broadcast',
+            element: <AdminBroadcastPage />,
+          },
+          {
+            path: 'requests',
+            element: <AdminRequestsPage />,
+          },
+        ],
       },
     ],
   },

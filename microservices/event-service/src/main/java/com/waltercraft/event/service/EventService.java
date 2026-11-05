@@ -4,6 +4,7 @@ import com.waltercraft.event.dto.EventCreateRequest;
 import com.waltercraft.event.dto.EventResponse;
 import com.waltercraft.event.dto.EventUpdateRequest;
 import com.waltercraft.event.entity.Event;
+import com.waltercraft.event.entity.EventStatus;
 import com.waltercraft.event.exception.ConflictException;
 import com.waltercraft.event.exception.ResourceNotFoundException;
 import com.waltercraft.event.repository.EventRepository;
@@ -40,6 +41,9 @@ public class EventService {
         if (eventRepository.existsByCode(request.code())) {
             throw new ConflictException("Событие с кодом '" + request.code() + "' уже существует.");
         }
+        EventStatus status = request.status() != null
+                ? request.status()
+                : (Boolean.FALSE.equals(request.active()) ? EventStatus.DRAFT : EventStatus.PUBLISHED);
         Event event = new Event(
                 request.code(),
                 request.title(),
@@ -48,8 +52,10 @@ public class EventService {
                 request.endDate(),
                 request.image(),
                 request.displayOrder(),
-                request.active() == null || request.active()
+                request.organizer() == null ? "" : request.organizer().trim(),
+                status
         );
+        event.setStartsAt(request.startsAt());
         return EventResponse.from(eventRepository.saveAndFlush(event));
     }
 
@@ -62,6 +68,9 @@ public class EventService {
         if (eventRepository.existsByCodeAndIdNot(request.code(), id)) {
             throw new ConflictException("Код события '" + request.code() + "' уже используется другим событием.");
         }
+        EventStatus status = request.status() != null
+                ? request.status()
+                : (Boolean.FALSE.equals(request.active()) ? EventStatus.DRAFT : EventStatus.PUBLISHED);
         event.replace(
                 request.code(),
                 request.title(),
@@ -70,8 +79,12 @@ public class EventService {
                 request.endDate(),
                 request.image(),
                 request.displayOrder(),
-                request.active()
+                request.organizer() == null ? event.getOrganizer() : request.organizer().trim(),
+                status
         );
+        if (request.startsAt() != null) {
+            event.setStartsAt(request.startsAt());
+        }
         try {
             return EventResponse.from(eventRepository.saveAndFlush(event));
         } catch (ObjectOptimisticLockingFailureException ex) {
