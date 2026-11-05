@@ -4,6 +4,8 @@ import com.waltercraft.auth.dto.AuthenticatedUser;
 import com.waltercraft.auth.dto.CheckAvailabilityRequest;
 import com.waltercraft.auth.dto.CheckAvailabilityResponse;
 import com.waltercraft.auth.dto.CredentialVerificationResponse;
+import com.waltercraft.auth.dto.InternalChangeEmailRequest;
+import com.waltercraft.auth.dto.InternalChangePasswordRequest;
 import com.waltercraft.auth.dto.InternalCredentialRequest;
 import com.waltercraft.auth.dto.InternalLinkMinecraftRequest;
 import com.waltercraft.auth.dto.InternalLinkMinecraftResponse;
@@ -131,5 +133,48 @@ public class PlayerServiceCredentialVerifier implements CredentialVerifier, Play
             throw new PlayerServiceUnavailableException();
         }
         return new AuthenticatedUser(response.userId(), response.username(), response.uuid(), response.roles());
+    }
+
+    @Override
+    public void changeEmail(long userId, String newEmail) {
+        try {
+            playerServiceRestClient.post()
+                    .uri("/internal/auth/change-email")
+                    .body(new InternalChangeEmailRequest(userId, newEmail))
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientResponseException exception) {
+            if (exception.getStatusCode() == HttpStatus.CONFLICT) {
+                throw new UserAlreadyExistsException("Email уже используется другим пользователем");
+            }
+            throw new PlayerServiceUnavailableException(exception);
+        } catch (RestClientException exception) {
+            throw new PlayerServiceUnavailableException(exception);
+        }
+    }
+
+    @Override
+    public void changePassword(long userId, String newPassword) {
+        try {
+            playerServiceRestClient.post()
+                    .uri("/internal/auth/change-password")
+                    .body(new InternalChangePasswordRequest(userId, newPassword))
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException exception) {
+            throw new PlayerServiceUnavailableException(exception);
+        }
+    }
+
+    @Override
+    public String getUserEmail(long userId) {
+        try {
+            return playerServiceRestClient.get()
+                    .uri("/internal/auth/user-email/{userId}", userId)
+                    .retrieve()
+                    .body(String.class);
+        } catch (RestClientException exception) {
+            throw new PlayerServiceUnavailableException(exception);
+        }
     }
 }

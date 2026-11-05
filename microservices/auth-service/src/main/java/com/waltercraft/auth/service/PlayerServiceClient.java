@@ -9,4 +9,7 @@ public interface PlayerServiceClient {
     void linkMinecraft(long userId, UUID uuid, String username);
     void checkAvailability(String email, String username);
     AuthenticatedUser register(String email, String username, String password);
+    void changeEmail(long userId, String newEmail);
+    void changePassword(long userId, String newPassword);
+    String getUserEmail(long userId);
 }

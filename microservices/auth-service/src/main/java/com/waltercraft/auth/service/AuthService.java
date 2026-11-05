@@ -1,6 +1,8 @@
 package com.waltercraft.auth.service;
 
 import com.waltercraft.auth.dto.AuthenticatedUser;
+import com.waltercraft.auth.dto.ChangeEmailRequest;
+import com.waltercraft.auth.dto.ChangePasswordRequest;
 import com.waltercraft.auth.dto.DeviceCodeResponse;
 import com.waltercraft.auth.dto.DeviceLoginResponse;
 import com.waltercraft.auth.dto.LoginRequest;
@@ -105,5 +107,32 @@ public class AuthService {
 
     public SendCodeResponse resendCode(ResendCodeRequest request) {
         return notificationServiceClient.sendCode(request.email(), request.purpose());
+    }
+
+    public SendCodeResponse sendEmailChangeCode(long userId, String newEmail) {
+        playerServiceClient.checkAvailability(newEmail, null);
+        return notificationServiceClient.sendCode(newEmail, "CHANGE_EMAIL");
+    }
+
+    public void changeEmail(long userId, ChangeEmailRequest request) {
+        notificationServiceClient.verifyCode(request.newEmail(), request.code(), "CHANGE_EMAIL");
+        playerServiceClient.changeEmail(userId, request.newEmail());
+    }
+
+    public SendCodeResponse sendPasswordChangeCode(long userId) {
+        String email = playerServiceClient.getUserEmail(userId);
+        if (email == null || email.isBlank()) {
+            throw new IllegalStateException("К аккаунту не привязана почта. Сначала укажите email в профиле.");
+        }
+        return notificationServiceClient.sendCode(email, "CHANGE_PASSWORD");
+    }
+
+    public void changePassword(long userId, ChangePasswordRequest request) {
+        String email = playerServiceClient.getUserEmail(userId);
+        if (email == null || email.isBlank()) {
+            throw new IllegalStateException("К аккаунту не привязана почта. Сначала укажите email в профиле.");
+        }
+        notificationServiceClient.verifyCode(email, request.code(), "CHANGE_PASSWORD");
+        playerServiceClient.changePassword(userId, request.newPassword());
     }
 }

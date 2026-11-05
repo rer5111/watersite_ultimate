@@ -1,6 +1,8 @@
 package com.waltercraft.auth.controller;
 
 import com.nimbusds.jose.jwk.JWKSet;
+import com.waltercraft.auth.dto.ChangeEmailRequest;
+import com.waltercraft.auth.dto.ChangePasswordRequest;
 import com.waltercraft.auth.dto.DeviceCodeResponse;
 import com.waltercraft.auth.dto.DeviceLoginRequest;
 import com.waltercraft.auth.dto.DeviceLoginResponse;
@@ -12,6 +14,7 @@ import com.waltercraft.auth.dto.RegisterSendCodeRequest;
 import com.waltercraft.auth.dto.RegisterVerifyCodeRequest;
 import com.waltercraft.auth.dto.ResendCodeRequest;
 import com.waltercraft.auth.dto.SendCodeResponse;
+import com.waltercraft.auth.dto.SendEmailChangeCodeRequest;
 import com.waltercraft.auth.dto.TokenResponse;
 import com.waltercraft.auth.exception.InvalidCredentialsException;
 import com.waltercraft.auth.service.AuthService;
@@ -115,6 +118,51 @@ public class AuthController {
     @PostMapping(path = "/auth/resend-code", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SendCodeResponse> resendCode(@Valid @RequestBody ResendCodeRequest request) {
         return ResponseEntity.ok(authService.resendCode(request));
+    }
+
+    @PostMapping(path = "/auth/change-email/send-code", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<SendCodeResponse> sendChangeEmailCode(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody SendEmailChangeCodeRequest request
+    ) {
+        Long userId = extractUserId(jwt);
+        return ResponseEntity.ok(authService.sendEmailChangeCode(userId, request.newEmail()));
+    }
+
+    @PostMapping(path = "/auth/change-email", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> changeEmail(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody ChangeEmailRequest request
+    ) {
+        Long userId = extractUserId(jwt);
+        authService.changeEmail(userId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(path = "/auth/change-password/send-code", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<SendCodeResponse> sendChangePasswordCode(@AuthenticationPrincipal Jwt jwt) {
+        Long userId = extractUserId(jwt);
+        return ResponseEntity.ok(authService.sendPasswordChangeCode(userId));
+    }
+
+    @PostMapping(path = "/auth/change-password", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> changePassword(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody ChangePasswordRequest request
+    ) {
+        Long userId = extractUserId(jwt);
+        authService.changePassword(userId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    private Long extractUserId(Jwt jwt) {
+        Long userId = jwt != null && jwt.getClaim("user_id") != null
+                ? ((Number) jwt.getClaim("user_id")).longValue()
+                : null;
+        if (userId == null) {
+            throw new InvalidCredentialsException();
+        }
+        return userId;
     }
 
     @GetMapping(path = "/.well-known/jwks.json", produces = MediaType.APPLICATION_JSON_VALUE)

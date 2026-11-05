@@ -25,6 +25,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "/auth/microsoft/link").authenticated()
                         .requestMatchers(HttpMethod.POST, "/auth/microsoft/device-code", "/auth/microsoft/device-login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/microsoft/device-link").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/auth/change-email/**", "/auth/change-password/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/.well-known/jwks.json").permitAll()
                         .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
                         .anyRequest().denyAll()
