@@ -1,0 +1,181 @@
+openapi: 3.0.3
+info:
+  title: Waltercraft Notification Service
+  version: 1.0.0
+  description: Сервис отправки кодов верификации и email-уведомлений
+servers:
+  - url: /api/notification-service
+paths:
+  /internal/notifications/email/send-code:
+    post:
+      operationId: sendVerificationCode
+      summary: Генерация и отправка одноразового 6-значного кода подтверждения на email
+      description: Внутренний эндпоинт для межсервисного вызова из auth-service. Генерирует код, сохраняет хэш и отправляет письмо.
+      security:
+        - InternalAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendCodeRequest'
+      responses:
+        '200':
+          description: Код успешно сгенерирован и отправлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendCodeResponse'
+        '400':
+          description: Некорректный email или назначение кода
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '401':
+          description: Не передан или не совпадает внутренний секрет авторизации (X-Internal-Auth)
+        '429':
+          description: Превышен лимит отправки кодов (действует кулдаун)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+
+  /internal/notifications/email/verify-code:
+    post:
+      operationId: verifyVerificationCode
+      summary: Проверка введенного пользователем 6-значного кода подтверждения
+      description: Внутренний эндпоинт для auth-service. Проверяет валидность и срок действия кода.
+      security:
+        - InternalAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyCodeRequest'
+      responses:
+        '200':
+          description: Результат верификации кода
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyCodeResponse'
+        '400':
+          description: Некорректный формат кода или email
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '401':
+          description: Не передан или не совпадает внутренний секрет авторизации (X-Internal-Auth)
+
+components:
+  securitySchemes:
+    InternalAuth:
+      type: apiKey
+      in: header
+      name: X-Internal-Auth
+      description: Общий секрет для межсервисной аутентификации микросервисов
+
+  schemas:
+    SendCodeRequest:
+      type: object
+      required:
+        - email
+        - purpose
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          example: user@example.com
+        purpose:
+          type: string
+          maxLength: 32
+          example: REGISTRATION
+          description: Назначение кода (REGISTRATION, PASSWORD_RESET, EMAIL_CHANGE)
+
+    SendCodeResponse:
+      type: object
+      required:
+        - status
+        - cooldownSeconds
+        - expiresInSeconds
+      properties:
+        status:
+          type: string
+          example: PENDING_VERIFICATION
+        cooldownSeconds:
+          type: integer
+          example: 60
+          description: Оставшееся время до возможности повторной отправки кода
+        expiresInSeconds:
+          type: integer
+          example: 900
+          description: Полный срок жизни кода в секундах
+
+    VerifyCodeRequest:
+      type: object
+      required:
+        - email
+        - code
+        - purpose
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          example: user@example.com
+        code:
+          type: string
+          pattern: '^\d{6}$'
+          example: "123456"
+          description: 6-значный одноразовый числовой код
+        purpose:
+          type: string
+          maxLength: 32
+          example: REGISTRATION
+          description: Назначение кода
+
+    VerifyCodeResponse:
+      type: object
+      required:
+        - verified
+        - message
+      properties:
+        verified:
+          type: boolean
+          example: true
+          description: Успешно ли подтвержден код
+        message:
+          type: string
+          example: Код успешно подтвержден
+          description: Поясняющее сообщение
+
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+          example: urn:problem:rate-limit-exceeded
+        title:
+          type: string
+          example: Превышен лимит запросов
+        status:
+          type: integer
+          example: 429
+        detail:
+          type: string
+          example: Повторный код можно запросить через 45 сек.
+        instance:
+          type: string
+          format: uri
+        retryAfterSeconds:
+          type: integer
+          example: 45
+        errors:
+          type: object
+          additionalProperties:
+            type: string

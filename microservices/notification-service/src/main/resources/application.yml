@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: notification-service
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+  threads:
+    virtual:
+      enabled: true
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    validate-on-migrate: ${FLYWAY_VALIDATE:false}
+  mvc:
+    problemdetails:
+      enabled: true
+  mail:
+    host: ${SMTP_HOST:${MAIL_HOST:smtp.gmail.com}}
+    port: ${SMTP_PORT:${MAIL_PORT:465}}
+    username: ${SMTP_USER:${MAIL_USERNAME:}}
+    password: ${SMTP_PASS:${MAIL_PASSWORD:}}
+    from: ${SMTP_FROM:${MAIL_FROM:Waltercraft <isip_k.f.bratuhin@mpt.ru>}}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+            trust: "*"
+          starttls:
+            enable: false
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
+
+server:
+  port: ${SERVER_PORT:8087}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,db
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    register-with-eureka: ${EUREKA_REGISTER:true}
+    fetch-registry: ${EUREKA_FETCH:true}
+  instance:
+    prefer-ip-address: true
+
+security:
+  notification-service:
+    shared-secret: ${NOTIFICATION_SERVICE_SHARED_SECRET:waltercraft-internal-auth-secret-key-32-chars}
