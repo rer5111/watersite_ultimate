@@ -1,6 +1,8 @@
 services:
   player-db:
     image: docker.io/library/postgres:16-alpine
+    ports:
+      - '5433:5432'
     environment:
       POSTGRES_DB: ${PLAYER_DB_NAME:-player_db}
       POSTGRES_USER: ${PLAYER_DB_USER:-postgres}
@@ -8,7 +10,11 @@ services:
     volumes:
       - player-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER:-postgres}\" -d \"$${POSTGRES_DB:-player_db}\""]
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U "$${POSTGRES_USER:-postgres}" -d "$${POSTGRES_DB:-player_db}"',
+        ]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -22,7 +28,8 @@ services:
     volumes:
       - donation-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      test:
+        ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
       interval: 5s
       timeout: 3s
       retries: 20
@@ -36,7 +43,8 @@ services:
     volumes:
       - application-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      test:
+        ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
       interval: 5s
       timeout: 3s
       retries: 20
@@ -50,7 +58,38 @@ services:
     volumes:
       - payment-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      test:
+        ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  notification-db:
+    image: docker.io/library/postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${NOTIFICATION_DB_NAME:-notification_db}
+      POSTGRES_USER: ${NOTIFICATION_DB_USER:-notification_user}
+      POSTGRES_PASSWORD: ${NOTIFICATION_DB_PASSWORD:?Set NOTIFICATION_DB_PASSWORD in .env}
+    volumes:
+      - notification-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  event-db:
+    image: docker.io/library/postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${EVENT_DB_NAME:-event_db}
+      POSTGRES_USER: ${EVENT_DB_USER:-event_user}
+      POSTGRES_PASSWORD: ${EVENT_DB_PASSWORD:?Set EVENT_DB_PASSWORD in .env}
+    volumes:
+      - event-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
       interval: 5s
       timeout: 3s
       retries: 20
@@ -67,7 +106,7 @@ services:
       CONFIG_REPO_LOCATION: file:/config-repo
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8888/actuator/health"]
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:8888/actuator/health']
       interval: 5s
       timeout: 3s
       retries: 30
@@ -84,12 +123,12 @@ services:
         condition: service_healthy
     environment:
       SERVER_PORT: 8761
-      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
-      EUREKA_CLIENT_FETCH_REGISTRY: "false"
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: 'false'
+      EUREKA_CLIENT_FETCH_REGISTRY: 'false'
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE:-http://localhost:8761/eureka/}
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8761/actuator/health"]
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:8761/actuator/health']
       interval: 5s
       timeout: 3s
       retries: 30
@@ -121,10 +160,10 @@ services:
       SECURITY_USER_NAME: ${PLAYER_SERVICE_USER:-user}
       SECURITY_USER_PASSWORD: ${PLAYER_SERVICE_PASSWORD:-}
       EUREKA_URL: http://discovery-server:8761/eureka/
-      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: 'true'
       CONFIG_SERVER_URL: http://config-server:8888
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8081/api/user/admins"]
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:8081/api/user/admins']
       interval: 5s
       timeout: 3s
       retries: 30
@@ -143,20 +182,28 @@ services:
         condition: service_healthy
       player-service:
         condition: service_healthy
+      notification-service:
+        condition: service_healthy
     environment:
       SERVER_PORT: 8090
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_URL: http://discovery-server:8761/eureka/
       PLAYER_SERVICE_BASE_URL: http://player-service:8081
+      NOTIFICATION_SERVICE_BASE_URL: http://notification-service:8087
+      NOTIFICATION_SERVICE_SHARED_SECRET: ${NOTIFICATION_SERVICE_SHARED_SECRET:-waltercraft-internal-auth-secret-key-32-chars}
       AUTH_SERVICE_SHARED_SECRET: ${AUTH_SERVICE_SHARED_SECRET:-}
       AUTH_JWT_PRIVATE_KEY_BASE64: ${AUTH_JWT_PRIVATE_KEY_BASE64:-}
       AUTH_JWT_ALLOW_EPHEMERAL_KEY: ${AUTH_JWT_ALLOW_EPHEMERAL_KEY:-true}
       AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.waltercraft.ru}
       AUTH_ACCESS_TOKEN_TTL: ${AUTH_ACCESS_TOKEN_TTL:-PT15M}
       AUTH_REFRESH_TOKEN_TTL: ${AUTH_REFRESH_TOKEN_TTL:-P7D}
+      MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID:-}
+      MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET:-}
+      MICROSOFT_REDIRECT_URI: ${MICROSOFT_REDIRECT_URI:-http://localhost:5173/auth/microsoft/callback}
+      MICROSOFT_SCOPES: ${MICROSOFT_SCOPES:-XboxLive.signin offline_access}
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8090/actuator/health"]
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:8090/actuator/health']
       interval: 5s
       timeout: 3s
       retries: 30
@@ -179,7 +226,7 @@ services:
       EUREKA_URL: http://discovery-server:8761/eureka/
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8082/actuator/health"]
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:8082/actuator/health']
       interval: 5s
       timeout: 3s
       retries: 30
@@ -213,7 +260,13 @@ services:
       AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.waltercraft.ru}
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8083/actuator/health/readiness"]
+      test:
+        [
+          'CMD',
+          'curl',
+          '-fsS',
+          'http://localhost:8083/actuator/health/readiness',
+        ]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -247,7 +300,13 @@ services:
       AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.waltercraft.ru}
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8084/actuator/health/readiness"]
+      test:
+        [
+          'CMD',
+          'curl',
+          '-fsS',
+          'http://localhost:8084/actuator/health/readiness',
+        ]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -281,7 +340,13 @@ services:
       AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.waltercraft.ru}
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8085/actuator/health/readiness"]
+      test:
+        [
+          'CMD',
+          'curl',
+          '-fsS',
+          'http://localhost:8085/actuator/health/readiness',
+        ]
       interval: 5s
       timeout: 3s
       retries: 30
@@ -312,11 +377,99 @@ services:
       DISCORD_MINECRAFT_BOT_USER_ID: ${DISCORD_MINECRAFT_BOT_USER_ID:-1042883408596062298}
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8086/actuator/health/readiness"]
+      test:
+        [
+          'CMD',
+          'curl',
+          '-fsS',
+          'http://localhost:8086/actuator/health/readiness',
+        ]
       interval: 5s
       timeout: 3s
       retries: 30
       start_period: 30s
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.java
+      args:
+        SERVICE_DIR: microservices/notification-service
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      notification-db:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8087
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URL: http://discovery-server:8761/eureka/
+      NOTIFICATION_DB_HOST: notification-db
+      NOTIFICATION_DB_PORT: 5432
+      NOTIFICATION_DB_NAME: ${NOTIFICATION_DB_NAME:-notification_db}
+      NOTIFICATION_DB_USER: ${NOTIFICATION_DB_USER:-notification_user}
+      NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD:-0}
+      NOTIFICATION_SERVICE_SHARED_SECRET: ${NOTIFICATION_SERVICE_SHARED_SECRET:-waltercraft-internal-auth-secret-key-32-chars}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-Waltercraft <isip_k.f.bratuhin@mpt.ru>}
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'curl',
+          '-fsS',
+          'http://localhost:8087/actuator/health/readiness',
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
+
+  event-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.java
+      args:
+        SERVICE_DIR: microservices/event-service
+    depends_on:
+      event-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8088
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URL: http://discovery-server:8761/eureka/
+      EVENT_DB_HOST: ${EVENT_DB_HOST:-event-db}
+      EVENT_DB_PORT: ${EVENT_DB_PORT:-5432}
+      EVENT_DB_NAME: ${EVENT_DB_NAME:-event_db}
+      EVENT_DB_USER: ${EVENT_DB_USER:-event_user}
+      EVENT_DB_PASSWORD: ${EVENT_DB_PASSWORD:?Set EVENT_DB_PASSWORD in .env}
+      JWT_JWK_SET_URI: http://auth-service:8090/.well-known/jwks.json
+      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.waltercraft.ru}
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'curl',
+          '-fsS',
+          'http://localhost:8088/actuator/health/readiness',
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 25s
 
   api-gateway:
     build:
@@ -343,6 +496,10 @@ services:
         condition: service_healthy
       chat-service:
         condition: service_healthy
+      notification-service:
+        condition: service_healthy
+      event-service:
+        condition: service_healthy
     environment:
       SERVER_PORT: 8080
       CONFIG_SERVER_URL: http://config-server:8888
@@ -353,9 +510,9 @@ services:
       JWT_JWK_SET_URI: ${JWT_JWK_SET_URI:-http://auth-service:8090/.well-known/jwks.json}
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     ports:
-      - "8080:8080"
+      - '8080:8080'
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:8080/actuator/health']
       interval: 5s
       timeout: 3s
       retries: 30
@@ -372,3 +529,5 @@ volumes:
   donation-db-data:
   application-db-data:
   payment-db-data:
+  notification-db-data:
+  event-db-data:

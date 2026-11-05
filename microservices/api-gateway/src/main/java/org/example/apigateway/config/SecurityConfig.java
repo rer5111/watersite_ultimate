@@ -19,6 +19,7 @@ public class SecurityConfig {
                 .pathMatchers(HttpMethod.GET, "/api/player-service/api/user/admins").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/skin-service/**").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/donation-service/api/v1/donation-types").permitAll()
+                .pathMatchers(HttpMethod.GET, "/api/event-service/api/v1/events", "/api/event-service/api/v1/events/**").permitAll()
                 .pathMatchers("/actuator/health/**", "/actuator/info").permitAll()
                 .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .pathMatchers("/api/player-service/**").denyAll()

@@ -44,6 +44,20 @@ spring:
             - Path=/api/chat-service/**
           filters:
             - StripPrefix=2
+        - id: notification-service
+          order: 18
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/notification-service/**
+          filters:
+            - StripPrefix=2
+        - id: event-service
+          order: 19
+          uri: lb://event-service
+          predicates:
+            - Path=/api/event-service/**
+          filters:
+            - StripPrefix=2
         - id: skin-service
           order: 20
           uri: lb://skin-service

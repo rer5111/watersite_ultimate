@@ -63,8 +63,10 @@ Waltercraft — сайт игрового сервера Minecraft с микро
 | `donation-service`    | Пожертвования и их типы                      | `donations`, `donation_types`  |
 | `application-service` | Заявки на сервер                             | `applications`                 |
 | `payment-service`     | Платежи                                      | `payments`                     |
-| `chat-service`        | Подключение к чату через Discord             | —                              |
-| `skin-service`        | Получение скинов Minecraft через внешний API | —                              |
+| `chat-service`         | Подключение к чату через Discord             | —                              |
+| `notification-service` | Отправка кодов подтверждения и email-сообщений | `email_verification_codes`     |
+| `event-service`        | Хронология событий и сезоны сервера          | `events`                       |
+| `skin-service`         | Получение скинов Minecraft через внешний API | —                              |
 
 ---
 
