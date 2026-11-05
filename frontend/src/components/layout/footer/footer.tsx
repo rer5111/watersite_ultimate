@@ -44,7 +44,6 @@ const links = [
 ];
 
 const discordUrl = 'https://discordapp.com/widget?id=967091313038196796&theme=dark';
-const minecraftUrl = 'https://crafty.gg/embed/server/c13.play2go.cloud%3A20074';
 
 export function Footer() {
   return (
@@ -56,7 +55,7 @@ export function Footer() {
             <iframe
               src={discordUrl}
               title="Discord server"
-              className="bg-background h-full w-full max-w-xl rounded-xl border-0"
+              className="bg-background block h-100 w-full max-w-xl border-0"
               sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
             />
           </div>
@@ -80,13 +79,6 @@ export function Footer() {
                 </div>
               ))}
             </nav>
-
-            <iframe
-              className="aspect-2/1 h-auto w-full rounded-xl border-0"
-              src={minecraftUrl}
-              title="Статус Minecraft-сервера c13.play2go.cloud:20074"
-              allow="clipboard-write"
-            />
           </div>
         </div>
 

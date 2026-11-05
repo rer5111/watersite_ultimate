@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router';
 import {
   AdminsPage,
+  ChatPage,
   DonationsPage,
   HomePage,
   LoginPage,
@@ -27,6 +28,10 @@ export const router = createBrowserRouter([
       {
         path: paths.admins,
         element: <AdminsPage />,
+      },
+      {
+        path: paths.chat,
+        element: <ChatPage />,
       },
       {
         path: paths.donate,

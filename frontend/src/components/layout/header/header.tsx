@@ -15,6 +15,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { title: 'Главная', destination: paths.home },
   { title: 'Администрация', destination: paths.admins },
+  { title: 'Чат', destination: paths.chat },
   { title: 'Пожертвовать', destination: paths.donate },
 ];
 
