@@ -39,6 +39,7 @@ public class SecurityConfig {
                 .antMatchers("/actuator/health/**", "/actuator/info").permitAll()
                 // Current user endpoints accessible by any authenticated user
                 .antMatchers("/api/user/me", "/api/user/me/**").authenticated()
+                .antMatchers(HttpMethod.POST, "/api/user/role-requests").authenticated()
                 // Admin management endpoints require ADMIN role
                 .antMatchers("/api/user/**", "/api/account/**", "/api/season/**").hasRole("ADMIN")
                 .anyRequest().authenticated()

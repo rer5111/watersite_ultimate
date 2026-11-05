@@ -4,4 +4,6 @@ export * from './chat';
 export * from './donation-types';
 export * from './events';
 export * from './auth';
+export * from './notifications';
 export * from './profile';
+export * from './role-requests';

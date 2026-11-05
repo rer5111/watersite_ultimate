@@ -7,6 +7,7 @@ import org.example.userservice.model.UserModel;
 import org.example.userservice.dto.AdminProfileResponse;
 import org.example.userservice.dto.AdminUserResponse;
 import org.example.userservice.dto.AdminUserUpdateRequest;
+import org.example.userservice.dto.CreateRoleRequestRequest;
 import org.example.userservice.dto.CreateUserRequest;
 import org.example.userservice.dto.RoleRejectRequest;
 import org.example.userservice.dto.RoleRequestResponse;
@@ -266,6 +267,25 @@ public class UserController {
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             log.error("Failed to add user to season: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping(path = {"/role-requests", "/me/role-requests"}, consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<RoleRequestResponse> submitRoleRequest(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody CreateRoleRequestRequest request
+    ) {
+        long userId = extractUserId(jwt);
+        if (userId <= 0) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(adminUserService.submitRoleRequest(userId, request));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }
     }

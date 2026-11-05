@@ -4,7 +4,7 @@ import { SkinAvatar, buttonVariants } from '@/components/ui';
 import { paths } from '@/routes';
 import { cn } from '@/lib';
 import type { AuthUser } from '@/types';
-import { useProfile } from '@/api';
+import { useProfile, useUnreadNotificationCount } from '@/api';
 
 interface UserMenuProps {
   user: AuthUser;
@@ -15,6 +15,7 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { data: profile } = useProfile(Boolean(user));
+  const { data: unreadCount = 0 } = useUnreadNotificationCount(Boolean(user));
 
   const displayName = profile?.minecraftNickname || user.username;
   const displayUuid = profile?.minecraftUuid ?? user.uuid;
@@ -51,17 +52,27 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
         aria-haspopup="true"
+        aria-label={unreadCount > 0
+          ? `${displayName}, непрочитанных уведомлений: ${unreadCount}`
+          : `Меню профиля ${displayName}`}
         className={cn(
           buttonVariants({ variant: 'tertiary' }),
           'hover:bg-tertiary-hover/50 active:bg-tertiary-active/50 h-10 gap-2.5 rounded-none px-3 py-1.5'
         )}
       >
-        <SkinAvatar
-          uuid={displayUuid}
-          name={displayName}
-          mode="face"
-          className="aspect-square size-6 shrink-0 rounded-none object-cover"
-        />
+        <span className="relative inline-flex size-6 shrink-0">
+          <SkinAvatar
+            uuid={displayUuid}
+            name={displayName}
+            mode="face"
+            className="aspect-square size-6 rounded-none object-cover"
+          />
+          {unreadCount > 0 && (
+            <span className="bg-primary text-foreground absolute -top-2 -left-2 min-w-4 rounded-none px-1 text-center text-[9px] leading-4 font-bold">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
+        </span>
         <span className="max-w-40 font-bold">{displayName}</span>
         <svg
           className={cn(

@@ -42,6 +42,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/actuator/health/**", "/actuator/info", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/internal/**").permitAll()
+                        .requestMatchers("/api/notifications/**").authenticated()
                         .requestMatchers("/api/broadcasts/**").hasRole("ADMIN")
                         .anyRequest().denyAll())
                 .oauth2ResourceServer(resourceServer -> resourceServer

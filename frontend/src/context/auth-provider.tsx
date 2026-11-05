@@ -72,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     queryClient.removeQueries({ queryKey: ['user-profile'] });
+    queryClient.removeQueries({ queryKey: ['notifications'] });
     setUser(null);
   }, []);
 

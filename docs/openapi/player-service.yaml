@@ -83,6 +83,33 @@ paths:
                 items:
                   $ref: '#/components/schemas/RoleRequestResponse'
 
+  /api/user/role-requests:
+    post:
+      operationId: submitRoleRequest
+      summary: Подать заявку на роль MODERATOR или ADMIN
+      description: Пользователь определяется по JWT. Одновременно может существовать только одна заявка со статусом PENDING.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoleRequestRequest'
+      responses:
+        '201':
+          description: Заявка создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleRequestResponse'
+        '400':
+          description: Некорректная роль или сообщение
+        '401':
+          description: Требуется авторизация
+        '409':
+          description: У пользователя уже есть заявка на рассмотрении
+
   /api/user/admin/role-requests/{id}/approve:
     post:
       operationId: approveRoleRequest
@@ -268,6 +295,20 @@ components:
         rejectionReason:
           type: string
           nullable: true
+
+    CreateRoleRequestRequest:
+      type: object
+      required:
+        - requestedRole
+        - note
+      properties:
+        requestedRole:
+          type: string
+          enum: [MODERATOR, ADMIN]
+        note:
+          type: string
+          minLength: 10
+          maxLength: 2000
 
     RoleRejectRequest:
       type: object

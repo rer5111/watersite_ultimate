@@ -10,6 +10,7 @@ import {
   HomePage,
   LoginPage,
   MicrosoftCallbackPage,
+  NotificationsPage,
   NotFoundPage,
   ProfilePage,
   RegisterPage,
@@ -46,6 +47,10 @@ export const router = createBrowserRouter([
       {
         path: paths.profile,
         element: <ProfilePage />,
+      },
+      {
+        path: paths.notifications,
+        element: <NotificationsPage />,
       },
     ],
   },

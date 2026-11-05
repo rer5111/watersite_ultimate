@@ -2,6 +2,7 @@ package org.example.userservice.service;
 
 import org.example.userservice.dto.AdminUserResponse;
 import org.example.userservice.dto.AdminUserUpdateRequest;
+import org.example.userservice.dto.CreateRoleRequestRequest;
 import org.example.userservice.dto.RoleRequestResponse;
 import org.example.userservice.model.AccountModel;
 import org.example.userservice.model.RoleEnum;
@@ -50,6 +51,24 @@ public class AdminUserService {
         return roleRequestRepository.findAllByOrderBySubmittedAtDesc().stream()
                 .map(this::toRoleRequestResponse)
                 .toList();
+    }
+
+    @Transactional
+    public RoleRequestResponse submitRoleRequest(long userId, CreateRoleRequestRequest request) {
+        if (request.requestedRole() == RoleEnum.USER) {
+            throw new IllegalArgumentException("Заявку можно подать только на роль MODERATOR или ADMIN");
+        }
+        UserModel user = findUser(userId);
+        if (roleRequestRepository.existsByUser_IdAndStatus(userId, RoleRequestStatus.PENDING)) {
+            throw new IllegalStateException("У вас уже есть заявка на рассмотрении");
+        }
+        RoleRequest roleRequest = new RoleRequest(
+                user,
+                request.requestedRole(),
+                request.note().trim(),
+                LocalDateTime.now()
+        );
+        return toRoleRequestResponse(roleRequestRepository.save(roleRequest));
     }
 
     @Transactional
