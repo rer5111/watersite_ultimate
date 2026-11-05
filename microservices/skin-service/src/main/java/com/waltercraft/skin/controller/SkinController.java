@@ -37,6 +37,20 @@ public class SkinController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @GetMapping(value = "/subject/{subject}/bust", produces = MediaType.IMAGE_PNG_VALUE)
+    public ResponseEntity<byte[]> getBustBySubject(@PathVariable String subject) {
+        return skinService.getBustBySubject(subject)
+                .map(this::pngResponse)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping(value = "/subject/{subject}/face", produces = MediaType.IMAGE_PNG_VALUE)
+    public ResponseEntity<byte[]> getFaceBySubject(@PathVariable String subject) {
+        return skinService.getFaceBySubject(subject)
+                .map(this::pngResponse)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @GetMapping(value = "/{uuid}/bust", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> getBustByUuid(@PathVariable UUID uuid) {
         return skinService.getBustByUuid(uuid)

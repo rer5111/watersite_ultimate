@@ -52,6 +52,28 @@ class SkinControllerTest {
     }
 
     @Test
+    void getBustBySubject_ReturnsPngWhenFound() throws Exception {
+        byte[] fakeImage = new byte[]{15, 25, 35};
+        when(skinService.getBustBySubject("X-Steve")).thenReturn(Optional.of(fakeImage));
+
+        mockMvc.perform(get("/api/skin/subject/{subject}/bust", "X-Steve"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.IMAGE_PNG))
+                .andExpect(content().bytes(fakeImage));
+    }
+
+    @Test
+    void getFaceBySubject_ReturnsPngWhenFound() throws Exception {
+        byte[] fakeImage = new byte[]{17, 27, 37};
+        when(skinService.getFaceBySubject("X-Steve")).thenReturn(Optional.of(fakeImage));
+
+        mockMvc.perform(get("/api/skin/subject/{subject}/face", "X-Steve"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.IMAGE_PNG))
+                .andExpect(content().bytes(fakeImage));
+    }
+
+    @Test
     void getFaceByUuid_ReturnsPngWhenFound() throws Exception {
         UUID uuid = UUID.randomUUID();
         byte[] fakeImage = new byte[]{1, 2, 3};

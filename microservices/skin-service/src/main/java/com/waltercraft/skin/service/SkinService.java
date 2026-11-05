@@ -22,6 +22,7 @@ public class SkinService {
 
     private static final Logger log = LoggerFactory.getLogger(SkinService.class);
     private static final int MAX_CACHE_ENTRIES = 1000;
+    private static final String DEFAULT_SKIN_SUBJECT = "X-Steve";
 
     private record CachedSkin(byte[] data, Instant expiresAt) {}
 
@@ -45,31 +46,54 @@ public class SkinService {
     }
 
     public Optional<byte[]> getFullByUuid(UUID uuid) {
-        return getFullBySubject(uuid.toString());
+        return getFullBySubject(uuid.toString())
+                .or(() -> getFullBySubject(DEFAULT_SKIN_SUBJECT));
     }
 
     public Optional<byte[]> getFullBySubject(String subject) {
-        return getOrFetch("full:" + subject.toLowerCase(), new String[]{
+        Optional<byte[]> skin = getOrFetch("full:" + subject.toLowerCase(), new String[]{
                 properties.vzgeUrl() + "/full/384/" + subject + ".png",
                 properties.crafatarUrl() + "/renders/body/" + subject + "?overlay=true",
                 properties.visageUrl() + "/full/384/" + subject
         });
+        if (skin.isPresent() || DEFAULT_SKIN_SUBJECT.equalsIgnoreCase(subject)) {
+            return skin;
+        }
+        return getFullBySubject(DEFAULT_SKIN_SUBJECT);
     }
 
     public Optional<byte[]> getBustByUuid(UUID uuid) {
-        return getOrFetch("bust:" + uuid, new String[]{
-                properties.vzgeUrl() + "/bust/384/" + uuid + ".png",
-                properties.visageUrl() + "/bust/384/" + uuid,
-                properties.crafatarUrl() + "/renders/body/" + uuid + "?overlay=true"
+        return getBustBySubject(uuid.toString())
+                .or(() -> getBustBySubject(DEFAULT_SKIN_SUBJECT));
+    }
+
+    public Optional<byte[]> getBustBySubject(String subject) {
+        Optional<byte[]> skin = getOrFetch("bust:" + subject.toLowerCase(), new String[]{
+                properties.vzgeUrl() + "/bust/384/" + subject + ".png",
+                properties.visageUrl() + "/bust/384/" + subject,
+                properties.crafatarUrl() + "/renders/body/" + subject + "?overlay=true"
         });
+        if (skin.isPresent() || DEFAULT_SKIN_SUBJECT.equalsIgnoreCase(subject)) {
+            return skin;
+        }
+        return getBustBySubject(DEFAULT_SKIN_SUBJECT);
     }
 
     public Optional<byte[]> getFaceByUuid(UUID uuid) {
-        return getOrFetch("face:" + uuid, new String[]{
-                properties.vzgeUrl() + "/face/256/" + uuid + ".png",
-                properties.crafatarUrl() + "/avatars/" + uuid + "?overlay=true&size=128",
-                properties.visageUrl() + "/face/128/" + uuid
+        return getFaceBySubject(uuid.toString())
+                .or(() -> getFaceBySubject(DEFAULT_SKIN_SUBJECT));
+    }
+
+    public Optional<byte[]> getFaceBySubject(String subject) {
+        Optional<byte[]> skin = getOrFetch("face:" + subject.toLowerCase(), new String[]{
+                properties.vzgeUrl() + "/face/256/" + subject + ".png",
+                properties.crafatarUrl() + "/avatars/" + subject + "?overlay=true&size=128",
+                properties.visageUrl() + "/face/128/" + subject
         });
+        if (skin.isPresent() || DEFAULT_SKIN_SUBJECT.equalsIgnoreCase(subject)) {
+            return skin;
+        }
+        return getFaceBySubject(DEFAULT_SKIN_SUBJECT);
     }
 
     public Optional<byte[]> getFaceByUsername(String username) {
@@ -77,7 +101,7 @@ public class SkinService {
                 properties.vzgeUrl() + "/face/256/" + username + ".png",
                 "https://minotar.net/avatar/" + username + "/128",
                 properties.crafatarUrl() + "/avatars/" + username + "?overlay=true"
-        });
+        }).or(() -> getFaceBySubject(DEFAULT_SKIN_SUBJECT));
     }
 
     private Optional<byte[]> getOrFetch(String cacheKey, String[] urls) {

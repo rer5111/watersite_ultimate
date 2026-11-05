@@ -28,7 +28,7 @@ paths:
   /api/skin/subject/{subject}/full:
     get:
       operationId: getFullBySubject
-      summary: Получить 3D полное тело по имени шаблона или игрока (например, X-Ghost)
+      summary: Получить 3D полное тело по имени шаблона или игрока (например, X-Steve, X-Ghost)
       parameters:
         - name: subject
           in: path
@@ -38,6 +38,46 @@ paths:
       responses:
         '200':
           description: Изображение 3D полного тела в формате PNG
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Скин не найден
+  /api/skin/subject/{subject}/bust:
+    get:
+      operationId: getBustBySubject
+      summary: Получить 3D бюст по имени шаблона или игрока (например, X-Steve)
+      parameters:
+        - name: subject
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Изображение 3D бюста в формате PNG
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Скин не найден
+  /api/skin/subject/{subject}/face:
+    get:
+      operationId: getFaceBySubject
+      summary: Получить лицо (2D аватар) по имени шаблона или игрока (например, X-Steve)
+      parameters:
+        - name: subject
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Изображение лица в формате PNG
           content:
             image/png:
               schema:
