@@ -13,6 +13,8 @@ import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,6 +32,19 @@ class AccountServiceTest {
     @BeforeEach
     void setUp() {
         accountService = new AccountServiceImpl(accountRepository);
+    }
+
+    @Test
+    void findByUuid_returnsAccountWhenFound() {
+        UUID uuid = UUID.randomUUID();
+        AccountModel account = new AccountModel(1L, "Steve", LocalDate.now());
+        account.setUuid(uuid);
+        when(accountRepository.findByUuid(uuid)).thenReturn(Optional.of(account));
+
+        Optional<AccountModel> result = accountService.findByUuid(uuid);
+
+        assertThat(result).contains(account);
+        verify(accountRepository).findByUuid(uuid);
     }
 
     @Test

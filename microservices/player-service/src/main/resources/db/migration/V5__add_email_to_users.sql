@@ -1,0 +1,4 @@
+ALTER TABLE IF EXISTS users
+    ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_users_email ON users(email);

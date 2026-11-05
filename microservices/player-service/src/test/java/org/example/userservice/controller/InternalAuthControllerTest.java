@@ -16,8 +16,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -46,7 +50,7 @@ class InternalAuthControllerTest {
         user.setName("player");
         user.setPassword("$2a$encoded");
         user.setRoles(Set.of(RoleEnum.USER));
-        when(userService.findByName("player")).thenReturn(List.of(user));
+        when(userService.findByIdentifier("player")).thenReturn(List.of(user));
         when(passwordEncoder.matches("correct", "$2a$encoded")).thenReturn(true);
 
         mockMvc.perform(post("/internal/auth/verify")
@@ -70,7 +74,7 @@ class InternalAuthControllerTest {
         user.setName("player");
         user.setPassword("$2a$encoded");
         user.setRoles(Set.of(RoleEnum.USER));
-        when(userService.findByName("player")).thenReturn(List.of(user));
+        when(userService.findByIdentifier("player")).thenReturn(List.of(user));
         when(passwordEncoder.matches(eq("wrong"), eq("$2a$encoded"))).thenReturn(false);
 
         mockMvc.perform(post("/internal/auth/verify")
@@ -94,5 +98,62 @@ class InternalAuthControllerTest {
                                 {"username":"player","password":"correct"}
                                 """))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void minecraftLogin_returnsUserData() throws Exception {
+        UUID uuid = UUID.randomUUID();
+        UserModel user = new UserModel();
+        user.setId(42L);
+        user.setName("Steve");
+        user.setRoles(Set.of(RoleEnum.USER));
+
+        when(userService.loginOrRegisterWithMinecraft(eq(uuid), eq("Steve"))).thenReturn(user);
+
+        mockMvc.perform(post("/internal/auth/minecraft-login")
+                        .header("X-Internal-Auth", SHARED_SECRET)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(String.format("""
+                                {"uuid":"%s","username":"Steve"}
+                                """, uuid)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authenticated").value(true))
+                .andExpect(jsonPath("$.userId").value(42))
+                .andExpect(jsonPath("$.username").value("Steve"))
+                .andExpect(jsonPath("$.roles[0]").value("USER"));
+    }
+
+    @Test
+    void linkMinecraft_success() throws Exception {
+        UUID uuid = UUID.randomUUID();
+
+        mockMvc.perform(post("/internal/auth/link-minecraft")
+                        .header("X-Internal-Auth", SHARED_SECRET)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(String.format("""
+                                {"userId":42,"uuid":"%s","username":"Steve"}
+                                """, uuid)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.userId").value(42))
+                .andExpect(jsonPath("$.uuid").value(uuid.toString()));
+
+        verify(userService).linkMinecraft(eq(42L), eq(uuid), eq("Steve"));
+    }
+
+    @Test
+    void linkMinecraft_conflictWhenAlreadyLinked() throws Exception {
+        UUID uuid = UUID.randomUUID();
+        doThrow(new IllegalStateException("Already linked")).when(userService)
+                .linkMinecraft(eq(42L), eq(uuid), eq("Steve"));
+
+        mockMvc.perform(post("/internal/auth/link-minecraft")
+                        .header("X-Internal-Auth", SHARED_SECRET)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(String.format("""
+                                {"userId":42,"uuid":"%s","username":"Steve"}
+                                """, uuid)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false));
     }
 }

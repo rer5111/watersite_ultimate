@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.lang.Nullable;
 
 import javax.persistence.CollectionTable;
+import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -33,6 +34,10 @@ public class UserModel {
 
     @NotBlank(message = "Name is required")
     private String name;
+
+    @Column(unique = true)
+    @Nullable
+    private String email;
 
     @NotBlank(message = "Password is required")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
@@ -80,6 +85,15 @@ public class UserModel {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Nullable
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(@Nullable String email) {
+        this.email = email;
     }
 
     public String getPassword() {

@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class AccountServiceImpl implements AccountService {
@@ -27,6 +29,11 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public List<AccountModel> findByName(String name) {
         return accountRepository.findByUsername(name);
+    }
+
+    @Override
+    public Optional<AccountModel> findByUuid(UUID uuid) {
+        return accountRepository.findByUuid(uuid);
     }
 
     @Override
