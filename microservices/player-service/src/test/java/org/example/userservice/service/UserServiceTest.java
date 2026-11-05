@@ -143,6 +143,23 @@ class UserServiceTest {
     }
 
     @Test
+    void loginOrRegisterWithMinecraft_throwsWhenUnlinkedAccountHasAdminRole() {
+        UUID uuid = UUID.randomUUID();
+        AccountModel unlinkedAdminAccount = new AccountModel(5L, "Cheshirius", LocalDate.now());
+        unlinkedAdminAccount.setUuid(null);
+        UserModel adminUser = new UserModel(5L, "Cheshirius", "hashed", Set.of(RoleEnum.ADMIN), unlinkedAdminAccount);
+
+        when(accountRepository.findByUuid(uuid)).thenReturn(Optional.empty());
+        when(accountRepository.findByUsername("Cheshirius")).thenReturn(List.of(unlinkedAdminAccount));
+        when(userRepository.findByAccount(unlinkedAdminAccount)).thenReturn(List.of(adminUser));
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                userService.loginOrRegisterWithMinecraft(uuid, "Cheshirius")
+        ).isInstanceOf(IllegalStateException.class)
+         .hasMessageContaining("Административный аккаунт не может быть автоматически привязан");
+    }
+
+    @Test
     void linkMinecraft_updatesUserAccount() {
         UUID uuid = UUID.randomUUID();
         AccountModel account = new AccountModel(10L, "OldName", LocalDate.now());

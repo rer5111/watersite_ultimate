@@ -1,6 +1,7 @@
 package org.example.userservice.service;
 
 import org.example.userservice.dto.CheckAvailabilityResponse;
+import org.example.userservice.dto.UserProfileResponse;
 import org.example.userservice.model.AccountModel;
 import org.example.userservice.model.RoleEnum;
 import org.example.userservice.model.UserModel;
@@ -116,9 +117,14 @@ public class UserServiceImpl implements UserService {
         List<AccountModel> existingAccounts = accountRepository.findByUsername(username);
         for (AccountModel acc : existingAccounts) {
             if (acc.getUuid() == null) {
+                List<UserModel> users = userRepository.findByAccount(acc);
+                boolean hasAdmin = users.stream()
+                        .anyMatch(u -> u.getRoles() != null && u.getRoles().contains(RoleEnum.ADMIN));
+                if (hasAdmin) {
+                    throw new IllegalStateException("Административный аккаунт не может быть автоматически привязан через вход");
+                }
                 acc.setUuid(uuid);
                 accountRepository.save(acc);
-                List<UserModel> users = userRepository.findByAccount(acc);
                 if (!users.isEmpty()) {
                     return users.get(0);
                 }
@@ -201,5 +207,110 @@ public class UserServiceImpl implements UserService {
         );
         newUser.setEmail(email.trim().toLowerCase());
         return userRepository.save(newUser);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserProfileResponse getProfile(long userId, String fallbackUsername) {
+        UserModel user = resolveUser(userId, fallbackUsername);
+        return mapToProfile(user);
+    }
+
+    @Override
+    @Transactional
+    public UserProfileResponse updateMinecraftNickname(long userId, String fallbackUsername, String newNickname) {
+        UserModel user = resolveUser(userId, fallbackUsername);
+        AccountModel account = user.getAccount();
+        if (account == null) {
+            account = new AccountModel(0L, newNickname.trim(), LocalDate.now());
+            account = accountRepository.save(account);
+            user.setAccount(account);
+            userRepository.save(user);
+        } else {
+            if (!newNickname.trim().equalsIgnoreCase(account.getUsername())) {
+                account.setUuid(null);
+            }
+            account.setUsername(newNickname.trim());
+            accountRepository.save(account);
+        }
+        return mapToProfile(user);
+    }
+
+    @Override
+    @Transactional
+    public void changeEmail(long userId, String newEmail) {
+        UserModel user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+        String normalized = newEmail.trim().toLowerCase();
+        List<UserModel> existing = userRepository.findByIdentifier(normalized);
+        for (UserModel u : existing) {
+            if (u.getId() != userId) {
+                throw new IllegalStateException("Email уже используется другим аккаунтом");
+            }
+        }
+        user.setEmail(normalized);
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(long userId, String newPassword) {
+        UserModel user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void deleteUserAndAccount(long userId, String fallbackUsername) {
+        UserModel user = resolveUser(userId, fallbackUsername);
+        AccountModel account = user.getAccount();
+        userRepository.delete(user);
+        if (account != null) {
+            accountRepository.delete(account);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getUserEmail(long userId) {
+        UserModel user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+        return user.getEmail();
+    }
+
+    private UserModel resolveUser(long userId, String fallbackUsername) {
+        if (userId > 0) {
+            Optional<UserModel> userOpt = userRepository.findById(userId);
+            if (userOpt.isPresent()) {
+                return userOpt.get();
+            }
+        }
+        if (fallbackUsername != null && !fallbackUsername.isBlank()) {
+            List<UserModel> users = userRepository.findAllByName(fallbackUsername.trim());
+            if (!users.isEmpty()) {
+                return users.get(0);
+            }
+        }
+        throw new IllegalArgumentException("Пользователь не найден");
+    }
+
+    private UserProfileResponse mapToProfile(UserModel user) {
+        Set<String> roles = user.getRoles() == null
+                ? Set.of()
+                : user.getRoles().stream().map(RoleEnum::name).collect(java.util.stream.Collectors.toUnmodifiableSet());
+        String mcNickname = user.getAccount() != null ? user.getAccount().getUsername() : user.getName();
+        UUID mcUuid = user.getAccount() != null ? user.getAccount().getUuid() : null;
+        LocalDate joinDate = user.getAccount() != null ? user.getAccount().getJoinDate() : null;
+        return new UserProfileResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                mcNickname,
+                mcUuid,
+                joinDate,
+                roles
+        );
     }
 }

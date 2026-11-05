@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -101,6 +102,17 @@ class InternalAuthControllerTest {
     }
 
     @Test
+    void rejectsRequestsWithEmptyInternalSecret() throws Exception {
+        mockMvc.perform(post("/internal/auth/change-password")
+                        .header("X-Internal-Auth", "")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"userId":1,"newPassword":"newPass123"}
+                                """))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void minecraftLogin_returnsUserData() throws Exception {
         UUID uuid = UUID.randomUUID();
         UserModel user = new UserModel();
@@ -139,6 +151,51 @@ class InternalAuthControllerTest {
                 .andExpect(jsonPath("$.uuid").value(uuid.toString()));
 
         verify(userService).linkMinecraft(eq(42L), eq(uuid), eq("Steve"));
+    }
+
+    @Test
+    void changeEmail_success() throws Exception {
+        mockMvc.perform(post("/internal/auth/change-email")
+                        .header("X-Internal-Auth", SHARED_SECRET)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"userId":42,"newEmail":"new@waltercraft.ru"}
+                                """))
+                .andExpect(status().isOk());
+
+        verify(userService).changeEmail(42L, "new@waltercraft.ru");
+    }
+
+    @Test
+    void changePassword_success() throws Exception {
+        mockMvc.perform(post("/internal/auth/change-password")
+                        .header("X-Internal-Auth", SHARED_SECRET)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"userId":42,"newPassword":"newSecretPassword123"}
+                                """))
+                .andExpect(status().isOk());
+
+        verify(userService).changePassword(42L, "newSecretPassword123");
+    }
+
+    @Test
+    void getUserEmail_success() throws Exception {
+        when(userService.getUserEmail(42L)).thenReturn("user@waltercraft.ru");
+
+        mockMvc.perform(get("/internal/auth/user-email/42")
+                        .header("X-Internal-Auth", SHARED_SECRET))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string("user@waltercraft.ru"));
+    }
+
+    @Test
+    void getUserEmail_noContentWhenEmpty() throws Exception {
+        when(userService.getUserEmail(42L)).thenReturn(null);
+
+        mockMvc.perform(get("/internal/auth/user-email/42")
+                        .header("X-Internal-Auth", SHARED_SECRET))
+                .andExpect(status().isNoContent());
     }
 
     @Test

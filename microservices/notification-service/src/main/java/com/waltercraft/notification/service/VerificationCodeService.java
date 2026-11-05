@@ -5,10 +5,14 @@ import com.waltercraft.notification.dto.VerifyCodeResponse;
 import com.waltercraft.notification.entity.EmailVerificationCode;
 import com.waltercraft.notification.exception.RateLimitExceededException;
 import com.waltercraft.notification.repository.EmailVerificationCodeRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -24,17 +28,28 @@ public class VerificationCodeService {
     private static final int COOLDOWN_SECONDS = 60;
     private static final int EXPIRATION_MINUTES = 10;
     private static final int MAX_ATTEMPTS = 5;
+    private static final String DEFAULT_PEPPER = "waltercraft-verification-code-pepper-32-chars";
 
     private final EmailVerificationCodeRepository codeRepository;
     private final EmailSenderService emailSenderService;
+    private final String sharedSecret;
     private final SecureRandom secureRandom = new SecureRandom();
+
+    public VerificationCodeService(
+            EmailVerificationCodeRepository codeRepository,
+            EmailSenderService emailSenderService,
+            @Value("${security.notification-service.shared-secret:}") String sharedSecret
+    ) {
+        this.codeRepository = codeRepository;
+        this.emailSenderService = emailSenderService;
+        this.sharedSecret = sharedSecret == null || sharedSecret.isBlank() ? DEFAULT_PEPPER : sharedSecret;
+    }
 
     public VerificationCodeService(
             EmailVerificationCodeRepository codeRepository,
             EmailSenderService emailSenderService
     ) {
-        this.codeRepository = codeRepository;
-        this.emailSenderService = emailSenderService;
+        this(codeRepository, emailSenderService, DEFAULT_PEPPER);
     }
 
     @Transactional
@@ -54,7 +69,7 @@ public class VerificationCodeService {
         }
 
         String rawCode = String.format("%06d", secureRandom.nextInt(1_000_000));
-        String codeHash = hash(rawCode);
+        String codeHash = hash(normalizedEmail, purpose, rawCode);
 
         Instant expiresAt = now.plus(Duration.ofMinutes(EXPIRATION_MINUTES));
         EmailVerificationCode newCode = new EmailVerificationCode(
@@ -97,7 +112,7 @@ public class VerificationCodeService {
             return VerifyCodeResponse.failure("Превышено количество попыток ввода. Запросите новый код");
         }
 
-        String providedHash = hash(code.trim());
+        String providedHash = hash(normalizedEmail, purpose, code.trim());
         if (!MessageDigest.isEqual(record.getCodeHash().getBytes(StandardCharsets.UTF_8), providedHash.getBytes(StandardCharsets.UTF_8))) {
             record.setAttempts(record.getAttempts() + 1);
             codeRepository.save(record);
@@ -110,13 +125,17 @@ public class VerificationCodeService {
         return VerifyCodeResponse.success();
     }
 
-    private String hash(String input) {
+    String hash(String email, String purpose, String rawCode) {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            Mac mac = Mac.getInstance("HmacSHA256");
+            byte[] keyBytes = sharedSecret.getBytes(StandardCharsets.UTF_8);
+            SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
+            mac.init(secretKey);
+            String payload = email.trim().toLowerCase() + ":" + purpose.trim().toUpperCase() + ":" + rawCode.trim();
+            byte[] hash = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 is not available", e);
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new IllegalStateException("Failed to calculate HMAC-SHA256 for verification code", e);
         }
     }
 }

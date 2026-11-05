@@ -2,6 +2,8 @@ package org.example.userservice.controller;
 
 import org.example.userservice.dto.CheckAvailabilityRequest;
 import org.example.userservice.dto.CheckAvailabilityResponse;
+import org.example.userservice.dto.InternalChangeEmailRequest;
+import org.example.userservice.dto.InternalChangePasswordRequest;
 import org.example.userservice.dto.InternalCredentialRequest;
 import org.example.userservice.dto.InternalCredentialVerificationResponse;
 import org.example.userservice.dto.InternalRegisterRequest;
@@ -15,6 +17,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -54,7 +58,7 @@ public class InternalAuthController {
             @RequestHeader(name = "X-Internal-Auth", required = false) String providedSecret,
             @Valid @RequestBody InternalCredentialRequest request
     ) {
-        if (sharedSecret.length() < MINIMUM_SECRET_LENGTH) {
+        if (isSecretMisconfigured()) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
         if (!matchesSecret(providedSecret)) {
@@ -83,7 +87,7 @@ public class InternalAuthController {
             @RequestHeader(name = "X-Internal-Auth", required = false) String providedSecret,
             @Valid @RequestBody MinecraftLoginRequest request
     ) {
-        if (sharedSecret.length() < MINIMUM_SECRET_LENGTH) {
+        if (isSecretMisconfigured()) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
         if (!matchesSecret(providedSecret)) {
@@ -103,7 +107,7 @@ public class InternalAuthController {
             @RequestHeader(name = "X-Internal-Auth", required = false) String providedSecret,
             @Valid @RequestBody LinkMinecraftRequest request
     ) {
-        if (sharedSecret.length() < MINIMUM_SECRET_LENGTH) {
+        if (isSecretMisconfigured()) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
         if (!matchesSecret(providedSecret)) {
@@ -125,6 +129,9 @@ public class InternalAuthController {
             @RequestHeader(name = "X-Internal-Auth", required = false) String providedSecret,
             @Valid @RequestBody CheckAvailabilityRequest request
     ) {
+        if (isSecretMisconfigured()) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
         if (!matchesSecret(providedSecret)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -136,6 +143,9 @@ public class InternalAuthController {
             @RequestHeader(name = "X-Internal-Auth", required = false) String providedSecret,
             @Valid @RequestBody InternalRegisterRequest request
     ) {
+        if (isSecretMisconfigured()) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
         if (!matchesSecret(providedSecret)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -151,8 +161,74 @@ public class InternalAuthController {
         }
     }
 
+    @PostMapping("/change-email")
+    public ResponseEntity<Void> changeEmail(
+            @RequestHeader(name = "X-Internal-Auth", required = false) String providedSecret,
+            @Valid @RequestBody InternalChangeEmailRequest request
+    ) {
+        if (isSecretMisconfigured()) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
+        if (!matchesSecret(providedSecret)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        try {
+            userService.changeEmail(request.userId(), request.newEmail());
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<Void> changePassword(
+            @RequestHeader(name = "X-Internal-Auth", required = false) String providedSecret,
+            @Valid @RequestBody InternalChangePasswordRequest request
+    ) {
+        if (isSecretMisconfigured()) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
+        if (!matchesSecret(providedSecret)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        try {
+            userService.changePassword(request.userId(), request.newPassword());
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+    @GetMapping("/user-email/{userId}")
+    public ResponseEntity<String> getUserEmail(
+            @RequestHeader(name = "X-Internal-Auth", required = false) String providedSecret,
+            @PathVariable long userId
+    ) {
+        if (isSecretMisconfigured()) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
+        if (!matchesSecret(providedSecret)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        try {
+            String email = userService.getUserEmail(userId);
+            if (email == null || email.isBlank()) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+            }
+            return ResponseEntity.ok(email);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+    private boolean isSecretMisconfigured() {
+        return sharedSecret.length() < MINIMUM_SECRET_LENGTH;
+    }
+
     private boolean matchesSecret(String providedSecret) {
-        if (providedSecret == null) {
+        if (isSecretMisconfigured() || providedSecret == null || providedSecret.isBlank()) {
             return false;
         }
         return MessageDigest.isEqual(

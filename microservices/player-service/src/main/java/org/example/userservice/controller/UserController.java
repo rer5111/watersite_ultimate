@@ -6,7 +6,9 @@ import org.example.userservice.model.SeasonModel;
 import org.example.userservice.model.UserModel;
 import org.example.userservice.dto.AdminProfileResponse;
 import org.example.userservice.dto.CreateUserRequest;
+import org.example.userservice.dto.UpdateMinecraftNicknameRequest;
 import org.example.userservice.dto.UpdateUserRequest;
+import org.example.userservice.dto.UserProfileResponse;
 import org.example.userservice.service.AccountService;
 import org.example.userservice.service.SeasonService;
 import org.example.userservice.service.UserService;
@@ -14,7 +16,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -208,5 +213,80 @@ public class UserController {
             log.error("Failed to add user to season: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    @GetMapping(path = "/me", produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserProfileResponse> getCurrentUserProfile(
+            @AuthenticationPrincipal Jwt jwt,
+            Authentication authentication
+    ) {
+        long userId = extractUserId(jwt);
+        String username = extractUsername(jwt, authentication);
+        if (userId <= 0 && (username == null || username.isBlank())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        try {
+            UserProfileResponse profile = userService.getProfile(userId, username);
+            return ResponseEntity.ok(profile);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+    @PutMapping(path = "/me/minecraft-nickname", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserProfileResponse> updateMinecraftNickname(
+            @AuthenticationPrincipal Jwt jwt,
+            Authentication authentication,
+            @Valid @RequestBody UpdateMinecraftNicknameRequest request
+    ) {
+        long userId = extractUserId(jwt);
+        String username = extractUsername(jwt, authentication);
+        if (userId <= 0 && (username == null || username.isBlank())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        try {
+            UserProfileResponse profile = userService.updateMinecraftNickname(userId, username, request.minecraftNickname());
+            return ResponseEntity.ok(profile);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteCurrentUserAccount(
+            @AuthenticationPrincipal Jwt jwt,
+            Authentication authentication
+    ) {
+        long userId = extractUserId(jwt);
+        String username = extractUsername(jwt, authentication);
+        if (userId <= 0 && (username == null || username.isBlank())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        try {
+            userService.deleteUserAndAccount(userId, username);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+    private long extractUserId(Jwt jwt) {
+        if (jwt != null && jwt.getClaim("user_id") != null) {
+            Object idVal = jwt.getClaim("user_id");
+            if (idVal instanceof Number) {
+                return ((Number) idVal).longValue();
+            }
+        }
+        return 0L;
+    }
+
+    private String extractUsername(Jwt jwt, Authentication authentication) {
+        if (jwt != null && jwt.getSubject() != null && !jwt.getSubject().isBlank()) {
+            return jwt.getSubject();
+        }
+        if (authentication != null && authentication.getName() != null && !authentication.getName().isBlank()) {
+            return authentication.getName();
+        }
+        return null;
     }
 }

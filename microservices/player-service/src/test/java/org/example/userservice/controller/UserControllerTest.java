@@ -66,8 +66,8 @@ class UserControllerTest {
     }
 
     @Test
-    @WithMockUser
-    void registerUser_WithJsonBody_ReturnsOk() throws Exception {
+    @WithMockUser(roles = "ADMIN")
+    void registerUser_WithJsonBody_WhenAdmin_ReturnsOk() throws Exception {
         AccountModel account = new AccountModel(1, "test_user", LocalDate.now());
         when(accountService.findById(1)).thenReturn(List.of(account));
 
@@ -89,8 +89,26 @@ class UserControllerTest {
     }
 
     @Test
-    @WithMockUser
-    void deleteUser_WhenFound_CallsUserServiceDeleteAndReturnsNoContent() throws Exception {
+    @WithMockUser(roles = "USER")
+    void registerUser_WhenNotAdmin_ReturnsForbidden() throws Exception {
+        String json = """
+                {
+                    "name": "test_user",
+                    "password": "secret_password",
+                    "roles": ["USER"],
+                    "accountId": 1
+                }
+                """;
+
+        mockMvc.perform(put("/api/user")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void deleteUser_WhenFoundAndAdmin_CallsUserServiceDeleteAndReturnsNoContent() throws Exception {
         AccountModel account = new AccountModel(10, "to_delete", LocalDate.now());
         UserModel user = new UserModel(10, "to_delete", "hash", Set.of(RoleEnum.USER), account);
         when(userService.findById(10)).thenReturn(List.of(user));
@@ -99,5 +117,70 @@ class UserControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(userService).deleteUser(10);
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void deleteUser_WhenNotAdmin_ReturnsForbidden() throws Exception {
+        mockMvc.perform(delete("/api/user/10"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "test_player")
+    void getCurrentUserProfile_WhenAuthenticated_ReturnsProfile() throws Exception {
+        org.example.userservice.dto.UserProfileResponse profile = new org.example.userservice.dto.UserProfileResponse(
+                5L,
+                "test_player",
+                "player@example.com",
+                "Steve_Craft",
+                UUID.fromString("ccb40ba9-e0af-4939-9c80-3ce15fb417ed"),
+                LocalDate.of(2025, 1, 1),
+                Set.of("USER")
+        );
+        when(userService.getProfile(0L, "test_player")).thenReturn(profile);
+
+        mockMvc.perform(get("/api/user/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(5)))
+                .andExpect(jsonPath("$.username", is("test_player")))
+                .andExpect(jsonPath("$.email", is("player@example.com")))
+                .andExpect(jsonPath("$.minecraftNickname", is("Steve_Craft")));
+    }
+
+    @Test
+    @WithMockUser(username = "test_player")
+    void updateMinecraftNickname_WhenValid_ReturnsUpdatedProfile() throws Exception {
+        org.example.userservice.dto.UserProfileResponse updated = new org.example.userservice.dto.UserProfileResponse(
+                5L,
+                "test_player",
+                "player@example.com",
+                "New_Steve",
+                null,
+                LocalDate.of(2025, 1, 1),
+                Set.of("USER")
+        );
+        when(userService.updateMinecraftNickname(0L, "test_player", "New_Steve")).thenReturn(updated);
+
+        String json = """
+                {
+                    "minecraftNickname": "New_Steve"
+                }
+                """;
+
+        mockMvc.perform(put("/api/user/me/minecraft-nickname")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.minecraftNickname", is("New_Steve")));
+    }
+
+    @Test
+    @WithMockUser(username = "test_player")
+    void deleteCurrentUserAccount_WhenAuthenticated_ReturnsNoContent() throws Exception {
+        mockMvc.perform(delete("/api/user/me"))
+                .andExpect(status().isNoContent());
+
+        verify(userService).deleteUserAndAccount(0L, "test_player");
     }
 }

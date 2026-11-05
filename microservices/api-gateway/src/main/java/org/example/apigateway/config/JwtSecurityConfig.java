@@ -20,6 +20,7 @@ public class JwtSecurityConfig {
         return http
                 .csrf().disable()
                 .authorizeExchange()
+                .pathMatchers("/api/*/internal/**", "/internal/**").denyAll()
                 .pathMatchers(HttpMethod.GET, "/api/player-service/api/user/admins").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/skin-service/**").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/donation-service/api/v1/donation-types").permitAll()
@@ -35,6 +36,8 @@ public class JwtSecurityConfig {
                 .pathMatchers("/api/chat-service/**").authenticated()
                 .pathMatchers("/api/auth-service/auth/microsoft/link").authenticated()
                 .pathMatchers("/api/auth-service/auth/microsoft/device-link").authenticated()
+                .pathMatchers("/api/auth-service/auth/change-email/**").authenticated()
+                .pathMatchers("/api/auth-service/auth/change-password/**").authenticated()
                 .anyExchange().permitAll()
                 .and()
                 .oauth2ResourceServer()

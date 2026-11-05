@@ -74,12 +74,11 @@ class VerificationCodeServiceTest {
 
     @Test
     void verifyCode_returnsSuccess_whenCodeMatches() {
-        // Compute sha-256 of "123456": ba3253876aed6bc22d4a6ff53d8406c6ad864195ed144ab5c87621b6c233b548b5...
-        // Let's test with actual hash from helper or mock
         Instant now = Instant.now();
+        String expectedHash = verificationCodeService.hash("player@example.com", "REGISTRATION", "123456");
         EmailVerificationCode record = new EmailVerificationCode(
                 "player@example.com",
-                "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92", // sha-256 of "123456"
+                expectedHash,
                 "REGISTRATION",
                 now.minusSeconds(30),
                 now.plus(Duration.ofMinutes(10))
@@ -97,9 +96,10 @@ class VerificationCodeServiceTest {
     @Test
     void verifyCode_returnsFailure_whenCodeDoesNotMatch() {
         Instant now = Instant.now();
+        String expectedHash = verificationCodeService.hash("player@example.com", "REGISTRATION", "123456");
         EmailVerificationCode record = new EmailVerificationCode(
                 "player@example.com",
-                "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+                expectedHash,
                 "REGISTRATION",
                 now.minusSeconds(30),
                 now.plus(Duration.ofMinutes(10))

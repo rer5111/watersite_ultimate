@@ -21,4 +21,10 @@ public interface UserService {
     void linkMinecraft(long userId, @NonNull UUID uuid, @NonNull String username);
     UserModel registerUser(String email, String username, String password);
     org.example.userservice.dto.CheckAvailabilityResponse checkAvailability(String email, String username);
+    org.example.userservice.dto.UserProfileResponse getProfile(long userId, String fallbackUsername);
+    org.example.userservice.dto.UserProfileResponse updateMinecraftNickname(long userId, String fallbackUsername, String newNickname);
+    void changeEmail(long userId, String newEmail);
+    void changePassword(long userId, String newPassword);
+    void deleteUserAndAccount(long userId, String fallbackUsername);
+    String getUserEmail(long userId);
 }

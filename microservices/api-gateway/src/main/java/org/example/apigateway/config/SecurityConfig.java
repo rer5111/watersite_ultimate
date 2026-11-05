@@ -16,7 +16,9 @@ public class SecurityConfig {
         return http
                 .csrf().disable()
                 .authorizeExchange()
+                .pathMatchers("/api/*/internal/**", "/internal/**").denyAll()
                 .pathMatchers(HttpMethod.GET, "/api/player-service/api/user/admins").permitAll()
+                .pathMatchers("/api/player-service/api/user/me", "/api/player-service/api/user/me/**").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/skin-service/**").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/donation-service/api/v1/donation-types").permitAll()
                 .pathMatchers(HttpMethod.GET, "/api/event-service/api/v1/events", "/api/event-service/api/v1/events/**").permitAll()
