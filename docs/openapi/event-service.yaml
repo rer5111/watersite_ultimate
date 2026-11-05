@@ -1,0 +1,369 @@
+openapi: 3.0.3
+info:
+  title: Waltercraft Event Service
+  version: 1.0.0
+  description: Сервис хронологии событий и сезонов игрового сервера Waltercraft
+servers:
+  - url: /api/event-service
+paths:
+  /api/v1/events:
+    get:
+      operationId: listEvents
+      summary: Получить список активных событий и сезонов сервера
+      description: Возвращает активные события сервера, упорядоченные по приоритету отображения и ID. Ответ кешируется на 10 минут.
+      security: []
+      parameters:
+        - name: page
+          in: query
+          description: Номер страницы (начиная с 0)
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: Размер страницы
+          schema:
+            type: integer
+            default: 50
+        - name: sort
+          in: query
+          description: Поля сортировки (по умолчанию displayOrder, id)
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: Страница событий сервера
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: "max-age=600, public"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventResponse'
+                  page:
+                    $ref: '#/components/schemas/PageMetadata'
+
+  /api/v1/events/{id}:
+    get:
+      operationId: getEvent
+      summary: Получить информацию о событии по ID
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Данные события
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '404':
+          description: Событие не найдено
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+
+  /api/v1/admin/events:
+    get:
+      operationId: listAllEvents
+      summary: Получить полный список всех событий (включая неактивные)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Полный список событий для администрации
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventResponse'
+        '401':
+          description: Не авторизован
+        '403':
+          description: Доступ запрещен (требуется роль ADMIN)
+    post:
+      operationId: createEvent
+      summary: Создать новое событие сервера
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventCreateRequest'
+      responses:
+        '201':
+          description: Событие успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '400':
+          description: Ошибка валидации
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Событие с таким кодом уже существует
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+
+  /api/v1/admin/events/{id}:
+    put:
+      operationId: updateEvent
+      summary: Обновить существующее событие сервера
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventUpdateRequest'
+      responses:
+        '200':
+          description: Событие успешно обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '400':
+          description: Ошибка валидации
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Событие не найдено
+        '409':
+          description: Конфликт версии (оптимистическая блокировка) или дубликат кода
+    delete:
+      operationId: deleteEvent
+      summary: Удалить событие сервера
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Событие удалено
+        '404':
+          description: Событие не найдено
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    EventResponse:
+      type: object
+      required:
+        - id
+        - code
+        - title
+        - description
+        - startDate
+        - endDate
+        - image
+        - displayOrder
+        - active
+        - version
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        code:
+          type: string
+          example: season-1
+        title:
+          type: string
+          example: 1 сезон
+        description:
+          type: string
+          example: Начало сервера, когда он ещё не был назван Валтеркрафтом...
+        startDate:
+          type: string
+          example: "2022"
+        endDate:
+          type: string
+          example: "2022"
+        image:
+          type: string
+          example: /images/seasons/season-1.webp
+        displayOrder:
+          type: integer
+          example: 10
+        active:
+          type: boolean
+          example: true
+        version:
+          type: integer
+          format: int64
+          example: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    EventCreateRequest:
+      type: object
+      required:
+        - code
+        - title
+        - description
+        - startDate
+        - endDate
+        - image
+        - displayOrder
+      properties:
+        code:
+          type: string
+          maxLength: 64
+          example: season-6
+        title:
+          type: string
+          maxLength: 120
+          example: 6 сезон
+        description:
+          type: string
+          maxLength: 1000
+          example: Новый этап развития сервера...
+        startDate:
+          type: string
+          maxLength: 32
+          example: "2026"
+        endDate:
+          type: string
+          maxLength: 32
+          example: "н. в."
+        image:
+          type: string
+          maxLength: 255
+          example: /images/seasons/season-5.webp
+        displayOrder:
+          type: integer
+          minimum: 0
+          example: 60
+        active:
+          type: boolean
+          default: true
+
+    EventUpdateRequest:
+      type: object
+      required:
+        - code
+        - title
+        - description
+        - startDate
+        - endDate
+        - image
+        - displayOrder
+        - active
+        - version
+      properties:
+        code:
+          type: string
+          maxLength: 64
+        title:
+          type: string
+          maxLength: 120
+        description:
+          type: string
+          maxLength: 1000
+        startDate:
+          type: string
+          maxLength: 32
+        endDate:
+          type: string
+          maxLength: 32
+        image:
+          type: string
+          maxLength: 255
+        displayOrder:
+          type: integer
+          minimum: 0
+        active:
+          type: boolean
+        version:
+          type: integer
+          format: int64
+
+    PageMetadata:
+      type: object
+      properties:
+        size:
+          type: integer
+          example: 50
+        number:
+          type: integer
+          example: 0
+        totalElements:
+          type: integer
+          example: 5
+        totalPages:
+          type: integer
+          example: 1
+
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            type: string
