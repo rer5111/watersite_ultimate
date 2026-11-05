@@ -4,11 +4,15 @@ import {
   DonationsPage,
   HomePage,
   LoginPage,
+  MicrosoftCallbackPage,
   NotFoundPage,
   RegisterPage,
+  VerifyEmailPage,
 } from '@/pages';
 import { paths } from './paths';
 import { AuthLayout, RootLayout } from '@/components';
+import { queryClient } from '@/lib';
+import { donationTypesQueryOptions, eventsQueryOptions } from '@/api';
 
 export const router = createBrowserRouter([
   {
@@ -17,6 +21,7 @@ export const router = createBrowserRouter([
       {
         path: paths.home,
         element: <HomePage />,
+        loader: () => queryClient.query(eventsQueryOptions),
       },
       {
         path: paths.admins,
@@ -25,6 +30,7 @@ export const router = createBrowserRouter([
       {
         path: paths.donate,
         element: <DonationsPage />,
+        loader: () => queryClient.query(donationTypesQueryOptions),
       },
     ],
   },
@@ -38,6 +44,14 @@ export const router = createBrowserRouter([
       {
         path: paths.register,
         element: <RegisterPage />,
+      },
+      {
+        path: paths.verifyEmail,
+        element: <VerifyEmailPage />,
+      },
+      {
+        path: paths.microsoftCallback,
+        element: <MicrosoftCallbackPage />,
       },
     ],
   },

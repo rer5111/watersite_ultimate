@@ -74,7 +74,7 @@ export function AuthLayout() {
 
   return (
     <main className="grid min-h-screen grid-cols-2">
-      <section className="flex flex-col items-center justify-start gap-8 pt-24">
+      <section className="flex flex-col items-center justify-start gap-8 pt-16">
         <div className="mx-auto w-full max-w-lg">
           <Link
             to={paths.home}

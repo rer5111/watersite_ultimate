@@ -18,10 +18,11 @@ export function SeasonCard({
       <img
         src={image}
         alt={title}
+        loading="eager"
         decoding="async"
         width={240}
         height={320}
-        className="aspect-3/4 w-60 shrink-0 rounded-2xl object-cover text-transparent text-[0px]"
+        className="aspect-3/4 w-60 shrink-0 rounded-none object-cover text-transparent text-[0px]"
       />
       <div className="flex max-w-88 flex-col gap-4">
         <h3 className="text-2xl leading-tight font-bold">{`${title} (${startDate}–${endDate})`}</h3>

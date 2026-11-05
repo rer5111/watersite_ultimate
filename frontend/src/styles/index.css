@@ -27,6 +27,9 @@
   --color-secondary-active: #333333;
   --color-input: #343434;
 
+  --color-error: #ef4444;
+  --color-error-hover: #dc2626;
+
   --color-tertiary-hover: #4d4d4d;
   --color-tertiary-active: #343232;
 
