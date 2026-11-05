@@ -47,7 +47,8 @@ export async function getDonationTypes(): Promise<DonationType[]> {
 export const donationTypesQueryOptions = queryOptions({
   queryKey: ['donation-types'] as const,
   queryFn: getDonationTypes,
-  staleTime: 1000 * 60 * 5,
+  staleTime: 1000 * 60 * 10,
+  gcTime: 1000 * 60 * 60,
 });
 
 export function useDonationTypes() {

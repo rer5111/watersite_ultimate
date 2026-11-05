@@ -19,6 +19,7 @@ export function DonationCard({ image, title, price }: DonationCardProps) {
       <img
         src={image}
         alt={title}
+        loading="eager"
         decoding="async"
         width={80}
         height={160}
