@@ -50,3 +50,57 @@ export function DiscordIcon({ className, ...props }: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function CloseIcon({ className, ...props }: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className ?? 'size-5'}
+      {...props}
+    >
+      <path d="M18 6L6 18M6 6L18 18" />
+    </svg>
+  );
+}
+
+export function CheckIcon({ className, ...props }: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className ?? 'size-5'}
+      {...props}
+    >
+      <path d="M20 6L9 17L4 12" />
+    </svg>
+  );
+}
+
+export function InfoCircleIcon({ className, ...props }: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className ?? 'size-5'}
+      {...props}
+    >
+      <path d="M12 16V12M12 8H12.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" />
+    </svg>
+  );
+}

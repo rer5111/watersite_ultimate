@@ -6,6 +6,7 @@ import {
   LoginPage,
   MicrosoftCallbackPage,
   NotFoundPage,
+  ProfilePage,
   RegisterPage,
   VerifyEmailPage,
 } from '@/pages';
@@ -31,6 +32,10 @@ export const router = createBrowserRouter([
         path: paths.donate,
         element: <DonationsPage />,
         loader: () => queryClient.query(donationTypesQueryOptions),
+      },
+      {
+        path: paths.profile,
+        element: <ProfilePage />,
       },
     ],
   },

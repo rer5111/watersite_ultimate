@@ -6,6 +6,7 @@ import {
 } from 'react';
 import type { AuthUser, TokenResponse } from '@/types';
 import { refreshAccessToken } from '@/api';
+import { queryClient } from '@/lib';
 import { AuthContext } from './auth-context';
 
 interface JwtPayload {
@@ -70,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    queryClient.removeQueries({ queryKey: ['user-profile'] });
     setUser(null);
   }, []);
 

@@ -4,6 +4,7 @@ import { SkinAvatar, buttonVariants } from '@/components/ui';
 import { paths } from '@/routes';
 import { cn } from '@/lib';
 import type { AuthUser } from '@/types';
+import { useProfile } from '@/api';
 
 interface UserMenuProps {
   user: AuthUser;
@@ -13,6 +14,10 @@ interface UserMenuProps {
 export function UserMenu({ user, onLogout }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { data: profile } = useProfile(Boolean(user));
+
+  const displayName = profile?.minecraftNickname || user.username;
+  const displayUuid = profile?.minecraftUuid ?? user.uuid;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -51,12 +56,12 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
         )}
       >
         <SkinAvatar
-          uuid={user.uuid}
-          name={user.username}
+          uuid={displayUuid}
+          name={displayName}
           mode="face"
-          className="aspect-square size-7 shrink-0 rounded-none object-cover [image-rendering:pixelated]"
+          className="aspect-square size-6 shrink-0 rounded-none object-cover"
         />
-        <span className="max-w-40 font-medium">{user.username}</span>
+        <span className="max-w-40 font-bold">{displayName}</span>
         <svg
           className={cn(
             'size-4 shrink-0 transition-transform duration-200',
