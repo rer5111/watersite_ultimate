@@ -44,11 +44,14 @@ class JwtTokenServiceTest {
 
     @Test
     void signsAccessAndRefreshTokensWithSeparateTypes() {
-        TokenResponse tokens = tokenService.issueTokens(new AuthenticatedUser(3L, "player", Set.of("USER")));
+        java.util.UUID uuid = java.util.UUID.randomUUID();
+        TokenResponse tokens = tokenService.issueTokens(new AuthenticatedUser(3L, "player", uuid, Set.of("USER")));
 
         Jwt accessToken = jwtDecoder.decode(tokens.accessToken());
         Jwt refreshToken = jwtDecoder.decode(tokens.refreshToken());
         assertEquals("player", accessToken.getSubject());
+        assertEquals(uuid.toString(), accessToken.getClaimAsString("uuid"));
+        assertEquals(uuid.toString(), refreshToken.getClaimAsString("uuid"));
         assertEquals("access", accessToken.getClaimAsString("token_type"));
         assertEquals("refresh", refreshToken.getClaimAsString("token_type"));
         assertEquals(Set.of("USER"), Set.copyOf(accessToken.getClaimAsStringList("roles")));

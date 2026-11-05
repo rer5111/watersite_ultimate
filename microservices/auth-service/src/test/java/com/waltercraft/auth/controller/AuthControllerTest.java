@@ -133,4 +133,58 @@ class AuthControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
     }
+
+    @Test
+    void getMicrosoftAuthorizeUrl_returnsUrl() throws Exception {
+        when(authService.getMicrosoftAuthorizeUrl("http://localhost:5173/callback", "state123"))
+                .thenReturn("https://login.live.com/oauth20_authorize.srf?client_id=test");
+
+        mockMvc.perform(get("/auth/microsoft/authorize-url")
+                        .param("redirect_uri", "http://localhost:5173/callback")
+                        .param("state", "state123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.url").value("https://login.live.com/oauth20_authorize.srf?client_id=test"));
+    }
+
+    @Test
+    void loginWithMicrosoft_returnsTokenPair() throws Exception {
+        when(authService.loginWithMicrosoft("auth-code-123", "http://localhost:5173/callback"))
+                .thenReturn(new TokenResponse("ms-access", "ms-refresh", "Bearer", 900));
+
+        mockMvc.perform(post("/auth/microsoft/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"code":"auth-code-123","redirectUri":"http://localhost:5173/callback"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("ms-access"))
+                .andExpect(jsonPath("$.refreshToken").value("ms-refresh"));
+    }
+
+    @Test
+    void getMicrosoftDeviceCode_returnsDeviceCodeDetails() throws Exception {
+        when(authService.initiateDeviceCode())
+                .thenReturn(new com.waltercraft.auth.dto.DeviceCodeResponse("dev-1", "CODE-1", "https://microsoft.com/link", 900, 5));
+
+        mockMvc.perform(post("/auth/microsoft/device-code"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.deviceCode").value("dev-1"))
+                .andExpect(jsonPath("$.userCode").value("CODE-1"))
+                .andExpect(jsonPath("$.verificationUri").value("https://microsoft.com/link"));
+    }
+
+    @Test
+    void loginWithMicrosoftDevice_returnsStatusAndTokens() throws Exception {
+        when(authService.pollDeviceLogin("dev-1"))
+                .thenReturn(new com.waltercraft.auth.dto.DeviceLoginResponse("SUCCESS", new TokenResponse("dev-access", "dev-refresh", "Bearer", 900)));
+
+        mockMvc.perform(post("/auth/microsoft/device-login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"deviceCode":"dev-1"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.tokens.accessToken").value("dev-access"));
+    }
 }

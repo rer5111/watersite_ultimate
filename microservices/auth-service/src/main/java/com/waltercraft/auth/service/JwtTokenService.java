@@ -45,8 +45,8 @@ public class JwtTokenService {
 
     public TokenResponse issueTokens(AuthenticatedUser user) {
         Instant issuedAt = clock.instant();
-        String accessToken = encode(user.username(), user.roles(), "access", issuedAt, properties.accessTokenTtl());
-        String refreshToken = encode(user.username(), user.roles(), "refresh", issuedAt, properties.refreshTokenTtl());
+        String accessToken = encode(user.id(), user.username(), user.uuid(), user.roles(), "access", issuedAt, properties.accessTokenTtl());
+        String refreshToken = encode(user.id(), user.username(), user.uuid(), user.roles(), "refresh", issuedAt, properties.refreshTokenTtl());
         return new TokenResponse(
                 accessToken,
                 refreshToken,
@@ -65,7 +65,10 @@ public class JwtTokenService {
             if (roles == null) {
                 throw new InvalidRefreshTokenException();
             }
-            return issueTokens(new AuthenticatedUser(null, jwt.getSubject(), java.util.Set.copyOf(roles)));
+            Long userId = jwt.getClaim("user_id") != null ? ((Number) jwt.getClaim("user_id")).longValue() : null;
+            String uuidStr = jwt.getClaimAsString("uuid");
+            UUID uuid = uuidStr != null && !uuidStr.isBlank() ? UUID.fromString(uuidStr) : null;
+            return issueTokens(new AuthenticatedUser(userId, jwt.getSubject(), uuid, java.util.Set.copyOf(roles)));
         } catch (JwtException | IllegalArgumentException exception) {
             throw new InvalidRefreshTokenException();
         }
@@ -75,19 +78,25 @@ public class JwtTokenService {
         return signingKey.keyId();
     }
 
-    private String encode(String username, Iterable<String> roles, String tokenType, Instant issuedAt, java.time.Duration ttl) {
+    private String encode(Long userId, String username, UUID uuid, Iterable<String> roles, String tokenType, Instant issuedAt, java.time.Duration ttl) {
         List<String> roleList = java.util.stream.StreamSupport.stream(roles.spliterator(), false)
                 .sorted()
                 .toList();
-        JwtClaimsSet claims = JwtClaimsSet.builder()
+        JwtClaimsSet.Builder builder = JwtClaimsSet.builder()
                 .issuer(properties.issuer())
                 .subject(username)
                 .issuedAt(issuedAt)
                 .expiresAt(issuedAt.plus(ttl))
                 .id(UUID.randomUUID().toString())
                 .claim("token_type", tokenType)
-                .claim("roles", roleList)
-                .build();
+                .claim("roles", roleList);
+        if (userId != null) {
+            builder.claim("user_id", userId);
+        }
+        if (uuid != null) {
+            builder.claim("uuid", uuid.toString());
+        }
+        JwtClaimsSet claims = builder.build();
         JwsHeader header = JwsHeader.with(SignatureAlgorithm.RS256)
                 .keyId(signingKey.keyId())
                 .build();

@@ -10,7 +10,7 @@ paths:
   /api/auth-service/auth/login:
     post:
       operationId: login
-      summary: Войти и получить пару токенов
+      summary: Войти по email/никнейму и паролю, получить пару токенов
       requestBody:
         required: true
         content:
@@ -29,6 +29,67 @@ paths:
         '401':
           $ref: '#/components/responses/Problem'
         '503':
+          $ref: '#/components/responses/Problem'
+  /api/auth-service/auth/register/send-code:
+    post:
+      operationId: sendRegistrationCode
+      summary: Проверить доступность email/никнейма и отправить код подтверждения
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterSendCodeRequest'
+      responses:
+        '200':
+          description: Информация об отправке кода
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendCodeResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /api/auth-service/auth/register/verify-code:
+    post:
+      operationId: completeRegistration
+      summary: Проверить код подтверждения и завершить регистрацию
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterVerifyCodeRequest'
+      responses:
+        '200':
+          description: Успешная регистрация и выпуск токенов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /api/auth-service/auth/resend-code:
+    post:
+      operationId: resendVerificationCode
+      summary: Повторная отправка кода подтверждения
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendCodeRequest'
+      responses:
+        '200':
+          description: Информация о повторной отправке кода
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendCodeResponse'
+        '400':
           $ref: '#/components/responses/Problem'
   /api/auth-service/auth/refresh:
     post:
@@ -68,6 +129,129 @@ paths:
                     type: array
                     items:
                       type: object
+  /api/auth-service/auth/microsoft/authorize-url:
+    get:
+      operationId: getMicrosoftAuthorizeUrl
+      summary: Получить ссылку для перенаправления на авторизацию Microsoft
+      parameters:
+        - name: redirect_uri
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ссылка для логина Microsoft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MicrosoftAuthorizeUrlResponse'
+  /api/auth-service/auth/microsoft/login:
+    post:
+      operationId: loginWithMicrosoft
+      summary: Обменять authorization_code Microsoft на токены Waltercraft
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MicrosoftLoginRequest'
+      responses:
+        '200':
+          description: Пара токенов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '503':
+          $ref: '#/components/responses/Problem'
+  /api/auth-service/auth/microsoft/link:
+    post:
+      operationId: linkMinecraftAccount
+      summary: Привязать аккаунт Minecraft к текущему профилю
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MicrosoftLoginRequest'
+      responses:
+        '200':
+          description: Успешная привязка
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /api/auth-service/auth/microsoft/device-code:
+    post:
+      operationId: getMicrosoftDeviceCode
+      summary: Запросить код устройства для авторизации через microsoft.com/link
+      responses:
+        '200':
+          description: Код устройства и ссылка для подтверждения
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceCodeResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+  /api/auth-service/auth/microsoft/device-login:
+    post:
+      operationId: loginWithMicrosoftDevice
+      summary: Проверить статус подтверждения кода устройства и получить токены
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceLoginRequest'
+      responses:
+        '200':
+          description: Статус авторизации (PENDING или SUCCESS)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceLoginResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+  /api/auth-service/auth/microsoft/device-link:
+    post:
+      operationId: linkMicrosoftDevice
+      summary: Привязать аккаунт через код устройства
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceLoginRequest'
+      responses:
+        '200':
+          description: Статус привязки (PENDING или SUCCESS)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceLoginResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
 components:
   securitySchemes:
     bearerAuth:
@@ -92,6 +276,21 @@ components:
       properties:
         refreshToken:
           type: string
+    MicrosoftAuthorizeUrlResponse:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+    MicrosoftLoginRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+        redirectUri:
+          type: string
     TokenResponse:
       type: object
       required: [accessToken, refreshToken, tokenType, expiresIn]
@@ -107,6 +306,91 @@ components:
           type: integer
           format: int64
           description: Срок действия access token в секундах
+    DeviceCodeResponse:
+      type: object
+      required: [deviceCode, userCode, verificationUri, expiresIn, interval]
+      properties:
+        deviceCode:
+          type: string
+        userCode:
+          type: string
+        verificationUri:
+          type: string
+          format: uri
+        expiresIn:
+          type: integer
+        interval:
+          type: integer
+    DeviceLoginRequest:
+      type: object
+      required: [deviceCode]
+      properties:
+        deviceCode:
+          type: string
+    DeviceLoginResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [PENDING, SUCCESS]
+        tokens:
+          $ref: '#/components/schemas/TokenResponse'
+    RegisterSendCodeRequest:
+      type: object
+      required: [email, username, password]
+      properties:
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+          minLength: 3
+          maxLength: 16
+        password:
+          type: string
+          minLength: 6
+          maxLength: 72
+    RegisterVerifyCodeRequest:
+      type: object
+      required: [email, username, password, code]
+      properties:
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+          minLength: 3
+          maxLength: 16
+        password:
+          type: string
+          minLength: 6
+          maxLength: 72
+        code:
+          type: string
+          pattern: '^[0-9]{6}$'
+    ResendCodeRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+        purpose:
+          type: string
+          default: REGISTRATION
+    SendCodeResponse:
+      type: object
+      required: [email, expiresInSeconds, cooldownSeconds, message]
+      properties:
+        email:
+          type: string
+        expiresInSeconds:
+          type: integer
+        cooldownSeconds:
+          type: integer
+        message:
+          type: string
     Problem:
       type: object
       required: [type, title, status, detail, code, message, details]

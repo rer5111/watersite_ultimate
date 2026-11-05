@@ -35,6 +35,43 @@ public class ApiExceptionHandler {
         return problem(HttpStatus.SERVICE_UNAVAILABLE, "AUTH_DEPENDENCY_UNAVAILABLE", "Сервис проверки аккаунтов временно недоступен", Map.of());
     }
 
+    @ExceptionHandler(MinecraftOAuthException.class)
+    public ResponseEntity<ProblemDetail> minecraftOAuthFailed(MinecraftOAuthException exception) {
+        return problem(HttpStatus.BAD_REQUEST, "MICROSOFT_AUTH_FAILED", exception.getMessage(), Map.of());
+    }
+
+    @ExceptionHandler(MinecraftProfileNotFoundException.class)
+    public ResponseEntity<ProblemDetail> minecraftProfileNotFound(MinecraftProfileNotFoundException exception) {
+        return problem(HttpStatus.FORBIDDEN, "MINECRAFT_LICENSE_REQUIRED", exception.getMessage(), Map.of());
+    }
+
+    @ExceptionHandler(MinecraftAccountAlreadyLinkedException.class)
+    public ResponseEntity<ProblemDetail> minecraftAlreadyLinked(MinecraftAccountAlreadyLinkedException exception) {
+        return problem(HttpStatus.CONFLICT, "MINECRAFT_ACCOUNT_ALREADY_LINKED", exception.getMessage(), Map.of());
+    }
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ProblemDetail> userAlreadyExists(UserAlreadyExistsException exception) {
+        String field = exception.getField();
+        if (field == null && exception.getMessage() != null) {
+            String lower = exception.getMessage().toLowerCase();
+            if (lower.contains("никнейм") || lower.contains("username")) {
+                field = "nickname";
+            } else if (lower.contains("email") || lower.contains("почт")) {
+                field = "email";
+            }
+        }
+        Map<String, String> details = field != null
+                ? Map.of(field, exception.getMessage())
+                : Map.of();
+        return problem(HttpStatus.CONFLICT, "USER_ALREADY_EXISTS", exception.getMessage(), details);
+    }
+
+    @ExceptionHandler(InvalidVerificationCodeException.class)
+    public ResponseEntity<ProblemDetail> invalidVerificationCode(InvalidVerificationCodeException exception) {
+        return problem(HttpStatus.BAD_REQUEST, "INVALID_VERIFICATION_CODE", exception.getMessage(), Map.of());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ProblemDetail> validation(MethodArgumentNotValidException exception) {
         Map<String, String> details = new LinkedHashMap<>();

@@ -30,6 +30,11 @@ auth:
     allow-ephemeral-key: ${AUTH_JWT_ALLOW_EPHEMERAL_KEY:true}
     access-token-ttl: ${AUTH_ACCESS_TOKEN_TTL:PT15M}
     refresh-token-ttl: ${AUTH_REFRESH_TOKEN_TTL:P7D}
+  microsoft:
+    client-id: ${MICROSOFT_CLIENT_ID:}
+    client-secret: ${MICROSOFT_CLIENT_SECRET:}
+    redirect-uri: ${MICROSOFT_REDIRECT_URI:http://localhost:5173/auth/microsoft/callback}
+    scopes: ${MICROSOFT_SCOPES:XboxLive.signin offline_access}
 
 player-service:
   base-url: ${PLAYER_SERVICE_BASE_URL:http://localhost:8081}
