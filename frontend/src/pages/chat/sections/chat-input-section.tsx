@@ -1,7 +1,7 @@
-import { useRef, useState, type FormEvent } from 'react';
 import { Button, Input } from '@/components/ui';
 import { ChevronRightIcon } from '@/components/ui';
 import type { ChatStatus } from '@/api/chat';
+import { useRef, useState } from 'react';
 
 export type ChatInputSectionProps = {
   status: ChatStatus | null;
@@ -23,7 +23,7 @@ export function ChatInputSection({
 
   const isDisconnected = status !== null && (!status.discordConfigured || !status.discordConnected);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     setLocalError(null);
 
@@ -76,6 +76,7 @@ export function ChatInputSection({
         onSubmit={(e) => void handleSubmit(e)}
         className="flex items-stretch"
         aria-label="Форма отправки сообщения"
+        autoComplete="off"
       >
         <Input
           ref={inputRef}
@@ -85,7 +86,8 @@ export function ChatInputSection({
           disabled={isSending || isDisconnected}
           isError={Boolean(displayError)}
           aria-label="Текст сообщения"
-          className="flex-1 rounded-none border-0"
+          className="flex-1 rounded-none border-0 focus-visible:ring-inset"
+          autoComplete="off"
         />
         <Button
           type="submit"

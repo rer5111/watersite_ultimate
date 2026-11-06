@@ -13,28 +13,25 @@ export function ChatWindowSection({
   currentUsername,
   isConnecting,
 }: ChatWindowSectionProps) {
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
   return (
     <div
+      ref={scrollRef}
       role="list"
       aria-label="Сообщения чата"
       aria-live="polite"
       aria-busy={isConnecting}
-      className="bg-surface flex h-[480px] flex-col gap-4 overflow-y-auto p-4"
+      className="bg-surface flex h-100 flex-col gap-4 overflow-y-auto p-4"
     >
-      {isConnecting && (
-        <p className="text-foreground-subtle m-auto text-sm">Подключение к чату…</p>
-      )}
-
       {!isConnecting && messages.length === 0 && (
-        <p className="text-foreground-subtle m-auto text-sm">
-          Сообщений пока нет. Будьте первым!
-        </p>
+        <p className="text-foreground-subtle m-auto text-sm">Сообщений пока нет. Будьте первым!</p>
       )}
 
       {messages.map((msg) => (
@@ -44,8 +41,6 @@ export function ChatWindowSection({
           isOwn={currentUsername !== null && msg.user === currentUsername}
         />
       ))}
-
-      <div ref={bottomRef} />
     </div>
   );
 }

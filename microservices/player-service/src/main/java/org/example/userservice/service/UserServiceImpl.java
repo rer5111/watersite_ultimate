@@ -108,7 +108,7 @@ public class UserServiceImpl implements UserService {
             }
             List<UserModel> users = userRepository.findByAccount(account);
             if (!users.isEmpty()) {
-                return users.get(0);
+                return syncSiteLogin(users.get(0), username);
             }
             UserModel user = new UserModel(0L, username, passwordEncoder.encode(UUID.randomUUID().toString()), Set.of(RoleEnum.USER), account);
             return userRepository.save(user);
@@ -126,7 +126,7 @@ public class UserServiceImpl implements UserService {
                 acc.setUuid(uuid);
                 accountRepository.save(acc);
                 if (!users.isEmpty()) {
-                    return users.get(0);
+                    return syncSiteLogin(users.get(0), username);
                 }
                 UserModel user = new UserModel(0L, username, passwordEncoder.encode(UUID.randomUUID().toString()), Set.of(RoleEnum.USER), acc);
                 return userRepository.save(user);
@@ -166,6 +166,7 @@ public class UserServiceImpl implements UserService {
         userAccount.setUuid(uuid);
         userAccount.setUsername(username);
         accountRepository.save(userAccount);
+        syncSiteLogin(user, username);
     }
 
     @Override
@@ -220,19 +221,25 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserProfileResponse updateMinecraftNickname(long userId, String fallbackUsername, String newNickname) {
         UserModel user = resolveUser(userId, fallbackUsername);
+        String nickname = newNickname.trim();
+        for (UserModel other : userRepository.findByIdentifier(nickname)) {
+            if (other.getId() != user.getId()) {
+                throw new IllegalStateException("Пользователь с таким никнеймом уже зарегистрирован");
+            }
+        }
         AccountModel account = user.getAccount();
         if (account == null) {
-            account = new AccountModel(0L, newNickname.trim(), LocalDate.now());
-            account = accountRepository.save(account);
+            account = accountRepository.save(new AccountModel(0L, nickname, LocalDate.now()));
             user.setAccount(account);
-            userRepository.save(user);
         } else {
-            if (!newNickname.trim().equalsIgnoreCase(account.getUsername())) {
+            if (!nickname.equalsIgnoreCase(account.getUsername())) {
                 account.setUuid(null);
             }
-            account.setUsername(newNickname.trim());
+            account.setUsername(nickname);
             accountRepository.save(account);
         }
+        user.setName(nickname);
+        userRepository.save(user);
         return mapToProfile(user);
     }
 
@@ -294,6 +301,14 @@ public class UserServiceImpl implements UserService {
             }
         }
         throw new IllegalArgumentException("Пользователь не найден");
+    }
+
+    private UserModel syncSiteLogin(UserModel user, String username) {
+        if (!username.equals(user.getName())) {
+            user.setName(username);
+            return userRepository.save(user);
+        }
+        return user;
     }
 
     private UserProfileResponse mapToProfile(UserModel user) {

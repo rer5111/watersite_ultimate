@@ -33,8 +33,8 @@ export function ChatMessageItem({ message, isOwn }: ChatMessageItemProps) {
 
         <p
           className={cn(
-            'bg-surface text-foreground-muted px-3 py-2 text-sm leading-relaxed wrap-break-word',
-            isOwn && 'bg-primary/10 text-foreground'
+            'bg-card text-foreground w-fit px-3 py-2 text-sm leading-relaxed wrap-break-word',
+            isOwn && 'bg-primary/40'
           )}
         >
           {message.message}

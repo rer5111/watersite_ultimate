@@ -160,6 +160,37 @@ class UserServiceTest {
     }
 
     @Test
+    void updateMinecraftNickname_updatesSiteLoginAndMinecraftAccount() {
+        AccountModel account = new AccountModel(10L, "OldName", LocalDate.now());
+        UserModel user = new UserModel(20L, "OldName", "pass", Set.of(RoleEnum.USER), account);
+        when(userRepository.findById(20L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdentifier("NewName")).thenReturn(List.of(user));
+
+        var profile = userService.updateMinecraftNickname(20L, "OldName", "NewName");
+
+        assertThat(user.getName()).isEqualTo("NewName");
+        assertThat(account.getUsername()).isEqualTo("NewName");
+        assertThat(profile.username()).isEqualTo("NewName");
+        assertThat(profile.minecraftNickname()).isEqualTo("NewName");
+        verify(accountRepository).save(account);
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void updateMinecraftNickname_throwsWhenNicknameBelongsToAnotherUser() {
+        AccountModel account = new AccountModel(10L, "OldName", LocalDate.now());
+        UserModel user = new UserModel(20L, "OldName", "pass", Set.of(RoleEnum.USER), account);
+        UserModel other = new UserModel(21L, "TakenName", "pass", Set.of(RoleEnum.USER), new AccountModel(11L, "TakenName", LocalDate.now()));
+        when(userRepository.findById(20L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdentifier("TakenName")).thenReturn(List.of(other));
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                userService.updateMinecraftNickname(20L, "OldName", "TakenName")
+        ).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("уже зарегистрирован");
+    }
+
+    @Test
     void linkMinecraft_updatesUserAccount() {
         UUID uuid = UUID.randomUUID();
         AccountModel account = new AccountModel(10L, "OldName", LocalDate.now());
@@ -172,6 +203,7 @@ class UserServiceTest {
 
         assertThat(account.getUuid()).isEqualTo(uuid);
         assertThat(account.getUsername()).isEqualTo("NewMinecraftName");
+        assertThat(user.getName()).isEqualTo("NewMinecraftName");
         verify(accountRepository).save(account);
     }
 }

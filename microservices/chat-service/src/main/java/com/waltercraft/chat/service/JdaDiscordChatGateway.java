@@ -28,6 +28,7 @@ public class JdaDiscordChatGateway extends ListenerAdapter implements DiscordCha
 
     private static final Logger log = LoggerFactory.getLogger(JdaDiscordChatGateway.class);
     private static final Pattern MINECRAFT_CHAT_PATTERN = Pattern.compile("^<([^>]+)>\\s(.*)$");
+    private static final String WEB_MESSAGE_PREFIX = "[Web] ";
 
     private final DiscordBotProperties properties;
     private final ChatHistory history;
@@ -70,7 +71,7 @@ public class JdaDiscordChatGateway extends ListenerAdapter implements DiscordCha
         if (channel == null) {
             throw new DiscordUnavailableException();
         }
-        channel.sendMessage("[Web] " + username + ": " + message).queue(
+        channel.sendMessage(WEB_MESSAGE_PREFIX + username + ": " + message).queue(
                 ignored -> history.publish(username, message, Origin.WEB),
                 exception -> log.warn("Discord rejected a chat message", exception));
     }
@@ -100,6 +101,11 @@ public class JdaDiscordChatGateway extends ListenerAdapter implements DiscordCha
 
         String username = event.getAuthor().getName();
         String message = event.getMessage().getContentDisplay();
+        boolean ownWebRelay = message.startsWith(WEB_MESSAGE_PREFIX)
+                && event.getAuthor().getId().equals(event.getJDA().getSelfUser().getId());
+        if (ownWebRelay) {
+            return;
+        }
         Origin origin = Origin.DISCORD;
         if (minecraftBot) {
             Matcher matcher = MINECRAFT_CHAT_PATTERN.matcher(message);

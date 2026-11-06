@@ -177,6 +177,25 @@ class UserControllerTest {
 
     @Test
     @WithMockUser(username = "test_player")
+    void updateMinecraftNickname_WhenNicknameIsTaken_ReturnsConflict() throws Exception {
+        when(userService.updateMinecraftNickname(0L, "test_player", "TakenName"))
+                .thenThrow(new IllegalStateException("Пользователь с таким никнеймом уже зарегистрирован"));
+
+        String json = """
+                {
+                    "minecraftNickname": "TakenName"
+                }
+                """;
+
+        mockMvc.perform(put("/api/user/me/minecraft-nickname")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message", is("Пользователь с таким никнеймом уже зарегистрирован")));
+    }
+
+    @Test
+    @WithMockUser(username = "test_player")
     void deleteCurrentUserAccount_WhenAuthenticated_ReturnsNoContent() throws Exception {
         mockMvc.perform(delete("/api/user/me"))
                 .andExpect(status().isNoContent());

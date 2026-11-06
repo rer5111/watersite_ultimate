@@ -309,7 +309,7 @@ public class UserController {
     }
 
     @PutMapping(path = "/me/minecraft-nickname", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
-    public ResponseEntity<UserProfileResponse> updateMinecraftNickname(
+    public ResponseEntity<?> updateMinecraftNickname(
             @AuthenticationPrincipal Jwt jwt,
             Authentication authentication,
             @Valid @RequestBody UpdateMinecraftNicknameRequest request
@@ -324,6 +324,9 @@ public class UserController {
             return ResponseEntity.ok(profile);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(java.util.Map.of("message", e.getMessage()));
         }
     }
 

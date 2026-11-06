@@ -33,7 +33,7 @@ function formatDateTime(value: string): string {
 export function NotificationsPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
-  const { data: notifications = [], isLoading, isError, refetch } = useNotifications(Boolean(user));
+  const { data: notifications = [], isError, refetch } = useNotifications(Boolean(user));
 
   const invalidate = () =>
     void queryClient.invalidateQueries({ queryKey: notificationQueryKeys.all });
@@ -102,8 +102,6 @@ export function NotificationsPage() {
             Повторить попытку
           </Button>
         </section>
-      ) : isLoading ? (
-        <p className="text-foreground-muted py-12 text-center text-sm">Загрузка уведомлений…</p>
       ) : notifications.length === 0 ? (
         <section className="border-border bg-card border p-8 text-center">
           <p className="text-foreground-muted text-sm">Уведомлений пока нет.</p>

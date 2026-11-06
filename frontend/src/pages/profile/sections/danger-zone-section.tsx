@@ -11,11 +11,12 @@ export function DangerZoneSection({ username }: DangerZoneSectionProps) {
 
   return (
     <section aria-label="Опасная зона" className="flex flex-col gap-4">
-      <div className="bg-card flex flex-col gap-4 border border-error/40 p-6 md:p-8">
+      <div className="bg-card flex flex-col gap-4 p-6 md:p-8">
         <div className="flex flex-col gap-1">
-          <h2 className="text-xl font-bold text-error">Опасная зона</h2>
-          <p className="text-sm text-foreground-muted">
-            Удаление учётной записи необратимо. Все игровые достижения, привязанный аккаунт Minecraft и данные доступа будут стёрты навсегда.
+          <h2 className="text-error text-xl font-bold">Опасная зона</h2>
+          <p className="text-foreground-muted text-sm">
+            Удаление учётной записи необратимо. Все игровые достижения, привязанный аккаунт
+            Minecraft и данные доступа будут стёрты навсегда.
           </p>
         </div>
 
@@ -24,7 +25,7 @@ export function DangerZoneSection({ username }: DangerZoneSectionProps) {
             type="button"
             variant="secondary"
             onClick={() => setIsDialogOpen(true)}
-            className="border border-error/50 text-error hover:bg-error hover:text-white"
+            className="bg-error hover:bg-error-hover text-white"
           >
             Удалить аккаунт
           </Button>

@@ -18,7 +18,7 @@ export function AdminLayout() {
   return (
     <div className="bg-background min-h-dvh">
       <div className="mx-auto flex w-full max-w-[100rem] flex-col lg:flex-row">
-        <aside className="border-border bg-card flex w-full shrink-0 flex-col gap-6 border-b p-4 lg:min-h-dvh lg:w-64 lg:border-r lg:border-b-0 lg:p-6">
+        <aside className="border-border bg-card flex w-full shrink-0 flex-col gap-6 border-b p-4 lg:sticky lg:top-0 lg:h-dvh lg:w-64 lg:overflow-y-auto lg:border-r lg:border-b-0 lg:p-6">
           <div className="flex items-center justify-between gap-4">
             <div className="flex flex-col gap-1">
               <Link
@@ -27,15 +27,8 @@ export function AdminLayout() {
               >
                 Waltercraft
               </Link>
-              <span className="text-primary text-[11px] font-semibold tracking-widest uppercase">
-                Админ-панель
-              </span>
             </div>
-            <span className="border-primary/40 bg-primary/10 text-primary rounded-none border px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase">
-              Admin
-            </span>
           </div>
-
           <nav aria-label="Разделы админ-панели" className="flex gap-2 overflow-x-auto lg:flex-col">
             {adminNavItems.map((item) => (
               <NavLink
@@ -55,12 +48,9 @@ export function AdminLayout() {
               </NavLink>
             ))}
           </nav>
-
           <div className="border-border mt-auto hidden flex-col gap-3 border-t pt-4 lg:flex">
             <div className="flex flex-col gap-0.5">
-              <span className="text-foreground-muted text-xs tracking-wider uppercase">
-                Вы вошли как
-              </span>
+              <span className="text-foreground-muted text-xs tracking-wider">Вы вошли как:</span>
               <span className="text-foreground text-sm font-semibold">{user?.username}</span>
             </div>
             <div className="flex flex-col gap-2">
