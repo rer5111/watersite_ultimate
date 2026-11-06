@@ -3,6 +3,8 @@ package org.example.userservice.service;
 import org.example.userservice.dto.AdminUserResponse;
 import org.example.userservice.dto.AdminUserUpdateRequest;
 import org.example.userservice.dto.RoleRequestResponse;
+import org.example.userservice.exception.ConflictException;
+import org.example.userservice.exception.ResourceNotFoundException;
 import org.example.userservice.model.AccountModel;
 import org.example.userservice.model.RoleEnum;
 import org.example.userservice.model.RoleRequest;
@@ -23,8 +25,8 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(MockitoExtension.class)
 class AdminUserServiceTest {
@@ -64,15 +66,48 @@ class AdminUserServiceTest {
         UserModel user = user(2, "applicant");
         RoleRequest request = new RoleRequest(user, RoleEnum.MODERATOR, "Хочу модерировать", LocalDateTime.now());
         request.setId(7);
-        when(roleRequestRepository.findById(7L)).thenReturn(Optional.of(request));
-        when(roleRequestRepository.save(request)).thenReturn(request);
+        when(roleRequestRepository.findByIdForUpdate(7L)).thenReturn(Optional.of(request));
 
         RoleRequestResponse response = adminUserService.approveRoleRequest(7L);
 
         assertThat(response.status()).isEqualTo("APPROVED");
         assertThat(response.reviewedAt()).isNotNull();
         assertThat(user.getRoles()).containsExactly(RoleEnum.MODERATOR);
-        verify(userRepository).save(user);
+    }
+
+    @Test
+    void rejectRoleRequest_marksRequestRejectedAndKeepsExistingRoles() {
+        UserModel user = user(3, "applicant");
+        RoleRequest request = new RoleRequest(user, RoleEnum.ADMIN, "Хочу помогать", LocalDateTime.now());
+        request.setId(8);
+        when(roleRequestRepository.findByIdForUpdate(8L)).thenReturn(Optional.of(request));
+
+        RoleRequestResponse response = adminUserService.rejectRoleRequest(8L, "Нужно больше опыта");
+
+        assertThat(response.status()).isEqualTo("REJECTED");
+        assertThat(response.rejectionReason()).isEqualTo("Нужно больше опыта");
+        assertThat(response.reviewedAt()).isNotNull();
+        assertThat(user.getRoles()).containsExactly(RoleEnum.USER);
+    }
+
+    @Test
+    void approveRoleRequest_whenMissing_throwsNotFound() {
+        when(roleRequestRepository.findByIdForUpdate(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> adminUserService.approveRoleRequest(99L))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void rejectRoleRequest_whenAlreadyReviewed_throwsConflict() {
+        UserModel user = user(4, "applicant");
+        RoleRequest request = new RoleRequest(user, RoleEnum.MODERATOR, "Хочу помогать", LocalDateTime.now());
+        request.setId(10);
+        request.setStatus(org.example.userservice.model.RoleRequestStatus.APPROVED);
+        when(roleRequestRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(request));
+
+        assertThatThrownBy(() -> adminUserService.rejectRoleRequest(10L, "Повторная причина"))
+                .isInstanceOf(ConflictException.class);
     }
 
     private UserModel user(long id, String name) {

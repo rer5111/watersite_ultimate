@@ -194,13 +194,7 @@ public class UserController {
 
     @PostMapping(path = "/admin/role-requests/{id}/approve", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<RoleRequestResponse> approveRoleRequest(@PathVariable long id) {
-        try {
-            return ResponseEntity.ok(adminUserService.approveRoleRequest(id));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
+        return ResponseEntity.ok(adminUserService.approveRoleRequest(id));
     }
 
     @PostMapping(path = "/admin/role-requests/{id}/reject", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
@@ -208,13 +202,7 @@ public class UserController {
             @PathVariable long id,
             @Valid @RequestBody RoleRejectRequest request
     ) {
-        try {
-            return ResponseEntity.ok(adminUserService.rejectRoleRequest(id, request.reason()));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
+        return ResponseEntity.ok(adminUserService.rejectRoleRequest(id, request.reason()));
     }
 
     @GetMapping(path = "/findPage/{page}", produces = APPLICATION_JSON_VALUE)

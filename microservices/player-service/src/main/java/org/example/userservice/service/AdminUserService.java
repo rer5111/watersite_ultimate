@@ -4,6 +4,9 @@ import org.example.userservice.dto.AdminUserResponse;
 import org.example.userservice.dto.AdminUserUpdateRequest;
 import org.example.userservice.dto.CreateRoleRequestRequest;
 import org.example.userservice.dto.RoleRequestResponse;
+import org.example.userservice.exception.BadRequestException;
+import org.example.userservice.exception.ConflictException;
+import org.example.userservice.exception.ResourceNotFoundException;
 import org.example.userservice.model.AccountModel;
 import org.example.userservice.model.RoleEnum;
 import org.example.userservice.model.RoleRequest;
@@ -14,14 +17,19 @@ import org.example.userservice.repository.RoleRequestRepository;
 import org.example.userservice.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
 @Service
 public class AdminUserService {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminUserService.class);
 
     private final UserRepository userRepository;
     private final RoleRequestRepository roleRequestRepository;
@@ -56,11 +64,11 @@ public class AdminUserService {
     @Transactional
     public RoleRequestResponse submitRoleRequest(long userId, CreateRoleRequestRequest request) {
         if (request.requestedRole() == RoleEnum.USER) {
-            throw new IllegalArgumentException("Заявку можно подать только на роль MODERATOR или ADMIN");
+            throw new BadRequestException("Заявку можно подать только на роль MODERATOR или ADMIN");
         }
         UserModel user = findUser(userId);
         if (roleRequestRepository.existsByUser_IdAndStatus(userId, RoleRequestStatus.PENDING)) {
-            throw new IllegalStateException("У вас уже есть заявка на рассмотрении");
+            throw new ConflictException("У вас уже есть заявка на рассмотрении");
         }
         RoleRequest roleRequest = new RoleRequest(
                 user,
@@ -68,45 +76,50 @@ public class AdminUserService {
                 request.note().trim(),
                 LocalDateTime.now()
         );
-        return toRoleRequestResponse(roleRequestRepository.save(roleRequest));
+        RoleRequest saved = roleRequestRepository.save(roleRequest);
+        log.info("Role request submitted roleRequestId={} applicantId={} requestedRole={}",
+                saved.getId(), userId, saved.getRequestedRole());
+        return toRoleRequestResponse(saved);
     }
 
     @Transactional
     public RoleRequestResponse approveRoleRequest(long id) {
         RoleRequest request = findPendingRequest(id);
         UserModel user = request.getUser();
-        user.setRoles(Set.of(request.getRequestedRole()));
-        userRepository.save(user);
+        user.setRoles(EnumSet.of(request.getRequestedRole()));
 
         request.setStatus(RoleRequestStatus.APPROVED);
         request.setReviewedAt(LocalDateTime.now());
         request.setRejectionReason(null);
-        return toRoleRequestResponse(roleRequestRepository.save(request));
+        log.info("Role request approved roleRequestId={} applicantId={} grantedRole={}",
+                request.getId(), user.getId(), request.getRequestedRole());
+        return toRoleRequestResponse(request);
     }
 
     @Transactional
     public RoleRequestResponse rejectRoleRequest(long id, String reason) {
         RoleRequest request = findPendingRequest(id);
         if (reason == null || reason.isBlank()) {
-            throw new IllegalArgumentException("Причина отклонения обязательна");
+            throw new BadRequestException("Причина отклонения обязательна");
         }
 
         request.setStatus(RoleRequestStatus.REJECTED);
         request.setReviewedAt(LocalDateTime.now());
         request.setRejectionReason(reason.trim());
-        return toRoleRequestResponse(roleRequestRepository.save(request));
+        log.info("Role request rejected roleRequestId={} applicantId={}", request.getId(), request.getUser().getId());
+        return toRoleRequestResponse(request);
     }
 
     private UserModel findUser(long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден"));
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
     }
 
     private RoleRequest findPendingRequest(long id) {
-        RoleRequest request = roleRequestRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Заявка не найдена"));
+        RoleRequest request = roleRequestRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Заявка не найдена"));
         if (request.getStatus() != RoleRequestStatus.PENDING) {
-            throw new IllegalStateException("Заявка уже рассмотрена");
+            throw new ConflictException("Заявка уже рассмотрена");
         }
         return request;
     }

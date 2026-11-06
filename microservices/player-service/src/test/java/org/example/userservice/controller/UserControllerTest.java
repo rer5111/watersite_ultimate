@@ -2,7 +2,12 @@ package org.example.userservice.controller;
 
 import org.example.userservice.model.AccountModel;
 import org.example.userservice.model.RoleEnum;
+import org.example.userservice.model.RoleRequest;
+import org.example.userservice.model.RoleRequestStatus;
 import org.example.userservice.model.UserModel;
+import org.example.userservice.repository.AccountRepository;
+import org.example.userservice.repository.RoleRequestRepository;
+import org.example.userservice.repository.UserRepository;
 import org.example.userservice.service.AccountService;
 import org.example.userservice.service.SeasonService;
 import org.example.userservice.service.UserService;
@@ -17,6 +22,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -28,7 +35,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -39,6 +48,15 @@ class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private AccountRepository accountRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private RoleRequestRepository roleRequestRepository;
 
     @MockBean
     private UserService userService;
@@ -201,5 +219,83 @@ class UserControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(userService).deleteUserAndAccount(0L, "test_player");
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void approveRoleRequest_updatesUserRoleAndRequestInPostgres() throws Exception {
+        RoleRequest roleRequest = createRoleRequest(RoleEnum.MODERATOR);
+
+        mockMvc.perform(post("/api/user/admin/role-requests/{id}/approve", roleRequest.getId()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value("APPROVED"))
+                .andExpect(jsonPath("$.requestedRole").value("MODERATOR"))
+                .andExpect(jsonPath("$.reviewedAt").isNotEmpty());
+
+        UserModel updatedUser = userRepository.findById(roleRequest.getUser().getId()).orElseThrow();
+        RoleRequest updatedRequest = roleRequestRepository.findById(roleRequest.getId()).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(updatedUser.getRoles()).containsExactly(RoleEnum.MODERATOR);
+        org.assertj.core.api.Assertions.assertThat(updatedRequest.getStatus()).isEqualTo(RoleRequestStatus.APPROVED);
+
+        mockMvc.perform(post("/api/user/admin/role-requests/{id}/approve", roleRequest.getId()))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+                .andExpect(jsonPath("$.code").value("CONFLICT"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void rejectRoleRequest_returnsProblemDetailsForInvalidAndMissingRequests() throws Exception {
+        RoleRequest roleRequest = createRoleRequest(RoleEnum.ADMIN);
+
+        mockMvc.perform(post("/api/user/admin/role-requests/{id}/reject", roleRequest.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\" \"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+
+        mockMvc.perform(post("/api/user/admin/role-requests/{id}/reject", 999999L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Недостаточно информации\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+
+        mockMvc.perform(post("/api/user/admin/role-requests/{id}/reject", roleRequest.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"Нужно больше опыта\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("REJECTED"))
+                .andExpect(jsonPath("$.rejectionReason").value("Нужно больше опыта"));
+
+        UserModel unchangedUser = userRepository.findById(roleRequest.getUser().getId()).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(unchangedUser.getRoles()).containsExactly(RoleEnum.USER);
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void roleRequestReviewIsForbiddenForNonAdministrators() throws Exception {
+        mockMvc.perform(post("/api/user/admin/role-requests/{id}/approve", 123L))
+                .andExpect(status().isForbidden());
+    }
+
+    private RoleRequest createRoleRequest(RoleEnum requestedRole) {
+        String username = "role-test-" + UUID.randomUUID();
+        AccountModel account = new AccountModel();
+        account.setUsername(username);
+        account.setJoinDate(LocalDate.now());
+        AccountModel savedAccount = accountRepository.saveAndFlush(account);
+
+        UserModel user = new UserModel();
+        user.setName(username);
+        user.setPassword("test-password-hash");
+        user.setRoles(new HashSet<>(Set.of(RoleEnum.USER)));
+        user.setAccount(savedAccount);
+        UserModel savedUser = userRepository.saveAndFlush(user);
+
+        RoleRequest roleRequest = new RoleRequest(savedUser, requestedRole, "Тестовая заявка", LocalDateTime.now());
+        return roleRequestRepository.saveAndFlush(roleRequest);
     }
 }
