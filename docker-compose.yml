@@ -161,7 +161,7 @@ services:
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: 'true'
       CONFIG_SERVER_URL: http://config-server:8888
     healthcheck:
-      test: ['CMD', 'curl', '-fsS', 'http://localhost:8081/actuator/health']
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:8081/api/user/admins']
       interval: 5s
       timeout: 3s
       retries: 30
