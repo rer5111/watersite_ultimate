@@ -7,6 +7,8 @@ import com.waltercraft.payment.entity.Payment;
 import com.waltercraft.payment.exception.ConflictException;
 import com.waltercraft.payment.exception.ResourceNotFoundException;
 import com.waltercraft.payment.repository.PaymentRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -16,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class PaymentService {
+
+    private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
 
     private final PaymentRepository paymentRepository;
 
@@ -37,7 +41,9 @@ public class PaymentService {
     public PaymentResponse create(PaymentCreateRequest request) {
         Payment payment = new Payment(request.payerUsername().trim(), request.paymentDate(),
                 request.amountRub(), cleanReference(request.externalReference()));
-        return PaymentResponse.from(paymentRepository.saveAndFlush(payment));
+        Payment saved = paymentRepository.saveAndFlush(payment);
+        log.info("Payment record created paymentId={}", saved.getId());
+        return PaymentResponse.from(saved);
     }
 
     @Transactional
@@ -50,7 +56,9 @@ public class PaymentService {
         payment.replace(request.payerUsername().trim(), request.paymentDate(),
                 request.amountRub(), cleanReference(request.externalReference()));
         try {
-            return PaymentResponse.from(paymentRepository.saveAndFlush(payment));
+            Payment saved = paymentRepository.saveAndFlush(payment);
+            log.info("Payment record updated paymentId={}", saved.getId());
+            return PaymentResponse.from(saved);
         } catch (ObjectOptimisticLockingFailureException exception) {
             throw new ConflictException("Платёж уже изменён. Обновите данные и повторите запрос.");
         }
@@ -62,6 +70,7 @@ public class PaymentService {
                 .orElseThrow(ResourceNotFoundException::new);
         paymentRepository.delete(payment);
         paymentRepository.flush();
+        log.info("Payment record deleted paymentId={}", id);
     }
 
     private static String cleanReference(String reference) {
