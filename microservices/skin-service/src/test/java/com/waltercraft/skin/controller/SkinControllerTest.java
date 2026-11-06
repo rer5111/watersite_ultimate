@@ -1,10 +1,12 @@
 package com.waltercraft.skin.controller;
 
 import com.waltercraft.skin.service.SkinService;
+import com.waltercraft.skin.config.SecurityConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -23,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "spring.cloud.config.enabled=false",
         "eureka.client.enabled=false"
 })
+@Import(SecurityConfiguration.class)
 class SkinControllerTest {
 
     @Autowired

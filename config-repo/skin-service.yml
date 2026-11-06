@@ -8,7 +8,16 @@ management:
       exposure:
         include: health,info,metrics,prometheus
 
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${JWT_JWK_SET_URI:http://auth-service:8090/.well-known/jwks.json}
+
 skin:
+  jwt:
+    issuer: ${AUTH_JWT_ISSUER:https://auth.waltercraft.ru}
   provider:
     vzge-url: ${VZGE_BASE_URL:https://vzge.me}
     crafatar-url: ${CRAFATAR_BASE_URL:https://crafatar.com}
