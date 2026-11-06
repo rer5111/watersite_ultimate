@@ -74,3 +74,9 @@ security:
 notification:
   jwt:
     issuer: ${AUTH_JWT_ISSUER:https://auth.waltercraft.ru}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: false

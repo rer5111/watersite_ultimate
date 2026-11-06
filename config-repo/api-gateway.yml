@@ -73,7 +73,36 @@ spring:
       globalcors:
         cors-configurations:
           '[/**]':
-            allowed-origins: ${FRONTEND_ORIGIN:http://localhost:5173}
-            allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+            allowed-origin-patterns:
+              - http://localhost:*
+              - http://127.0.0.1:*
+              - ${FRONTEND_ORIGIN:http://localhost:5173}
+            allowed-methods: GET,POST,PUT,DELETE,OPTIONS,PATCH
             allowed-headers: '*'
             allow-credentials: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    version: 5.21.0
+    disable-swagger-default-url: true
+    persistAuthorization: true
+    urls:
+      - name: auth-service
+        url: /api/auth-service/v3/api-docs
+      - name: player-service
+        url: /api/player-service/v3/api-docs
+      - name: application-service
+        url: /api/application-service/v3/api-docs
+      - name: payment-service
+        url: /api/payment-service/v3/api-docs
+      - name: donation-service
+        url: /api/donation-service/v3/api-docs
+      - name: chat-service
+        url: /api/chat-service/v3/api-docs
+      - name: notification-service
+        url: /api/notification-service/v3/api-docs
+      - name: event-service
+        url: /api/event-service/v3/api-docs
+      - name: skin-service
+        url: /api/skin-service/v3/api-docs

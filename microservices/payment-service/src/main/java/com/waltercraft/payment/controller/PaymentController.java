@@ -6,6 +6,7 @@ import com.waltercraft.payment.dto.PaymentUpdateRequest;
 import com.waltercraft.payment.service.PaymentService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedModel;
@@ -39,7 +40,7 @@ public class PaymentController {
 
     @GetMapping
     public PagedModel<PaymentResponse> listPayments(
-            @PageableDefault(size = 25, sort = {"paymentDate", "id"}, direction = Sort.Direction.DESC)
+            @ParameterObject @PageableDefault(size = 25, sort = {"paymentDate", "id"}, direction = Sort.Direction.DESC)
             Pageable pageable) {
         return new PagedModel<>(paymentService.list(pageable));
     }

@@ -36,7 +36,8 @@ public class SecurityConfig {
                 .antMatchers(HttpMethod.GET, "/api/user/admins").permitAll()
                 // Internal authentication calls are protected by the shared X-Internal-Auth secret.
                 .antMatchers("/internal/auth/**").permitAll()
-                .antMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                .antMatchers("/actuator/health/**", "/actuator/info",
+                        "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**").permitAll()
                 // Current user endpoints accessible by any authenticated user
                 .antMatchers("/api/user/me", "/api/user/me/**").authenticated()
                 .antMatchers(HttpMethod.POST, "/api/user/role-requests").authenticated()

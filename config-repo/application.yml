@@ -1,3 +1,9 @@
+server:
+  forward-headers-strategy: framework
+
+springdoc:
+  default-flat-param-object: true
+
 eureka:
   client:
     service-url:

@@ -5,6 +5,7 @@ import com.waltercraft.donation.dto.DonationTypeResponse;
 import com.waltercraft.donation.dto.DonationTypeUpdateRequest;
 import com.waltercraft.donation.service.DonationTypeService;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedModel;
 import org.springframework.data.web.PageableDefault;
@@ -35,7 +36,7 @@ public class DonationTypeController {
 
     @GetMapping("/donation-types")
     public ResponseEntity<PagedModel<DonationTypeResponse>> listDonationTypes(
-            @PageableDefault(size = 50, sort = {"displayOrder", "id"}) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 50, sort = {"displayOrder", "id"}) Pageable pageable) {
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.maxAge(Duration.ofMinutes(10)).cachePublic())
                 .body(new PagedModel<>(donationTypeService.listPublic(pageable)));
@@ -43,7 +44,7 @@ public class DonationTypeController {
 
     @GetMapping("/admin/donation-types")
     public PagedModel<DonationTypeResponse> listAllDonationTypes(
-            @PageableDefault(size = 50, sort = {"displayOrder", "id"}) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 50, sort = {"displayOrder", "id"}) Pageable pageable) {
         return new PagedModel<>(donationTypeService.listAll(pageable));
     }
 

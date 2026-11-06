@@ -3,6 +3,7 @@ package com.waltercraft.donation.exception;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +40,8 @@ public class ApiExceptionHandler {
     }
 
     @ExceptionHandler({HttpMessageNotReadableException.class, MissingServletRequestParameterException.class,
-            MethodArgumentTypeMismatchException.class, PropertyReferenceException.class})
+            MethodArgumentTypeMismatchException.class, PropertyReferenceException.class,
+            InvalidDataAccessApiUsageException.class, IllegalArgumentException.class})
     public ResponseEntity<ProblemDetail> invalidRequest() {
         return problem(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Параметры запроса имеют неверный формат", Map.of());
     }

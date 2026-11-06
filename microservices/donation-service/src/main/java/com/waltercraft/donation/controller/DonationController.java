@@ -4,6 +4,7 @@ import com.waltercraft.donation.dto.DonationCreateRequest;
 import com.waltercraft.donation.dto.DonationResponse;
 import com.waltercraft.donation.service.DonationService;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedModel;
@@ -30,7 +31,7 @@ public class DonationController {
 
     @GetMapping
     public PagedModel<DonationResponse> listDonations(
-            @PageableDefault(size = 25, sort = "donatedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 25, sort = "donatedAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return new PagedModel<>(donationService.list(pageable));
     }
 

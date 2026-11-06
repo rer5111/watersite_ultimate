@@ -5,6 +5,7 @@ import com.waltercraft.event.dto.EventResponse;
 import com.waltercraft.event.dto.EventUpdateRequest;
 import com.waltercraft.event.service.EventService;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.web.PagedModel;
@@ -35,7 +36,7 @@ public class EventController {
 
     @GetMapping("/events")
     public ResponseEntity<PagedModel<EventResponse>> listEvents(
-            @PageableDefault(size = 50, sort = {"displayOrder", "id"}) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 50, sort = {"displayOrder", "id"}) Pageable pageable) {
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.maxAge(Duration.ofMinutes(10)).cachePublic())
                 .body(new PagedModel<>(eventService.listPublic(pageable)));
@@ -48,7 +49,7 @@ public class EventController {
 
     @GetMapping("/admin/events")
     public PagedModel<EventResponse> listAllEvents(
-            @PageableDefault(size = 50, sort = {"displayOrder", "id"}) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 50, sort = {"displayOrder", "id"}) Pageable pageable) {
         return new PagedModel<>(eventService.listAll(pageable));
     }
 

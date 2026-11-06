@@ -55,3 +55,9 @@ management:
       group:
         readiness:
           include: readinessState
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: false

@@ -13,7 +13,13 @@ import reactor.core.publisher.Mono;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "spring.cloud.gateway.routes[0].id=fallback",
+        "spring.cloud.gateway.routes[0].uri=http://localhost:1",
+        "spring.cloud.gateway.routes[0].predicates[0]=Path=/**",
+        "springdoc.swagger-ui.urls[0].name=test-service",
+        "springdoc.swagger-ui.urls[0].url=/api/test-service/v3/api-docs"
+})
 @AutoConfigureWebTestClient
 @ActiveProfiles("test")
 class ApiGatewayApplicationTests {
@@ -39,6 +45,32 @@ class ApiGatewayApplicationTests {
                 .uri("/internal/notifications/email/send-code")
                 .exchange()
                 .expectStatus().is4xxClientError();
+    }
+
+    @Test
+    void swaggerUiIsServedLocally() {
+        String uiLocation = webTestClient.get()
+                .uri("/swagger-ui.html")
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .returnResult(Void.class)
+                .getResponseHeaders()
+                .getLocation()
+                .toString();
+
+        webTestClient.get()
+                .uri(uiLocation)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class)
+                .value(body -> assertThat(body).contains("Swagger UI"));
+
+        webTestClient.get()
+                .uri("/v3/api-docs/swagger-config")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class)
+                .value(body -> assertThat(body).contains("/api/test-service/v3/api-docs"));
     }
 
     @Test

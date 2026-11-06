@@ -27,7 +27,8 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "/auth/microsoft/device-link").authenticated()
                         .requestMatchers(HttpMethod.POST, "/auth/change-email/**", "/auth/change-password/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/.well-known/jwks.json").permitAll()
-                        .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/health/**", "/actuator/info",
+                                "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**").permitAll()
                         .anyRequest().denyAll()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder)))

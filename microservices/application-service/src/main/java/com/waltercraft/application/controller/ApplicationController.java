@@ -6,6 +6,7 @@ import com.waltercraft.application.dto.ApplicationUpdateRequest;
 import com.waltercraft.application.service.ApplicationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedModel;
@@ -40,7 +41,7 @@ public class ApplicationController {
 
     @GetMapping
     public PagedModel<ApplicationResponse> listApplications(
-            @PageableDefault(size = 25, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable,
+            @ParameterObject @PageableDefault(size = 25, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable,
             Authentication authentication
     ) {
         return new PagedModel<>(applicationService.list(pageable, authentication));

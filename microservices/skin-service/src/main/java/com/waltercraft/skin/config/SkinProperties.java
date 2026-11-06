@@ -1,9 +1,7 @@
 package com.waltercraft.skin.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.ConstructorBinding;
 
-@ConstructorBinding
 @ConfigurationProperties(prefix = "skin.provider")
 public record SkinProperties(
         String vzgeUrl,
