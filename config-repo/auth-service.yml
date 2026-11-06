@@ -34,15 +34,15 @@ notification-service:
 
 security:
   auth-service:
-    shared-secret: ${AUTH_SERVICE_SHARED_SECRET:}
+    shared-secret: ${AUTH_SERVICE_SHARED_SECRET}
   notification-service:
-    shared-secret: ${NOTIFICATION_SERVICE_SHARED_SECRET:waltercraft-internal-auth-secret-key-32-chars}
+    shared-secret: ${NOTIFICATION_SERVICE_SHARED_SECRET}
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       probes:
@@ -50,3 +50,30 @@ management:
       group:
         readiness:
           include: readinessState
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 3s
+    instances:
+      playerService:
+        baseConfig: default
+        recordExceptions:
+          - com.waltercraft.auth.exception.PlayerServiceUnavailableException
+      notificationService:
+        baseConfig: default
+        recordExceptions:
+          - com.waltercraft.auth.exception.NotificationServiceUnavailableException
+      minecraftOAuth:
+        baseConfig: default
+        recordExceptions:
+          - com.waltercraft.auth.exception.MinecraftProviderUnavailableException

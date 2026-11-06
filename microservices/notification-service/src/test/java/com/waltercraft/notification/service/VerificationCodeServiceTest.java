@@ -36,7 +36,8 @@ class VerificationCodeServiceTest {
 
     @BeforeEach
     void setUp() {
-        verificationCodeService = new VerificationCodeService(codeRepository, emailSenderService, "");
+        verificationCodeService = new VerificationCodeService(
+                codeRepository, emailSenderService, "test-verification-code-pepper-value-32chars");
     }
 
     @Test

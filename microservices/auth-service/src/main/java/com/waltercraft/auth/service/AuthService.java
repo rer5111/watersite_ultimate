@@ -12,12 +12,16 @@ import com.waltercraft.auth.dto.RegisterVerifyCodeRequest;
 import com.waltercraft.auth.dto.ResendCodeRequest;
 import com.waltercraft.auth.dto.SendCodeResponse;
 import com.waltercraft.auth.dto.TokenResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final CredentialVerifier credentialVerifier;
     private final JwtTokenService jwtTokenService;
@@ -41,7 +45,9 @@ public class AuthService {
 
     public TokenResponse login(LoginRequest request) {
         AuthenticatedUser user = credentialVerifier.verify(request.username(), request.password());
-        return jwtTokenService.issueTokens(user);
+        TokenResponse tokens = jwtTokenService.issueTokens(user);
+        log.info("User authenticated userId={} method=password", user.id());
+        return tokens;
     }
 
     public TokenResponse refresh(String refreshToken) {
@@ -58,7 +64,9 @@ public class AuthService {
         if (user.uuid() == null) {
             user = new AuthenticatedUser(user.id(), user.username(), profile.uuid(), user.roles());
         }
-        return jwtTokenService.issueTokens(user);
+        TokenResponse tokens = jwtTokenService.issueTokens(user);
+        log.info("User authenticated userId={} method=minecraft", user.id());
+        return tokens;
     }
 
     public void linkMinecraft(long userId, String code, String redirectUri) {
@@ -102,6 +110,7 @@ public class AuthService {
     public TokenResponse completeRegistration(RegisterVerifyCodeRequest request) {
         notificationServiceClient.verifyCode(request.email(), request.code(), "REGISTRATION");
         AuthenticatedUser user = playerServiceClient.register(request.email(), request.username(), request.password());
+        log.info("User registered userId={}", user.id());
         return jwtTokenService.issueTokens(user);
     }
 

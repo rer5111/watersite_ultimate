@@ -41,7 +41,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       probes:
@@ -49,9 +49,34 @@ management:
       group:
         readiness:
           include: readinessState
+      show-details: when-authorized
 
 springdoc:
   api-docs:
     path: /v3/api-docs
   swagger-ui:
     enabled: false
+
+logging:
+  structured:
+    format:
+      console: logstash
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 3s
+    instances:
+      discord:
+        baseConfig: default
+        recordExceptions:
+          - com.waltercraft.chat.exception.DiscordUnavailableException

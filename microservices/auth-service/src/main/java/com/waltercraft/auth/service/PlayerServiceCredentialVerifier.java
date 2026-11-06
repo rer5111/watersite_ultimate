@@ -15,6 +15,9 @@ import com.waltercraft.auth.exception.InvalidCredentialsException;
 import com.waltercraft.auth.exception.MinecraftAccountAlreadyLinkedException;
 import com.waltercraft.auth.exception.PlayerServiceUnavailableException;
 import com.waltercraft.auth.exception.UserAlreadyExistsException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -26,6 +29,8 @@ import java.util.UUID;
 @Component
 public class PlayerServiceCredentialVerifier implements CredentialVerifier, PlayerServiceClient {
 
+    private static final Logger log = LoggerFactory.getLogger(PlayerServiceCredentialVerifier.class);
+
     private final RestClient playerServiceRestClient;
 
     public PlayerServiceCredentialVerifier(RestClient playerServiceRestClient) {
@@ -33,6 +38,7 @@ public class PlayerServiceCredentialVerifier implements CredentialVerifier, Play
     }
 
     @Override
+    @CircuitBreaker(name = "playerService", fallbackMethod = "verifyFallback")
     public AuthenticatedUser verify(String username, String password) {
         CredentialVerificationResponse response;
         try {
@@ -54,6 +60,7 @@ public class PlayerServiceCredentialVerifier implements CredentialVerifier, Play
     }
 
     @Override
+    @CircuitBreaker(name = "playerService", fallbackMethod = "minecraftLoginFallback")
     public AuthenticatedUser loginWithMinecraft(UUID uuid, String username) {
         CredentialVerificationResponse response;
         try {
@@ -72,6 +79,7 @@ public class PlayerServiceCredentialVerifier implements CredentialVerifier, Play
     }
 
     @Override
+    @CircuitBreaker(name = "playerService", fallbackMethod = "linkMinecraftFallback")
     public void linkMinecraft(long userId, UUID uuid, String username) {
         try {
             playerServiceRestClient.post()
@@ -90,6 +98,7 @@ public class PlayerServiceCredentialVerifier implements CredentialVerifier, Play
     }
 
     @Override
+    @CircuitBreaker(name = "playerService", fallbackMethod = "checkAvailabilityFallback")
     public void checkAvailability(String email, String username) {
         CheckAvailabilityResponse response;
         try {
@@ -113,6 +122,7 @@ public class PlayerServiceCredentialVerifier implements CredentialVerifier, Play
     }
 
     @Override
+    @CircuitBreaker(name = "playerService", fallbackMethod = "registerFallback")
     public AuthenticatedUser register(String email, String username, String password) {
         CredentialVerificationResponse response;
         try {
@@ -136,6 +146,7 @@ public class PlayerServiceCredentialVerifier implements CredentialVerifier, Play
     }
 
     @Override
+    @CircuitBreaker(name = "playerService", fallbackMethod = "changeEmailFallback")
     public void changeEmail(long userId, String newEmail) {
         try {
             playerServiceRestClient.post()
@@ -154,6 +165,7 @@ public class PlayerServiceCredentialVerifier implements CredentialVerifier, Play
     }
 
     @Override
+    @CircuitBreaker(name = "playerService", fallbackMethod = "changePasswordFallback")
     public void changePassword(long userId, String newPassword) {
         try {
             playerServiceRestClient.post()
@@ -167,6 +179,7 @@ public class PlayerServiceCredentialVerifier implements CredentialVerifier, Play
     }
 
     @Override
+    @CircuitBreaker(name = "playerService", fallbackMethod = "getUserEmailFallback")
     public String getUserEmail(long userId) {
         try {
             return playerServiceRestClient.get()
@@ -176,5 +189,51 @@ public class PlayerServiceCredentialVerifier implements CredentialVerifier, Play
         } catch (RestClientException exception) {
             throw new PlayerServiceUnavailableException(exception);
         }
+    }
+
+    private AuthenticatedUser verifyFallback(String username, String password, Throwable cause) {
+        throw fallbackFailure(cause);
+    }
+
+    private AuthenticatedUser minecraftLoginFallback(UUID uuid, String username, Throwable cause) {
+        throw fallbackFailure(cause);
+    }
+
+    private void linkMinecraftFallback(long userId, UUID uuid, String username, Throwable cause) {
+        throw fallbackFailure(cause);
+    }
+
+    private void checkAvailabilityFallback(String email, String username, Throwable cause) {
+        throw fallbackFailure(cause);
+    }
+
+    private AuthenticatedUser registerFallback(String email, String username, String password, Throwable cause) {
+        throw fallbackFailure(cause);
+    }
+
+    private void changeEmailFallback(long userId, String newEmail, Throwable cause) {
+        throw fallbackFailure(cause);
+    }
+
+    private void changePasswordFallback(long userId, String newPassword, Throwable cause) {
+        throw fallbackFailure(cause);
+    }
+
+    private String getUserEmailFallback(long userId, Throwable cause) {
+        throw fallbackFailure(cause);
+    }
+
+    private RuntimeException fallbackFailure(Throwable cause) {
+        if (cause instanceof InvalidCredentialsException
+                || cause instanceof UserAlreadyExistsException
+                || cause instanceof MinecraftAccountAlreadyLinkedException) {
+            return (RuntimeException) cause;
+        }
+        if (cause instanceof PlayerServiceUnavailableException unavailable) {
+            log.warn("Player service fallback invoked exceptionType={}", cause.getClass().getSimpleName());
+            return unavailable;
+        }
+        log.warn("Player service fallback invoked exceptionType={}", cause.getClass().getSimpleName());
+        return new PlayerServiceUnavailableException(cause);
     }
 }

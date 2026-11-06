@@ -1,6 +1,8 @@
 package com.waltercraft.notification.service;
 
+import com.waltercraft.notification.exception.EmailDeliveryUnavailableException;
 import jakarta.mail.internet.MimeMessage;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,7 @@ public class EmailSenderService {
         this.fromAddress = fromAddress;
     }
 
+    @CircuitBreaker(name = "smtp", fallbackMethod = "sendVerificationCodeFallback")
     public void sendVerificationCode(String toEmail, String code, String purpose) {
         String title;
         String description;
@@ -95,8 +98,7 @@ public class EmailSenderService {
                 """.formatted(title, title, description, code);
 
         if (mailSender == null) {
-            log.warn("JavaMailSender не настроен. Локальный вывод кода для {}: [{}]", toEmail, code);
-            return;
+            throw new EmailDeliveryUnavailableException();
         }
 
         try {
@@ -107,9 +109,18 @@ public class EmailSenderService {
             helper.setSubject(subject);
             helper.setText(plainText, htmlText);
             mailSender.send(mimeMessage);
-            log.info("Письмо с кодом успешно отправлено на {}", toEmail);
+            log.info("Verification email sent purpose={}", purpose);
         } catch (Exception ex) {
-            log.warn("Не удалось отправить письмо через SMTP ({}). Локальный код: [{}]", ex.getMessage(), code);
+            throw new EmailDeliveryUnavailableException(ex);
         }
+    }
+
+    private void sendVerificationCodeFallback(String toEmail, String code, String purpose, Throwable cause) {
+        log.warn("Email delivery fallback invoked purpose={} exceptionType={}",
+                purpose, cause.getClass().getSimpleName());
+        if (cause instanceof EmailDeliveryUnavailableException unavailable) {
+            throw unavailable;
+        }
+        throw new EmailDeliveryUnavailableException(cause);
     }
 }

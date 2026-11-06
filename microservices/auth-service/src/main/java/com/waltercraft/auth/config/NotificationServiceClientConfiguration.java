@@ -11,7 +11,7 @@ public class NotificationServiceClientConfiguration {
     @Bean
     public RestClient notificationServiceRestClient(
             @Value("${notification-service.base-url:http://localhost:8087}") String baseUrl,
-            @Value("${security.notification-service.shared-secret:waltercraft-internal-auth-secret-key-32-chars}") String sharedSecret
+            @Value("${security.notification-service.shared-secret}") String sharedSecret
     ) {
         return RestClient.builder()
                 .baseUrl(baseUrl)

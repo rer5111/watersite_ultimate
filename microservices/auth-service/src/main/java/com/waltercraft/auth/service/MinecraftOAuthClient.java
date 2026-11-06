@@ -8,6 +8,8 @@ import com.waltercraft.auth.dto.DeviceCodeResponse;
 import com.waltercraft.auth.dto.MinecraftProfile;
 import com.waltercraft.auth.exception.MinecraftOAuthException;
 import com.waltercraft.auth.exception.MinecraftProfileNotFoundException;
+import com.waltercraft.auth.exception.MinecraftProviderUnavailableException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -17,8 +19,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.util.UriComponentsBuilder;
-
+import org.springframework.web.client.RestClientException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -52,19 +54,23 @@ public class MinecraftOAuthClient {
 
     public String buildAuthorizeUrl(String customRedirectUri, String state) {
         String effectiveRedirect = resolveRedirectUri(customRedirectUri);
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(MS_AUTH_URL)
-                .queryParam("client_id", properties.clientId())
-                .queryParam("response_type", "code")
-                .queryParam("redirect_uri", effectiveRedirect)
-                .queryParam("scope", properties.scopes())
-                .queryParam("prompt", "select_account");
-
+        StringBuilder url = new StringBuilder(MS_AUTH_URL)
+                .append("?client_id=").append(encodeQueryValue(properties.clientId()))
+                .append("&response_type=code")
+                .append("&redirect_uri=").append(encodeQueryValue(effectiveRedirect))
+                .append("&scope=").append(encodeQueryValue(properties.scopes()))
+                .append("&prompt=select_account");
         if (state != null && !state.isBlank()) {
-            builder.queryParam("state", state);
+            url.append("&state=").append(encodeQueryValue(state));
         }
-        return builder.toUriString();
+        return url.toString();
     }
 
+    private static String encodeQueryValue(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
+    }
+
+    @CircuitBreaker(name = "minecraftOAuth", fallbackMethod = "initiateDeviceCodeFallback")
     public DeviceCodeResponse initiateDeviceCodeFlow() {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("client_id", properties.deviceClientId());
@@ -90,14 +96,18 @@ public class MinecraftOAuthClient {
                     response.interval() != null ? response.interval() : 5
             );
         } catch (RestClientResponseException ex) {
-            log.error("Device code request failed with status {}: {}", ex.getStatusCode(), ex.getResponseBodyAsString());
+            rethrowIfProviderUnavailable(ex);
+            log.error("Device code request failed status={}", ex.getStatusCode());
             throw new MinecraftOAuthException(extractErrorMessage(ex, "Ошибка получения кода устройства Microsoft"), ex);
+        } catch (RestClientException ex) {
+            throw new MinecraftProviderUnavailableException(ex);
         } catch (Exception ex) {
             log.error("Unexpected error initiating device code flow", ex);
             throw new MinecraftOAuthException("Не удалось связаться с Microsoft сервисом авторизации", ex);
         }
     }
 
+    @CircuitBreaker(name = "minecraftOAuth", fallbackMethod = "pollDeviceTokenFallback")
     public Optional<String> pollDeviceToken(String deviceCode) {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("grant_type", "urn:ietf:params:oauth:grant-type:device_code");
@@ -117,6 +127,7 @@ public class MinecraftOAuthClient {
             }
             return Optional.empty();
         } catch (RestClientResponseException ex) {
+            rethrowIfProviderUnavailable(ex);
             String body = ex.getResponseBodyAsString();
             if (body != null) {
                 if (body.contains("authorization_pending") || body.contains("slow_down")) {
@@ -126,14 +137,17 @@ public class MinecraftOAuthClient {
                     throw new MinecraftOAuthException("Срок действия кода авторизации истёк. Запросите новый код.");
                 }
             }
-            log.error("Device token poll failed with status {}: {}", ex.getStatusCode(), body);
+            log.error("Device token poll failed status={}", ex.getStatusCode());
             throw new MinecraftOAuthException(extractErrorMessage(ex, "Ошибка проверки статуса авторизации"), ex);
+        } catch (RestClientException ex) {
+            throw new MinecraftProviderUnavailableException(ex);
         } catch (Exception ex) {
             log.error("Unexpected error polling device token", ex);
             throw new MinecraftOAuthException("Не удалось проверить статус авторизации Microsoft", ex);
         }
     }
 
+    @CircuitBreaker(name = "minecraftOAuth", fallbackMethod = "exchangeMsTokenFallback")
     public MinecraftProfile exchangeMsAccessTokenForMinecraftProfile(String msAccessToken) {
         XboxToken xblToken = acquireXboxLiveToken(msAccessToken);
         XboxToken xstsMojangToken = acquireXstsToken(xblToken.token(), "rp://api.minecraftservices.com/");
@@ -141,6 +155,7 @@ public class MinecraftOAuthClient {
         return fetchMinecraftProfile(minecraftToken);
     }
 
+    @CircuitBreaker(name = "minecraftOAuth", fallbackMethod = "exchangeCodeFallback")
     public MinecraftProfile exchangeCodeForMinecraftProfile(String code, String customRedirectUri) {
         String effectiveRedirect = resolveRedirectUri(customRedirectUri);
 
@@ -203,8 +218,10 @@ public class MinecraftOAuthClient {
                     }
                 }
             }
+        } catch (RestClientException ex) {
+            throw new MinecraftProviderUnavailableException(ex);
         } catch (Exception ex) {
-            log.warn("Failed to fetch Xbox profile settings: {}", ex.getMessage());
+            log.debug("Xbox profile settings unavailable exceptionType={}", ex.getClass().getSimpleName());
         }
         return null;
     }
@@ -219,18 +236,20 @@ public class MinecraftOAuthClient {
                     .body(MojangProfileResponse.class);
 
             if (response != null && response.id() != null && response.name() != null) {
-                log.info("Found official Mojang profile for {}: uuid={}, name={}", safeName, response.id(), response.name());
+                log.info("Resolved official Minecraft profile provider=Mojang");
                 return new MinecraftProfile(parseMojangUuid(response.id()), response.name());
             }
         } catch (RestClientResponseException ex) {
-            log.info("No official Minecraft Java profile found for gamertag {} (status {}), using Xbox Live gamertag",
-                    safeName, ex.getStatusCode());
+            rethrowIfProviderUnavailable(ex);
+            log.info("No official Minecraft Java profile found status={}, using Xbox Live gamertag", ex.getStatusCode());
+        } catch (RestClientException ex) {
+            throw new MinecraftProviderUnavailableException(ex);
         } catch (Exception ex) {
-            log.warn("Failed to query Mojang public API for gamertag {}: {}", safeName, ex.getMessage());
+            log.warn("Mojang profile lookup failed exceptionType={}", ex.getClass().getSimpleName());
         }
 
         UUID offlineUuid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + safeName).getBytes(StandardCharsets.UTF_8));
-        log.info("Using deterministic offline UUID for Xbox user {}: {}", safeName, offlineUuid);
+        log.info("Using deterministic offline UUID for unlinked Xbox profile");
         return new MinecraftProfile(offlineUuid, safeName);
     }
 
@@ -265,8 +284,11 @@ public class MinecraftOAuthClient {
             }
             return response.accessToken();
         } catch (RestClientResponseException ex) {
-            log.error("Microsoft OAuth exchange failed with status {}: {}", ex.getStatusCode(), ex.getResponseBodyAsString());
+            rethrowIfProviderUnavailable(ex);
+            log.error("Microsoft OAuth exchange failed status={}", ex.getStatusCode());
             throw new MinecraftOAuthException(extractErrorMessage(ex, "Ошибка авторизации Microsoft"), ex);
+        } catch (RestClientException ex) {
+            throw new MinecraftProviderUnavailableException(ex);
         } catch (Exception ex) {
             log.error("Unexpected error exchanging Microsoft OAuth code", ex);
             throw new MinecraftOAuthException("Не удалось связаться с Microsoft OAuth сервисом", ex);
@@ -295,8 +317,11 @@ public class MinecraftOAuthClient {
 
             return extractXboxToken(response, "Xbox Live");
         } catch (RestClientResponseException ex) {
-            log.error("Xbox Live authentication failed with status {}: {}", ex.getStatusCode(), ex.getResponseBodyAsString());
+            rethrowIfProviderUnavailable(ex);
+            log.error("Xbox Live authentication failed status={}", ex.getStatusCode());
             throw new MinecraftOAuthException(extractErrorMessage(ex, "Ошибка авторизации Xbox Live"), ex);
+        } catch (RestClientException ex) {
+            throw new MinecraftProviderUnavailableException(ex);
         } catch (Exception ex) {
             log.error("Unexpected error authenticating with Xbox Live", ex);
             throw new MinecraftOAuthException("Не удалось связаться с сервисом Xbox Live", ex);
@@ -324,8 +349,11 @@ public class MinecraftOAuthClient {
 
             return extractXboxToken(response, "XSTS");
         } catch (RestClientResponseException ex) {
-            log.error("XSTS authorization failed for {} with status {}: {}", relyingParty, ex.getStatusCode(), ex.getResponseBodyAsString());
+            rethrowIfProviderUnavailable(ex);
+            log.error("XSTS authorization failed status={}", ex.getStatusCode());
             throw new MinecraftOAuthException(extractErrorMessage(ex, "Ошибка авторизации XSTS"), ex);
+        } catch (RestClientException ex) {
+            throw new MinecraftProviderUnavailableException(ex);
         } catch (Exception ex) {
             log.error("Unexpected error authorizing with XSTS for " + relyingParty, ex);
             throw new MinecraftOAuthException("Не удалось связаться с сервисом XSTS", ex);
@@ -366,8 +394,11 @@ public class MinecraftOAuthClient {
             }
             return response.accessToken();
         } catch (RestClientResponseException ex) {
-            log.error("Minecraft login failed with status {}: {}", ex.getStatusCode(), ex.getResponseBodyAsString());
+            rethrowIfProviderUnavailable(ex);
+            log.error("Minecraft login failed status={}", ex.getStatusCode());
             throw new MinecraftOAuthException(extractErrorMessage(ex, "Ошибка входа в Minecraft Services"), ex);
+        } catch (RestClientException ex) {
+            throw new MinecraftProviderUnavailableException(ex);
         } catch (Exception ex) {
             log.error("Unexpected error authenticating with Minecraft Services", ex);
             throw new MinecraftOAuthException("Не удалось связаться с Minecraft Services", ex);
@@ -395,11 +426,51 @@ public class MinecraftOAuthClient {
         } catch (MinecraftProfileNotFoundException ex) {
             throw ex;
         } catch (RestClientResponseException ex) {
-            log.error("Minecraft profile fetch failed with status {}: {}", ex.getStatusCode(), ex.getResponseBodyAsString());
+            rethrowIfProviderUnavailable(ex);
+            log.error("Minecraft profile fetch failed status={}", ex.getStatusCode());
             throw new MinecraftOAuthException(extractErrorMessage(ex, "Ошибка получения профиля Minecraft"), ex);
+        } catch (RestClientException ex) {
+            throw new MinecraftProviderUnavailableException(ex);
         } catch (Exception ex) {
             log.error("Unexpected error fetching Minecraft profile", ex);
             throw new MinecraftOAuthException("Не удалось получить профиль Minecraft", ex);
+        }
+    }
+
+    private DeviceCodeResponse initiateDeviceCodeFallback(Throwable cause) {
+        throw providerFallback(cause);
+    }
+
+    private Optional<String> pollDeviceTokenFallback(String deviceCode, Throwable cause) {
+        throw providerFallback(cause);
+    }
+
+    private MinecraftProfile exchangeMsTokenFallback(String msAccessToken, Throwable cause) {
+        throw providerFallback(cause);
+    }
+
+    private MinecraftProfile exchangeCodeFallback(String code, String customRedirectUri, Throwable cause) {
+        throw providerFallback(cause);
+    }
+
+    private RuntimeException providerFallback(Throwable cause) {
+        if (cause instanceof MinecraftOAuthException oauthFailure) {
+            return oauthFailure;
+        }
+        if (cause instanceof MinecraftProfileNotFoundException profileNotFound) {
+            return profileNotFound;
+        }
+        if (cause instanceof MinecraftProviderUnavailableException unavailable) {
+            log.warn("Minecraft OAuth circuit fallback invoked exceptionType={}", cause.getClass().getSimpleName());
+            return unavailable;
+        }
+        log.warn("Minecraft OAuth circuit fallback invoked exceptionType={}", cause.getClass().getSimpleName());
+        return new MinecraftProviderUnavailableException(cause);
+    }
+
+    private static void rethrowIfProviderUnavailable(RestClientResponseException exception) {
+        if (exception.getStatusCode().is5xxServerError() || exception.getStatusCode().value() == 429) {
+            throw new MinecraftProviderUnavailableException(exception);
         }
     }
 

@@ -3,6 +3,9 @@ package com.waltercraft.chat.service;
 import com.waltercraft.chat.config.DiscordBotProperties;
 import com.waltercraft.chat.dto.ChatMessageResponse.Origin;
 import com.waltercraft.chat.exception.DiscordUnavailableException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import net.dv8tion.jda.api.JDA;
@@ -19,6 +22,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,12 +37,18 @@ public class JdaDiscordChatGateway extends ListenerAdapter implements DiscordCha
 
     private final DiscordBotProperties properties;
     private final ChatHistory history;
+    private final CircuitBreaker circuitBreaker;
     private final AtomicBoolean connected = new AtomicBoolean();
     private JDA jda;
 
-    public JdaDiscordChatGateway(DiscordBotProperties properties, ChatHistory history) {
+    public JdaDiscordChatGateway(
+            DiscordBotProperties properties,
+            ChatHistory history,
+            CircuitBreakerRegistry circuitBreakerRegistry
+    ) {
         this.properties = properties;
         this.history = history;
+        this.circuitBreaker = circuitBreakerRegistry.circuitBreaker("discord");
     }
 
     @PostConstruct
@@ -64,16 +75,43 @@ public class JdaDiscordChatGateway extends ListenerAdapter implements DiscordCha
 
     @Override
     public void send(String username, String message) {
-        if (!isConnected()) {
-            throw new DiscordUnavailableException();
+        try {
+            circuitBreaker.acquirePermission();
+        } catch (CallNotPermittedException exception) {
+            log.warn("Discord chat fallback invoked circuitState={}", circuitBreaker.getState());
+            throw new DiscordUnavailableException(exception);
         }
-        TextChannel channel = jda.getTextChannelById(properties.channelId());
-        if (channel == null) {
-            throw new DiscordUnavailableException();
+
+        long startedAt = System.nanoTime();
+        try {
+            if (!isConnected()) {
+                throw new DiscordUnavailableException();
+            }
+            TextChannel channel = jda.getTextChannelById(properties.channelId());
+            if (channel == null) {
+                throw new DiscordUnavailableException();
+            }
+            channel.sendMessage(WEB_MESSAGE_PREFIX + username + ": " + message).submit()
+                    .whenComplete((ignored, failure) -> {
+                        long duration = System.nanoTime() - startedAt;
+                        if (failure != null) {
+                            Throwable cause = failure instanceof CompletionException && failure.getCause() != null
+                                    ? failure.getCause() : failure;
+                            circuitBreaker.onError(duration, TimeUnit.NANOSECONDS, cause);
+                            log.warn("Discord message delivery failed exceptionType={}", cause.getClass().getSimpleName());
+                            return;
+                        }
+                        circuitBreaker.onSuccess(duration, TimeUnit.NANOSECONDS);
+                        history.publish(username, message, Origin.WEB);
+                    });
+        } catch (RuntimeException exception) {
+            circuitBreaker.onError(System.nanoTime() - startedAt, TimeUnit.NANOSECONDS, exception);
+            log.warn("Discord chat fallback invoked exceptionType={}", exception.getClass().getSimpleName());
+            if (exception instanceof DiscordUnavailableException unavailable) {
+                throw unavailable;
+            }
+            throw new DiscordUnavailableException(exception);
         }
-        channel.sendMessage(WEB_MESSAGE_PREFIX + username + ": " + message).queue(
-                ignored -> history.publish(username, message, Origin.WEB),
-                exception -> log.warn("Discord rejected a chat message", exception));
     }
 
     @Override

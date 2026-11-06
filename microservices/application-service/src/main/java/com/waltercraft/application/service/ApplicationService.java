@@ -8,6 +8,8 @@ import com.waltercraft.application.entity.ServerApplication;
 import com.waltercraft.application.exception.ConflictException;
 import com.waltercraft.application.exception.ResourceNotFoundException;
 import com.waltercraft.application.repository.ApplicationRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -19,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class ApplicationService {
+
+    private static final Logger log = LoggerFactory.getLogger(ApplicationService.class);
 
     private final ApplicationRepository applicationRepository;
 
@@ -41,7 +45,9 @@ public class ApplicationService {
     @Transactional
     public ApplicationResponse create(ApplicationCreateRequest request, Authentication authentication) {
         ServerApplication application = new ServerApplication(authentication.getName(), request.text());
-        return ApplicationResponse.from(applicationRepository.saveAndFlush(application));
+        ServerApplication saved = applicationRepository.saveAndFlush(application);
+        log.info("Application created applicationId={} status={}", saved.getId(), saved.getStatus());
+        return ApplicationResponse.from(saved);
     }
 
     @Transactional
@@ -53,7 +59,9 @@ public class ApplicationService {
         }
         application.replace(request.text(), request.status());
         try {
-            return ApplicationResponse.from(applicationRepository.saveAndFlush(application));
+            ServerApplication saved = applicationRepository.saveAndFlush(application);
+            log.info("Application reviewed applicationId={} status={}", saved.getId(), saved.getStatus());
+            return ApplicationResponse.from(saved);
         } catch (ObjectOptimisticLockingFailureException exception) {
             throw new ConflictException("Заявка уже изменена. Обновите данные и повторите запрос.");
         }
@@ -67,6 +75,7 @@ public class ApplicationService {
         }
         applicationRepository.delete(application);
         applicationRepository.flush();
+        log.info("Application deleted applicationId={}", id);
     }
 
     private ServerApplication findVisible(long id, Authentication authentication) {

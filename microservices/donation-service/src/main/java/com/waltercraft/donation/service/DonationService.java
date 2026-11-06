@@ -9,6 +9,8 @@ import com.waltercraft.donation.exception.InvalidReferenceException;
 import com.waltercraft.donation.exception.ResourceNotFoundException;
 import com.waltercraft.donation.repository.DonationRepository;
 import com.waltercraft.donation.repository.DonationTypeRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class DonationService {
+
+    private static final Logger log = LoggerFactory.getLogger(DonationService.class);
 
     private final DonationRepository donationRepository;
     private final DonationTypeRepository donationTypeRepository;
@@ -48,7 +52,9 @@ public class DonationService {
             paymentReference = null;
         }
         Donation donation = new Donation(request.playerId(), donationType, donationType.getPriceRub(), paymentReference);
-        return DonationResponse.from(donationRepository.saveAndFlush(donation));
+        Donation saved = donationRepository.saveAndFlush(donation);
+        log.info("Donation recorded donationId={} donationTypeId={}", saved.getId(), donationType.getId());
+        return DonationResponse.from(saved);
     }
 
     @Transactional
@@ -57,5 +63,6 @@ public class DonationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Запись о донате не найдена"));
         donationRepository.delete(donation);
         donationRepository.flush();
+        log.info("Donation record deleted donationId={}", id);
     }
 }

@@ -11,7 +11,7 @@ public class PlayerServiceClientConfiguration {
     @Bean
     public RestClient playerServiceRestClient(
             @Value("${player-service.base-url:http://localhost:8081}") String baseUrl,
-            @Value("${security.auth-service.shared-secret:}") String sharedSecret
+            @Value("${security.auth-service.shared-secret}") String sharedSecret
     ) {
         return RestClient.builder()
                 .baseUrl(baseUrl)

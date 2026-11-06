@@ -2,6 +2,9 @@ package com.waltercraft.chat.service;
 
 import com.waltercraft.chat.config.DiscordBotProperties;
 import com.waltercraft.chat.dto.ChatMessageResponse.Origin;
+import com.waltercraft.chat.exception.DiscordUnavailableException;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.SelfUser;
@@ -11,6 +14,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -21,8 +25,15 @@ class JdaDiscordChatGatewayTest {
     private static final String CHANNEL_ID = "channel";
 
     private final ChatHistory history = new ChatHistory();
+    private final CircuitBreakerRegistry circuitBreakers = CircuitBreakerRegistry.of(
+            CircuitBreakerConfig.custom()
+                    .slidingWindowSize(10)
+                    .minimumNumberOfCalls(10)
+                    .failureRateThreshold(50)
+                    .waitDurationInOpenState(java.time.Duration.ofSeconds(10))
+                    .build());
     private final JdaDiscordChatGateway gateway = new JdaDiscordChatGateway(
-            new DiscordBotProperties(true, "token", CHANNEL_ID, BOT_ID), history);
+            new DiscordBotProperties(true, "token", CHANNEL_ID, BOT_ID), history, circuitBreakers);
 
     @Test
     void ignoresTheWebRelayEchoFromItsOwnBot() {
@@ -39,6 +50,17 @@ class JdaDiscordChatGatewayTest {
         assertEquals(1, messages.size());
         assertEquals("Steve", messages.getFirst().user());
         assertEquals(Origin.MINECRAFT, messages.getFirst().origin());
+    }
+
+    @Test
+    void opensCircuitAndReturnsControlledFallbackWhenDiscordStaysDisconnected() {
+        for (int attempt = 0; attempt < 10; attempt++) {
+            assertThrows(DiscordUnavailableException.class, () -> gateway.send("player", "hello"));
+        }
+
+        assertEquals(io.github.resilience4j.circuitbreaker.CircuitBreaker.State.OPEN,
+                circuitBreakers.circuitBreaker("discord").getState());
+        assertThrows(DiscordUnavailableException.class, () -> gateway.send("player", "hello"));
     }
 
     private MessageReceivedEvent event(String authorId, String content) {

@@ -41,6 +41,7 @@ public class SecurityConfiguration {
                 .httpBasic(basic -> basic.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/actuator/metrics/**", "/actuator/prometheus").hasRole("ADMIN")
                         .requestMatchers("/actuator/health/**", "/actuator/info",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/events", "/api/v1/events/**").permitAll()

@@ -8,6 +8,8 @@ import com.waltercraft.event.entity.EventStatus;
 import com.waltercraft.event.exception.ConflictException;
 import com.waltercraft.event.exception.ResourceNotFoundException;
 import com.waltercraft.event.repository.EventRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -17,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class EventService {
+
+    private static final Logger log = LoggerFactory.getLogger(EventService.class);
 
     private final EventRepository eventRepository;
 
@@ -56,7 +60,9 @@ public class EventService {
                 status
         );
         event.setStartsAt(request.startsAt());
-        return EventResponse.from(eventRepository.saveAndFlush(event));
+        Event saved = eventRepository.saveAndFlush(event);
+        log.info("Event created eventId={} status={}", saved.getId(), saved.getStatus());
+        return EventResponse.from(saved);
     }
 
     @Transactional
@@ -86,7 +92,9 @@ public class EventService {
             event.setStartsAt(request.startsAt());
         }
         try {
-            return EventResponse.from(eventRepository.saveAndFlush(event));
+            Event saved = eventRepository.saveAndFlush(event);
+            log.info("Event updated eventId={} status={}", saved.getId(), saved.getStatus());
+            return EventResponse.from(saved);
         } catch (ObjectOptimisticLockingFailureException ex) {
             throw new ConflictException("Событие уже было изменено другим процессом. Обновите страницу и повторите попытку.");
         }
@@ -96,6 +104,7 @@ public class EventService {
     public void delete(Long id) {
         Event event = findEvent(id);
         eventRepository.delete(event);
+        log.info("Event deleted eventId={}", id);
     }
 
     private Event findEvent(Long id) {

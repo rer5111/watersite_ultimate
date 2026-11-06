@@ -7,7 +7,7 @@ spring:
   datasource:
     url: ${NOTIFICATION_DB_URL:jdbc:postgresql://${NOTIFICATION_DB_HOST:notification-db}:${NOTIFICATION_DB_PORT:5432}/${NOTIFICATION_DB_NAME:notification_db}}
     username: ${NOTIFICATION_DB_USER:notification_user}
-    password: ${NOTIFICATION_DB_PASSWORD:0}
+    password: ${NOTIFICATION_DB_PASSWORD}
   jpa:
     open-in-view: false
     hibernate:
@@ -43,7 +43,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       probes:
@@ -54,8 +54,28 @@ management:
 
 security:
   notification-service:
-    shared-secret: ${NOTIFICATION_SERVICE_SHARED_SECRET:waltercraft-internal-auth-secret-key-32-chars}
+    shared-secret: ${NOTIFICATION_SERVICE_SHARED_SECRET}
+    verification-code-pepper: ${VERIFICATION_CODE_PEPPER}
 
 notification:
   jwt:
     issuer: ${AUTH_JWT_ISSUER:https://auth.waltercraft.ru}
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 3s
+    instances:
+      smtp:
+        baseConfig: default
+        recordExceptions:
+          - com.waltercraft.notification.exception.EmailDeliveryUnavailableException

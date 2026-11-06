@@ -35,6 +35,18 @@ public class ApiExceptionHandler {
         return problem(HttpStatus.SERVICE_UNAVAILABLE, "AUTH_DEPENDENCY_UNAVAILABLE", "Сервис проверки аккаунтов временно недоступен", Map.of());
     }
 
+    @ExceptionHandler(NotificationServiceUnavailableException.class)
+    public ResponseEntity<ProblemDetail> notificationServiceUnavailable() {
+        return problem(HttpStatus.SERVICE_UNAVAILABLE, "NOTIFICATION_SERVICE_UNAVAILABLE",
+                "Сервис отправки подтверждений временно недоступен", Map.of());
+    }
+
+    @ExceptionHandler(MinecraftProviderUnavailableException.class)
+    public ResponseEntity<ProblemDetail> minecraftProviderUnavailable() {
+        return problem(HttpStatus.SERVICE_UNAVAILABLE, "MINECRAFT_PROVIDER_UNAVAILABLE",
+                "Сервис авторизации Minecraft временно недоступен", Map.of());
+    }
+
     @ExceptionHandler(MinecraftOAuthException.class)
     public ResponseEntity<ProblemDetail> minecraftOAuthFailed(MinecraftOAuthException exception) {
         return problem(HttpStatus.BAD_REQUEST, "MICROSOFT_AUTH_FAILED", exception.getMessage(), Map.of());

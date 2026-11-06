@@ -5,6 +5,8 @@ import com.waltercraft.notification.dto.VerifyCodeResponse;
 import com.waltercraft.notification.entity.EmailVerificationCode;
 import com.waltercraft.notification.exception.RateLimitExceededException;
 import com.waltercraft.notification.repository.EmailVerificationCodeRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,24 +27,27 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class VerificationCodeService {
 
+    private static final Logger log = LoggerFactory.getLogger(VerificationCodeService.class);
+
     private static final int COOLDOWN_SECONDS = 60;
     private static final int EXPIRATION_MINUTES = 10;
     private static final int MAX_ATTEMPTS = 5;
-    private static final String DEFAULT_PEPPER = "waltercraft-verification-code-pepper-32-chars";
-
     private final EmailVerificationCodeRepository codeRepository;
     private final EmailSenderService emailSenderService;
-    private final String sharedSecret;
+    private final String verificationCodePepper;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public VerificationCodeService(
             EmailVerificationCodeRepository codeRepository,
             EmailSenderService emailSenderService,
-            @Value("${security.notification-service.shared-secret:}") String sharedSecret
+            @Value("${security.notification-service.verification-code-pepper}") String verificationCodePepper
     ) {
         this.codeRepository = codeRepository;
         this.emailSenderService = emailSenderService;
-        this.sharedSecret = sharedSecret == null || sharedSecret.isBlank() ? DEFAULT_PEPPER : sharedSecret;
+        if (verificationCodePepper == null || verificationCodePepper.length() < 32) {
+            throw new IllegalArgumentException("Verification code pepper must contain at least 32 characters");
+        }
+        this.verificationCodePepper = verificationCodePepper;
     }
 
     @Transactional
@@ -75,6 +80,8 @@ public class VerificationCodeService {
         codeRepository.save(newCode);
 
         emailSenderService.sendVerificationCode(normalizedEmail, rawCode, purpose);
+        log.info("Verification code generated codeId={} purpose={} expiresAt={}",
+                newCode.getId(), purpose, newCode.getExpiresAt());
 
         return new SendCodeResponse("SENT", COOLDOWN_SECONDS, (int) Duration.ofMinutes(EXPIRATION_MINUTES).toSeconds());
     }
@@ -110,18 +117,21 @@ public class VerificationCodeService {
             record.setAttempts(record.getAttempts() + 1);
             codeRepository.save(record);
             int remainingAttempts = MAX_ATTEMPTS - record.getAttempts();
+            log.warn("Verification code rejected codeId={} purpose={} remainingAttempts={}",
+                    record.getId(), purpose, remainingAttempts);
             return VerifyCodeResponse.failure("Неверный код. Осталось попыток: " + remainingAttempts);
         }
 
         record.setVerified(true);
         codeRepository.save(record);
+        log.info("Verification code verified codeId={} purpose={}", record.getId(), purpose);
         return VerifyCodeResponse.success();
     }
 
     String hash(String email, String purpose, String rawCode) {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
-            byte[] keyBytes = sharedSecret.getBytes(StandardCharsets.UTF_8);
+            byte[] keyBytes = verificationCodePepper.getBytes(StandardCharsets.UTF_8);
             SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
             mac.init(secretKey);
             String payload = email.trim().toLowerCase() + ":" + purpose.trim().toUpperCase() + ":" + rawCode.trim();

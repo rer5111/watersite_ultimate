@@ -8,6 +8,8 @@ import com.waltercraft.donation.exception.ConflictException;
 import com.waltercraft.donation.exception.ResourceNotFoundException;
 import com.waltercraft.donation.repository.DonationRepository;
 import com.waltercraft.donation.repository.DonationTypeRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -17,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class DonationTypeService {
+
+    private static final Logger log = LoggerFactory.getLogger(DonationTypeService.class);
 
     private final DonationTypeRepository donationTypeRepository;
     private final DonationRepository donationRepository;
@@ -42,7 +46,9 @@ public class DonationTypeService {
     public DonationTypeResponse create(DonationTypeCreateRequest request) {
         DonationType donationType = new DonationType(request.code(), request.name(), request.description(),
                 request.priceRub(), request.displayOrder(), request.active() == null || request.active());
-        return DonationTypeResponse.from(donationTypeRepository.saveAndFlush(donationType));
+        DonationType saved = donationTypeRepository.saveAndFlush(donationType);
+        log.info("Donation type created donationTypeId={} active={}", saved.getId(), saved.isActive());
+        return DonationTypeResponse.from(saved);
     }
 
     @Transactional
@@ -54,7 +60,9 @@ public class DonationTypeService {
         donationType.replace(request.code(), request.name(), request.description(), request.priceRub(),
                 request.displayOrder(), request.active());
         try {
-            return DonationTypeResponse.from(donationTypeRepository.saveAndFlush(donationType));
+            DonationType saved = donationTypeRepository.saveAndFlush(donationType);
+            log.info("Donation type updated donationTypeId={} active={}", saved.getId(), saved.isActive());
+            return DonationTypeResponse.from(saved);
         } catch (ObjectOptimisticLockingFailureException exception) {
             throw new ConflictException("Тип доната уже изменён. Обновите данные и повторите запрос.");
         }
@@ -68,6 +76,7 @@ public class DonationTypeService {
         }
         donationTypeRepository.delete(donationType);
         donationTypeRepository.flush();
+        log.info("Donation type deleted donationTypeId={}", id);
     }
 
     private DonationType findType(long id) {

@@ -27,6 +27,7 @@
         <url/>
     </scm>
     <properties>
+        <logback.version>1.2.13</logback.version>
         <java.version>25</java.version>
         <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
@@ -54,6 +55,16 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>7.3</version>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
     <dependencyManagement>
