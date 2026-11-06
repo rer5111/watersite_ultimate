@@ -6,7 +6,7 @@ spring:
   datasource:
     url: jdbc:postgresql://${PLAYER_DB_HOST:${DB_HOST:localhost}}:${PLAYER_DB_PORT:${DB_PORT:5432}}/${PLAYER_DB_NAME:${DB_NAME:player_db}}
     username: ${PLAYER_DB_USER:${DB_USER:${SPRING_DATASOURCE_USERNAME:postgres}}}
-    password: ${PLAYER_DB_PASSWORD:${DB_PASSWORD:${SPRING_DATASOURCE_PASSWORD:0}}}
+    password: ${PLAYER_DB_PASSWORD:${DB_PASSWORD:${SPRING_DATASOURCE_PASSWORD:}}}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -25,4 +25,4 @@ spring:
 
 security:
   auth-service:
-    shared-secret: ${AUTH_SERVICE_SHARED_SECRET:}
+    shared-secret: ${AUTH_SERVICE_SHARED_SECRET}

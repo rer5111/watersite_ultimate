@@ -72,10 +72,8 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ApiProblemResponse> unexpected(Exception exception, WebRequest request) {
         String method = request instanceof ServletWebRequest servletRequest
                 ? servletRequest.getRequest().getMethod() : "UNKNOWN";
-        String path = request instanceof ServletWebRequest servletRequest
-                ? servletRequest.getRequest().getRequestURI() : "UNKNOWN";
-        log.error("Unhandled request failure method={} path={} exceptionType={}",
-                method, path, exception.getClass().getSimpleName(), exception);
+        log.error("Unhandled request failure method={} exceptionType={}",
+                method, exception.getClass().getSimpleName(), exception);
         return problem(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR",
                 "Внутренняя ошибка сервера", request, Map.of());
     }

@@ -5,6 +5,7 @@ import org.example.userservice.model.RoleEnum;
 import org.example.userservice.model.RoleRequest;
 import org.example.userservice.model.RoleRequestStatus;
 import org.example.userservice.model.UserModel;
+import org.example.userservice.dto.SeasonParticipationResponse;
 import org.example.userservice.repository.AccountRepository;
 import org.example.userservice.repository.RoleRequestRepository;
 import org.example.userservice.repository.UserRepository;
@@ -33,6 +34,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -279,6 +281,31 @@ class UserControllerTest {
     void roleRequestReviewIsForbiddenForNonAdministrators() throws Exception {
         mockMvc.perform(post("/api/user/admin/role-requests/{id}/approve", 123L))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void currentPlayerCanReadSeasonParticipationHistory() throws Exception {
+        var season = new SeasonParticipationResponse.SeasonEntry(
+                5L, "Пятый сезон", LocalDate.of(2025, 1, 1), LocalDate.of(2026, 1, 1),
+                "История сервера", "/images/seasons/season-5.webp",
+                SeasonParticipationResponse.Phase.COMPLETED);
+        when(seasonService.getParticipation(42L)).thenReturn(new SeasonParticipationResponse(42L, 1, List.of(season)));
+
+        mockMvc.perform(get("/api/season/me")
+                        .with(jwt().jwt(token -> token.claim("user_id", 42L))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.playerId").value(42))
+                .andExpect(jsonPath("$.totalSeasons").value(1))
+                .andExpect(jsonPath("$.seasons[0].title").value("Пятый сезон"))
+                .andExpect(jsonPath("$.seasons[0].phase").value("COMPLETED"));
+
+        verify(seasonService).getParticipation(42L);
+    }
+
+    @Test
+    void seasonParticipationRequiresUserIdInAccessToken() throws Exception {
+        mockMvc.perform(get("/api/season/me").with(jwt()))
+                .andExpect(status().isUnauthorized());
     }
 
     private RoleRequest createRoleRequest(RoleEnum requestedRole) {

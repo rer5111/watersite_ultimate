@@ -96,7 +96,7 @@ public class UserController {
             userService.addUser(userModel);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("Failed to register user: {}", e.getMessage());
+            log.error("Failed to register user", e);
             return ResponseEntity.badRequest().build();
         }
     }
@@ -129,7 +129,7 @@ public class UserController {
             userService.updateUser(userModel);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("Failed to update user: {}", e.getMessage());
+            log.error("Failed to update user", e);
             return ResponseEntity.badRequest().build();
         }
     }
@@ -144,7 +144,7 @@ public class UserController {
             userService.deleteUser(key);
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
-            log.error("Failed to delete user: {}", e.getMessage());
+            log.error("Failed to delete user", e);
             return ResponseEntity.notFound().build();
         }
     }
@@ -234,7 +234,7 @@ public class UserController {
             userService.updateUser(userModel);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("Failed to delete user from season: {}", e.getMessage());
+            log.error("Failed to delete user from season", e);
             return ResponseEntity.badRequest().build();
         }
     }
@@ -254,7 +254,7 @@ public class UserController {
             log.info("User {} added to season {}", id, s_id);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("Failed to add user to season: {}", e.getMessage());
+            log.error("Failed to add user to season", e);
             return ResponseEntity.badRequest().build();
         }
     }

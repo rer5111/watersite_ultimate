@@ -22,6 +22,9 @@ public interface UserRepository extends JpaRepository<UserModel, Long> {
     List<UserModel> findByAccount(AccountModel account);
     List<UserModel> findByRolesContainingOrderByAccount_IdAsc(RoleEnum role);
 
+    @EntityGraph(attributePaths = "seasons")
+    java.util.Optional<UserModel> findWithSeasonsById(long id);
+
     @Query("SELECT u FROM UserModel u LEFT JOIN u.account a WHERE LOWER(u.name) = LOWER(:identifier) OR LOWER(u.email) = LOWER(:identifier) OR LOWER(a.username) = LOWER(:identifier)")
     List<UserModel> findByIdentifier(@Param("identifier") String identifier);
 }

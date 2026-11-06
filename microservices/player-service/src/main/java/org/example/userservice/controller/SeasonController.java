@@ -1,9 +1,12 @@
 package org.example.userservice.controller;
 
+import org.example.userservice.dto.SeasonParticipationResponse;
 import org.example.userservice.model.SeasonModel;
 import org.example.userservice.service.SeasonService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -105,5 +108,14 @@ public class SeasonController {
     @GetMapping(value = "/findTitle/{title}", produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<List<SeasonModel>> findByTitle(@PathVariable String title) {
         return ResponseEntity.ok(seasonService.findByTitle(title));
+    }
+
+    @GetMapping(path = "/me", produces = APPLICATION_JSON_VALUE)
+    public ResponseEntity<SeasonParticipationResponse> getMySeasons(@AuthenticationPrincipal Jwt jwt) {
+        Object userId = jwt == null ? null : jwt.getClaim("user_id");
+        if (!(userId instanceof Number id) || id.longValue() <= 0) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(seasonService.getParticipation(id.longValue()));
     }
 }

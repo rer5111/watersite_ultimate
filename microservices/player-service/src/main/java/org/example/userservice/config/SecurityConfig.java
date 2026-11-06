@@ -36,10 +36,12 @@ public class SecurityConfig {
                 .antMatchers(HttpMethod.GET, "/api/user/admins").permitAll()
                 // Internal authentication calls are protected by the shared X-Internal-Auth secret.
                 .antMatchers("/internal/auth/**").permitAll()
+                .antMatchers("/actuator/metrics/**", "/actuator/prometheus").hasRole("ADMIN")
                 .antMatchers("/actuator/health/**", "/actuator/info",
                         "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**").permitAll()
                 // Current user endpoints accessible by any authenticated user
                 .antMatchers("/api/user/me", "/api/user/me/**").authenticated()
+                .antMatchers(HttpMethod.GET, "/api/season/me").authenticated()
                 .antMatchers(HttpMethod.POST, "/api/user/role-requests").authenticated()
                 // Admin management endpoints require ADMIN role
                 .antMatchers("/api/user/**", "/api/account/**", "/api/season/**").hasRole("ADMIN")

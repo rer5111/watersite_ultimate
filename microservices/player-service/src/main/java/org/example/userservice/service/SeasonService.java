@@ -1,5 +1,6 @@
 package org.example.userservice.service;
 
+import org.example.userservice.dto.SeasonParticipationResponse;
 import org.example.userservice.model.SeasonModel;
 import org.springframework.lang.NonNull;
 
@@ -14,4 +15,5 @@ public interface SeasonService {
     void deleteSeason(long id);
     List<SeasonModel> findPage(int page);
     int getPages();
+    SeasonParticipationResponse getParticipation(long playerId);
 }

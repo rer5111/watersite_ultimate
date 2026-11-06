@@ -1,11 +1,14 @@
 package org.example.userservice.service;
 
+import org.example.userservice.dto.SeasonParticipationResponse;
 import org.example.userservice.model.SeasonModel;
+import org.example.userservice.repository.UserRepository;
 import org.example.userservice.repository.SeasonRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -14,9 +17,11 @@ import java.util.Objects;
 public class SeasonServiceImpl implements SeasonService {
 
     private final SeasonRepository seasonRepository;
+    private final UserRepository userRepository;
 
-    public SeasonServiceImpl(SeasonRepository seasonRepository) {
+    public SeasonServiceImpl(SeasonRepository seasonRepository, UserRepository userRepository) {
         this.seasonRepository = seasonRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -62,5 +67,13 @@ public class SeasonServiceImpl implements SeasonService {
     public int getPages() {
         Pageable pageable = PageRequest.of(0, 5);
         return seasonRepository.findAll(pageable).getTotalPages();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SeasonParticipationResponse getParticipation(long playerId) {
+        return userRepository.findWithSeasonsById(playerId)
+                .map(SeasonParticipationResponse::from)
+                .orElseGet(() -> SeasonParticipationResponse.empty(playerId));
     }
 }

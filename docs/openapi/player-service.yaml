@@ -18,6 +18,22 @@ paths:
                 items:
                   $ref: '#/components/schemas/AdminProfileResponse'
 
+  /api/season/me:
+    get:
+      operationId: getMySeasonParticipation
+      summary: История участия текущего игрока в сезонах
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Сезоны, связанные с текущим профилем игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeasonParticipationResponse'
+        '401':
+          description: Не авторизован или в access-токене отсутствует идентификатор игрока
+
   /api/user/admin/users:
     get:
       operationId: listAdminUsers
@@ -206,6 +222,47 @@ components:
           type: string
           format: uuid
           nullable: true
+
+    SeasonParticipationResponse:
+      type: object
+      required: [playerId, totalSeasons, seasons]
+      properties:
+        playerId:
+          type: integer
+          format: int64
+        totalSeasons:
+          type: integer
+          minimum: 0
+        seasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeasonEntry'
+
+    SeasonEntry:
+      type: object
+      required: [id, title, phase]
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        startDate:
+          type: string
+          format: date
+          nullable: true
+        endDate:
+          type: string
+          format: date
+          nullable: true
+        description:
+          type: string
+        image:
+          type: string
+          nullable: true
+        phase:
+          type: string
+          enum: [UPCOMING, ACTIVE, COMPLETED, UNKNOWN]
 
     AdminUserResponse:
       type: object
