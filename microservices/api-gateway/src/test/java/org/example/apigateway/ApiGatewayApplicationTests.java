@@ -7,15 +7,19 @@ import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWeb
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt;
 
 @SpringBootTest(properties = {
+        "GATEWAY_JWT_ENABLED=true",
+        "JWT_JWK_SET_URI=http://localhost:1/.well-known/jwks.json",
         "spring.cloud.gateway.routes[0].id=fallback",
-        "spring.cloud.gateway.routes[0].uri=http://localhost:1",
+        "spring.cloud.gateway.routes[0].uri=http://127.0.0.1:1",
         "spring.cloud.gateway.routes[0].predicates[0]=Path=/**",
         "springdoc.swagger-ui.urls[0].name=test-service",
         "springdoc.swagger-ui.urls[0].url=/api/test-service/v3/api-docs"
@@ -45,6 +49,26 @@ class ApiGatewayApplicationTests {
                 .uri("/internal/notifications/email/send-code")
                 .exchange()
                 .expectStatus().is4xxClientError();
+    }
+
+    @Test
+    void downstreamActuatorMetricsRequireAdministratorRole() {
+        webTestClient.get()
+                .uri("/api/skin-service/actuator/metrics")
+                .exchange()
+                .expectStatus().is4xxClientError();
+
+        webTestClient.mutateWith(mockJwt().authorities(new SimpleGrantedAuthority("ROLE_USER")))
+                .get()
+                .uri("/api/skin-service/actuator/metrics")
+                .exchange()
+                .expectStatus().isForbidden();
+
+        webTestClient.mutateWith(mockJwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
+                .get()
+                .uri("/api/skin-service/actuator/metrics")
+                .exchange()
+                .expectStatus().is5xxServerError();
     }
 
     @Test

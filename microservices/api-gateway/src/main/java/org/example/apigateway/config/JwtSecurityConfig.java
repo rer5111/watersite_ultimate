@@ -55,6 +55,8 @@ public class JwtSecurityConfig {
                         .pathMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**").permitAll()
                         .pathMatchers("/fallback/**").denyAll()
                         .pathMatchers(HttpMethod.GET, "/api/*/v3/api-docs", "/api/*/v3/api-docs/**").permitAll()
+                        .pathMatchers("/api/*/actuator/health/**", "/api/*/actuator/info").permitAll()
+                        .pathMatchers("/api/*/actuator/**").hasRole("ADMIN")
                         .pathMatchers(HttpMethod.GET, "/api/player-service/api/user/admins").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/skin-service/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/donation-service/api/v1/donation-types").permitAll()

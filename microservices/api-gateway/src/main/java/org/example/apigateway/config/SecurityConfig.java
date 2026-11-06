@@ -22,6 +22,8 @@ public class SecurityConfig {
                         .pathMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**").permitAll()
                         .pathMatchers("/fallback/**").denyAll()
                         .pathMatchers(HttpMethod.GET, "/api/*/v3/api-docs", "/api/*/v3/api-docs/**").permitAll()
+                        .pathMatchers("/api/*/actuator/health/**", "/api/*/actuator/info").permitAll()
+                        .pathMatchers("/api/*/actuator/**").denyAll()
                         .pathMatchers(HttpMethod.GET, "/api/player-service/api/user/admins").permitAll()
                         .pathMatchers("/api/player-service/api/user/me", "/api/player-service/api/user/me/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/skin-service/**").permitAll()
