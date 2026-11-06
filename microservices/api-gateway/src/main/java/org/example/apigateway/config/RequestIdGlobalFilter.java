@@ -30,7 +30,10 @@ public class RequestIdGlobalFilter implements GlobalFilter, Ordered {
         ServerWebExchange routedExchange = exchange.mutate()
                 .request(exchange.getRequest().mutate().headers(headers -> headers.set(REQUEST_ID_HEADER, requestId)).build())
                 .build();
-        routedExchange.getResponse().getHeaders().set(REQUEST_ID_HEADER, requestId);
+        routedExchange.getResponse().beforeCommit(() -> {
+            routedExchange.getResponse().getHeaders().set(REQUEST_ID_HEADER, requestId);
+            return Mono.empty();
+        });
         long startedAt = System.nanoTime();
 
         return chain.filter(routedExchange)
