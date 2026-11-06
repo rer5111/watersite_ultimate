@@ -7,3 +7,4 @@ export * from './auth';
 export * from './notifications';
 export * from './profile';
 export * from './role-requests';
+export * from './seasons';

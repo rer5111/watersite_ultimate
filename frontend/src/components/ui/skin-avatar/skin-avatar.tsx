@@ -10,7 +10,7 @@ export type SkinAvatarProps = {
 };
 
 export function SkinAvatar({ uuid, fallbackImage, name, className, mode = 'full' }: SkinAvatarProps) {
-  const [imageFailed, setImageFailed] = useState(false);
+  const [failedEndpoint, setFailedEndpoint] = useState<string | null>(null);
   const apiUrl = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
 
   const defaultSteveUrl = `${apiUrl}/api/skin-service/api/skin/subject/X-Steve/${mode}`;
@@ -20,6 +20,7 @@ export function SkinAvatar({ uuid, fallbackImage, name, className, mode = 'full'
       ? `${apiUrl}/api/skin-service/api/skin/subject/${encodeURIComponent(name)}/${mode}`
       : undefined;
 
+  const imageFailed = skinEndpoint !== undefined && failedEndpoint === skinEndpoint;
   const image = (skinEndpoint && !imageFailed) ? skinEndpoint : (fallbackImage ?? defaultSteveUrl);
 
   return (
@@ -31,8 +32,8 @@ export function SkinAvatar({ uuid, fallbackImage, name, className, mode = 'full'
       height={240}
       className={cn('text-transparent text-[0px] shrink-0', className)}
       onError={() => {
-        if (!imageFailed && skinEndpoint) {
-          setImageFailed(true);
+        if (skinEndpoint) {
+          setFailedEndpoint(skinEndpoint);
         }
       }}
     />

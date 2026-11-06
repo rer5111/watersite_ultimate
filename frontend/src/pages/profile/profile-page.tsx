@@ -5,6 +5,8 @@ import { Button } from '@/components/ui';
 import { paths } from '@/routes';
 import {
   ProfileHeroSection,
+  SeasonHistorySection,
+  SkinShowcaseSection,
   AccountManagementSection,
   DangerZoneSection,
 } from './sections';
@@ -61,6 +63,8 @@ export function ProfilePage() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-4 py-10 md:px-8 md:py-16">
       <ProfileHeroSection profile={profile} />
+      <SkinShowcaseSection profile={profile} />
+      <SeasonHistorySection playerId={profile.id} />
       <AccountManagementSection profile={profile} />
       <DangerZoneSection username={profile.username} />
     </main>
