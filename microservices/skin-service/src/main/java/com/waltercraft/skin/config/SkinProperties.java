@@ -23,7 +23,7 @@ public record SkinProperties(
             visageUrl = "https://visage.surgeplay.com";
         }
         if (userAgent == null || userAgent.isBlank()) {
-            userAgent = "WaltercraftSkinService/1.0 (+https://waltercraft.ru; admin@waltercraft.ru)";
+            userAgent = "WaltercraftSkinService/1.0 (+https://waltercraft.ru)";
         }
         if (cacheTtlMinutes <= 0) {
             cacheTtlMinutes = 1440;

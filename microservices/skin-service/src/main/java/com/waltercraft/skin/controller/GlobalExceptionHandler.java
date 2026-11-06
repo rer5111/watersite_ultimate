@@ -1,6 +1,8 @@
 package com.waltercraft.skin.controller;
 
 import com.waltercraft.skin.dto.ErrorResponse;
+import com.waltercraft.skin.exception.SkinProviderUnavailableException;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -22,6 +24,20 @@ public class GlobalExceptionHandler {
         String message = "Некорректный формат параметра: " + name;
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.of("INVALID_ARGUMENT", message, Map.of(name, String.valueOf(ex.getValue()))));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.of("INVALID_ARGUMENT", "Некорректный формат параметра", Map.of()));
+    }
+
+    @ExceptionHandler(SkinProviderUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleProviderUnavailable(SkinProviderUnavailableException ex) {
+        log.warn("Skin provider fallback exhausted exceptionType={}", ex.getClass().getSimpleName());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ErrorResponse.of("SKIN_PROVIDER_UNAVAILABLE",
+                        "Сервис скинов временно недоступен", Map.of()));
     }
 
     @ExceptionHandler(Exception.class)

@@ -12,13 +12,17 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(SkinController.class)
+@WebMvcTest(value = SkinController.class, properties = {
+        "spring.cloud.config.enabled=false",
+        "eureka.client.enabled=false"
+})
 class SkinControllerTest {
 
     @Autowired
@@ -121,5 +125,13 @@ class SkinControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.IMAGE_PNG))
                 .andExpect(content().bytes(fakeImage));
+    }
+
+    @Test
+    void getFaceByUsername_RejectsInvalidUsernameBeforeCallingProvider() throws Exception {
+        mockMvc.perform(get("/api/skin/username/{username}/face", "invalid-name!"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(skinService);
     }
 }

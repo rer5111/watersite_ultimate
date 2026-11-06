@@ -6,14 +6,45 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics,prometheus
 
 skin:
   provider:
     vzge-url: ${VZGE_BASE_URL:https://vzge.me}
     crafatar-url: ${CRAFATAR_BASE_URL:https://crafatar.com}
     visage-url: ${VISAGE_BASE_URL:https://visage.surgeplay.com}
-    user-agent: WaltercraftSkinService/1.0 (+https://waltercraft.ru; admin@waltercraft.ru)
+    user-agent: WaltercraftSkinService/1.0 (+https://waltercraft.ru)
     cache-ttl-minutes: 1440
     connect-timeout-ms: 3000
     read-timeout-ms: 5000
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 3s
+    instances:
+      skin-vzge.me:
+        baseConfig: default
+        recordExceptions:
+          - com.waltercraft.skin.exception.SkinProviderUnavailableException
+      skin-crafatar.com:
+        baseConfig: default
+        recordExceptions:
+          - com.waltercraft.skin.exception.SkinProviderUnavailableException
+      skin-visage.surgeplay.com:
+        baseConfig: default
+        recordExceptions:
+          - com.waltercraft.skin.exception.SkinProviderUnavailableException
+      skin-minotar.net:
+        baseConfig: default
+        recordExceptions:
+          - com.waltercraft.skin.exception.SkinProviderUnavailableException

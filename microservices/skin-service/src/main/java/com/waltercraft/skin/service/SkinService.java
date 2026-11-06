@@ -1,6 +1,10 @@
 package com.waltercraft.skin.service;
 
 import com.waltercraft.skin.config.SkinProperties;
+import com.waltercraft.skin.exception.SkinProviderUnavailableException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -9,6 +13,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
@@ -28,6 +33,7 @@ public class SkinService {
 
     private final HttpClient httpClient;
     private final SkinProperties properties;
+    private final CircuitBreakerRegistry circuitBreakerRegistry;
     private final Map<String, CachedSkin> imageCache = Collections.synchronizedMap(
             new LinkedHashMap<String, CachedSkin>(128, 0.75f, true) {
                 @Override
@@ -37,8 +43,9 @@ public class SkinService {
             }
     );
 
-    public SkinService(SkinProperties properties) {
+    public SkinService(SkinProperties properties, CircuitBreakerRegistry circuitBreakerRegistry) {
         this.properties = properties;
+        this.circuitBreakerRegistry = circuitBreakerRegistry;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(properties.connectTimeoutMs()))
                 .followRedirects(HttpClient.Redirect.NORMAL)
@@ -106,15 +113,16 @@ public class SkinService {
 
     private Optional<byte[]> getOrFetch(String cacheKey, String[] urls) {
         CachedSkin cached = imageCache.get(cacheKey);
+        boolean providerUnavailable = false;
         if (cached != null) {
             if (cached.expiresAt().isAfter(Instant.now())) {
                 return Optional.of(cached.data());
-            } else {
-                imageCache.remove(cacheKey);
             }
         }
 
         for (String url : urls) {
+            String providerHost = URI.create(url).getHost();
+            CircuitBreaker circuitBreaker = circuitBreakerRegistry.circuitBreaker("skin-" + providerHost);
             try {
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(url))
@@ -124,18 +132,50 @@ public class SkinService {
                         .GET()
                         .build();
 
-                HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+                HttpResponse<byte[]> response = circuitBreaker.executeSupplier(() -> send(request));
                 if (response.statusCode() == 200 && response.body() != null && response.body().length > 0) {
                     Instant expiresAt = Instant.now().plus(Duration.ofMinutes(properties.cacheTtlMinutes()));
                     imageCache.put(cacheKey, new CachedSkin(response.body(), expiresAt));
                     return Optional.of(response.body());
                 } else {
-                    log.debug("HTTP {} from {}", response.statusCode(), url);
+                    log.debug("Skin provider returned no image providerHost={} status={}", providerHost, response.statusCode());
                 }
+            } catch (CallNotPermittedException exception) {
+                providerUnavailable = true;
+                log.warn("Skin provider circuit is open providerHost={} cachedFallbackAvailable={}",
+                        providerHost, cached != null);
+            } catch (SkinProviderUnavailableException exception) {
+                providerUnavailable = true;
+                log.warn("Skin provider fallback activated providerHost={} exceptionType={}",
+                        providerHost, exception.getClass().getSimpleName());
             } catch (Exception e) {
-                log.debug("Failed to fetch skin from {}: {}", url, e.getMessage());
+                log.debug("Skin provider request failed providerHost={} exceptionType={}", providerHost,
+                        e.getClass().getSimpleName());
             }
         }
+        if (cached != null) {
+            long staleAgeSeconds = Math.max(0, Duration.between(cached.expiresAt(), Instant.now()).getSeconds());
+            log.warn("Using stale skin cache after provider failures staleAgeSeconds={}", staleAgeSeconds);
+            return Optional.of(cached.data());
+        }
+        if (providerUnavailable) {
+            throw new SkinProviderUnavailableException("All skin providers are temporarily unavailable");
+        }
         return Optional.empty();
+    }
+
+    private HttpResponse<byte[]> send(HttpRequest request) {
+        try {
+            HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+            if (response.statusCode() >= 500 || response.statusCode() == 429) {
+                throw new SkinProviderUnavailableException("Skin provider returned HTTP " + response.statusCode());
+            }
+            return response;
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new SkinProviderUnavailableException(exception);
+        } catch (IOException exception) {
+            throw new SkinProviderUnavailableException(exception);
+        }
     }
 }
