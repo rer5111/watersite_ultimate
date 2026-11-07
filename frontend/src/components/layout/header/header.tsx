@@ -46,7 +46,7 @@ export function Header() {
 
         <div className="flex items-center justify-end gap-4">
           <a
-            href="https://discord.gg/967091313038196796"
+            href="https://discord.gg/z8FTdEMH8"
             target="_blank"
             rel="noreferrer"
             className={cn(

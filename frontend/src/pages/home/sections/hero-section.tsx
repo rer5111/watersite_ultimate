@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui';
+import { buttonVariants } from '@/components/ui';
 import heroImage from '@/assets/images/hero.png';
 
 export function HeroSection() {
@@ -21,7 +21,14 @@ export function HeroSection() {
           Ванильный Minecraft сервер с ламповой атмосферой. Присоединяйтесь к нам и станьте частью
           нашей дружной семьи
         </p>
-        <Button>Присоединиться</Button>
+        <a
+          href="https://discord.gg/z8FTdEMH8"
+          target="_blank"
+          rel="noreferrer"
+          className={buttonVariants()}
+        >
+          Присоединиться
+        </a>
       </div>
     </section>
   );
