@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_DB: ${PLAYER_DB_NAME:-player_db}
       POSTGRES_USER: ${PLAYER_DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${PLAYER_DB_PASSWORD:?Set PLAYER_DB_PASSWORD in .env}
+      POSTGRES_PASSWORD: ${PLAYER_DB_PASSWORD:-0}
     volumes:
       - player-db-data:/var/lib/postgresql/data
     healthcheck:
@@ -102,9 +102,9 @@ services:
       - ./config-repo:/config-repo:ro,Z
     environment:
       CONFIG_REPO_LOCATION: file:/config-repo
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
-      test: ['CMD', 'curl', '-fsS', 'http://localhost:9090/actuator/health']
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:8888/actuator/health']
       interval: 5s
       timeout: 3s
       retries: 30
@@ -124,9 +124,11 @@ services:
       EUREKA_CLIENT_REGISTER_WITH_EUREKA: 'false'
       EUREKA_CLIENT_FETCH_REGISTRY: 'false'
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE:-http://localhost:8761/eureka/}
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
+    ports:
+      - '8761:8761'
     healthcheck:
-      test: ['CMD', 'curl', '-fsS', 'http://localhost:9090/actuator/health']
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:8761/actuator/health']
       interval: 5s
       timeout: 3s
       retries: 30
@@ -151,9 +153,9 @@ services:
       DB_PORT: ${PLAYER_DB_PORT:-5432}
       DB_NAME: ${PLAYER_DB_NAME:-player_db}
       DB_USER: ${PLAYER_DB_USER:-postgres}
-      DB_PASSWORD: ${PLAYER_DB_PASSWORD:?Set PLAYER_DB_PASSWORD in .env}
-      ADMIN_INITIAL_PASSWORD_HASH: ${ADMIN_INITIAL_PASSWORD_HASH:?Set ADMIN_INITIAL_PASSWORD_HASH in .env}
-      AUTH_SERVICE_SHARED_SECRET: ${AUTH_SERVICE_SHARED_SECRET:?Set AUTH_SERVICE_SHARED_SECRET in .env}
+      DB_PASSWORD: ${PLAYER_DB_PASSWORD:-0}
+      ADMIN_INITIAL_PASSWORD_HASH: ${ADMIN_INITIAL_PASSWORD_HASH:-*LOCKED*}
+      AUTH_SERVICE_SHARED_SECRET: ${AUTH_SERVICE_SHARED_SECRET:-}
       JWT_JWK_SET_URI: http://auth-service:8090/.well-known/jwks.json
       SECURITY_USER_NAME: ${PLAYER_SERVICE_USER:-user}
       SECURITY_USER_PASSWORD: ${PLAYER_SERVICE_PASSWORD:-}
@@ -188,8 +190,8 @@ services:
       EUREKA_URL: http://discovery-server:8761/eureka/
       PLAYER_SERVICE_BASE_URL: http://player-service:8081
       NOTIFICATION_SERVICE_BASE_URL: http://notification-service:8087
-      NOTIFICATION_SERVICE_SHARED_SECRET: ${NOTIFICATION_SERVICE_SHARED_SECRET:?Set NOTIFICATION_SERVICE_SHARED_SECRET in .env}
-      AUTH_SERVICE_SHARED_SECRET: ${AUTH_SERVICE_SHARED_SECRET:?Set AUTH_SERVICE_SHARED_SECRET in .env}
+      NOTIFICATION_SERVICE_SHARED_SECRET: ${NOTIFICATION_SERVICE_SHARED_SECRET:-waltercraft-internal-auth-secret-key-32-chars}
+      AUTH_SERVICE_SHARED_SECRET: ${AUTH_SERVICE_SHARED_SECRET:-}
       AUTH_JWT_PRIVATE_KEY_BASE64: ${AUTH_JWT_PRIVATE_KEY_BASE64:-}
       AUTH_JWT_ALLOW_EPHEMERAL_KEY: ${AUTH_JWT_ALLOW_EPHEMERAL_KEY:-true}
       AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.waltercraft.ru}
@@ -199,7 +201,7 @@ services:
       MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET:-}
       MICROSOFT_REDIRECT_URI: ${MICROSOFT_REDIRECT_URI:-http://localhost:5173/auth/microsoft/callback}
       MICROSOFT_SCOPES: ${MICROSOFT_SCOPES:-XboxLive.signin offline_access}
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
       test: ['CMD', 'curl', '-fsS', 'http://localhost:8090/actuator/health']
       interval: 5s
@@ -222,7 +224,7 @@ services:
       SERVER_PORT: 8082
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_URL: http://discovery-server:8761/eureka/
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
       test: ['CMD', 'curl', '-fsS', 'http://localhost:8082/actuator/health']
       interval: 5s
@@ -256,7 +258,7 @@ services:
       DONATION_DB_PASSWORD: ${DONATION_DB_PASSWORD:?Set DONATION_DB_PASSWORD in .env}
       JWT_JWK_SET_URI: http://auth-service:8090/.well-known/jwks.json
       AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.waltercraft.ru}
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
       test:
         [
@@ -296,7 +298,7 @@ services:
       APPLICATION_DB_PASSWORD: ${APPLICATION_DB_PASSWORD:?Set APPLICATION_DB_PASSWORD in .env}
       JWT_JWK_SET_URI: http://auth-service:8090/.well-known/jwks.json
       AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.waltercraft.ru}
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
       test:
         [
@@ -336,7 +338,7 @@ services:
       PAYMENT_DB_PASSWORD: ${PAYMENT_DB_PASSWORD:?Set PAYMENT_DB_PASSWORD in .env}
       JWT_JWK_SET_URI: http://auth-service:8090/.well-known/jwks.json
       AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.waltercraft.ru}
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
       test:
         [
@@ -373,7 +375,7 @@ services:
       DISCORD_BOT_TOKEN: ${DISCORD_TOKEN:-}
       DISCORD_CHAT_CHANNEL_ID: ${DISCORD_CHANNEL_ID:-}
       DISCORD_MINECRAFT_BOT_USER_ID: ${DISCORD_MINECRAFT_BOT_USER_ID:-1042883408596062298}
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
       test:
         [
@@ -408,9 +410,8 @@ services:
       NOTIFICATION_DB_PORT: 5432
       NOTIFICATION_DB_NAME: ${NOTIFICATION_DB_NAME:-notification_db}
       NOTIFICATION_DB_USER: ${NOTIFICATION_DB_USER:-notification_user}
-      NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD:?Set NOTIFICATION_DB_PASSWORD in .env}
-      NOTIFICATION_SERVICE_SHARED_SECRET: ${NOTIFICATION_SERVICE_SHARED_SECRET:?Set NOTIFICATION_SERVICE_SHARED_SECRET in .env}
-      VERIFICATION_CODE_PEPPER: ${VERIFICATION_CODE_PEPPER:?Set VERIFICATION_CODE_PEPPER in .env}
+      NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD:-0}
+      NOTIFICATION_SERVICE_SHARED_SECRET: ${NOTIFICATION_SERVICE_SHARED_SECRET:-waltercraft-internal-auth-secret-key-32-chars}
       AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.waltercraft.ru}
       JWT_JWK_SET_URI: ${JWT_JWK_SET_URI:-http://auth-service:8090/.well-known/jwks.json}
       SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
@@ -418,7 +419,7 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-Waltercraft <isip_k.f.bratuhin@mpt.ru>}
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
       test:
         [
@@ -458,7 +459,7 @@ services:
       EVENT_DB_PASSWORD: ${EVENT_DB_PASSWORD:?Set EVENT_DB_PASSWORD in .env}
       JWT_JWK_SET_URI: http://auth-service:8090/.well-known/jwks.json
       AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.waltercraft.ru}
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
       test:
         [
@@ -509,7 +510,7 @@ services:
       FRONTEND_ORIGIN: http://localhost:8080
       GATEWAY_JWT_ENABLED: ${GATEWAY_JWT_ENABLED:-true}
       JWT_JWK_SET_URI: ${JWT_JWK_SET_URI:-http://auth-service:8090/.well-known/jwks.json}
-      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     ports:
       - '8080:8080'
     healthcheck:
