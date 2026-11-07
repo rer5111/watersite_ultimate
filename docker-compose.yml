@@ -524,7 +524,7 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_API_URL: http://localhost:8080
+        VITE_API_URL: ''
 
 volumes:
   player-db-data:
