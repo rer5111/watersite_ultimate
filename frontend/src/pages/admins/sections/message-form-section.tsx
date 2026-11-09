@@ -15,6 +15,7 @@ export function MessageFormSection() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!user || isSubmitting || isSubmitted) return;
     setError(null);
     setIsSubmitting(true);
     try {
@@ -28,7 +29,8 @@ export function MessageFormSection() {
     }
   };
 
-  const nickname = profile?.minecraftNickname || profile?.username || user?.username || 'Загрузка…';
+  const nickname = user ? (profile?.minecraftNickname || profile?.username || user.username) : '';
+  const isFormDisabled = !user || isSubmitting || isSubmitted;
 
   return (
     <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-32 py-16">
@@ -46,7 +48,15 @@ export function MessageFormSection() {
           <label htmlFor="nickname" className="text-foreground text-sm font-semibold">
             Никнейм
           </label>
-          <Input id="nickname" name="nickname" value={nickname} readOnly />
+          <Input
+            id="nickname"
+            name="nickname"
+            value={nickname}
+            placeholder="Никнейм"
+            readOnly
+            disabled={!user}
+            className="disabled:cursor-not-allowed disabled:opacity-50"
+          />
         </div>
 
         <div className="flex flex-col gap-3">
@@ -58,7 +68,8 @@ export function MessageFormSection() {
             name="requestedRole"
             value={requestedRole}
             onChange={(event) => setRequestedRole(event.target.value as AdminRequestedRole)}
-            className="text-foreground bg-input w-full rounded-none border border-transparent p-3 text-sm font-medium focus-visible:ring-foreground focus-visible:ring-2 focus-visible:outline-none"
+            disabled={isFormDisabled}
+            className="text-foreground bg-input w-full rounded-none border border-transparent p-3 text-sm font-medium focus-visible:ring-foreground focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           >
             <option value="MODERATOR">Модератор</option>
             <option value="ADMIN">Администратор</option>
@@ -78,6 +89,8 @@ export function MessageFormSection() {
             minLength={10}
             maxLength={2000}
             required
+            disabled={isFormDisabled}
+            className="disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
 
@@ -88,7 +101,7 @@ export function MessageFormSection() {
           type="submit"
           variant="primary"
           trailingIcon={<ChevronRightIcon />}
-          disabled={!user || isSubmitting || isSubmitted || note.trim().length < 10}
+          disabled={isFormDisabled || note.trim().length < 10}
         >
           {isSubmitting ? 'Отправка…' : isSubmitted ? 'Заявка отправлена' : 'Отправить'}
         </Button>

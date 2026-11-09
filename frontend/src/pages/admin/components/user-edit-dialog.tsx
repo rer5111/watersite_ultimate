@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Dialog, Select, toast } from '@/components/ui';
 import { adminQueryKeys, updateAdminUser } from '@/api';
+import { useAuth } from '@/context';
 import type { AdminUser, AdminUserRole, AdminUserStatus, UpdateAdminUserPayload } from '@/types';
 import { formatErrorMessage, userRoleLabels, userStatusLabels } from '../admin-utils';
 
@@ -12,8 +13,14 @@ export interface UserEditDialogProps {
 
 export function UserEditDialog({ user, onClose }: UserEditDialogProps) {
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
   const [role, setRole] = useState<AdminUserRole>(user.role);
   const [status, setStatus] = useState<AdminUserStatus>(user.status);
+
+  const isTargetAdmin = user.role === 'ADMIN';
+  const isSelf = currentUser?.id !== undefined
+    ? user.id === currentUser.id
+    : user.username === currentUser?.username;
 
   const mutation = useMutation({
     mutationFn: (payload: UpdateAdminUserPayload) => updateAdminUser(user.id, payload),
@@ -30,6 +37,18 @@ export function UserEditDialog({ user, onClose }: UserEditDialogProps) {
   const handleSubmit = () => {
     if (role === user.role && status === user.status) {
       toast.info('Изменения не выбраны');
+      return;
+    }
+    if (isTargetAdmin && status === 'BANNED') {
+      toast.error('Нельзя заблокировать учетную запись администратора');
+      return;
+    }
+    if (isSelf && status === 'BANNED') {
+      toast.error('Нельзя заблокировать собственный аккаунт');
+      return;
+    }
+    if (isSelf && isTargetAdmin && role !== 'ADMIN') {
+      toast.error('Нельзя понизить роль собственной учетной записи');
       return;
     }
     mutation.mutate({ role, status });
@@ -76,11 +95,14 @@ export function UserEditDialog({ user, onClose }: UserEditDialogProps) {
               onChange={(event) => setRole(event.target.value as AdminUserRole)}
               disabled={mutation.isPending}
             >
-              {Object.entries(userRoleLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
+              {Object.entries(userRoleLabels).map(([value, label]) => {
+                const disabled = isSelf && isTargetAdmin && value !== 'ADMIN';
+                return (
+                  <option key={value} value={value} disabled={disabled}>
+                    {label}{disabled ? ' (нельзя понизить себя)' : ''}
+                  </option>
+                );
+              })}
             </Select>
           </div>
 
@@ -97,11 +119,15 @@ export function UserEditDialog({ user, onClose }: UserEditDialogProps) {
               onChange={(event) => setStatus(event.target.value as AdminUserStatus)}
               disabled={mutation.isPending}
             >
-              {Object.entries(userStatusLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
+              {Object.entries(userStatusLabels).map(([value, label]) => {
+                const isBanOption = value === 'BANNED';
+                const disabled = (isTargetAdmin || isSelf) && isBanOption;
+                return (
+                  <option key={value} value={value} disabled={disabled}>
+                    {label}{disabled ? ' (недоступно для администратора)' : ''}
+                  </option>
+                );
+              })}
             </Select>
           </div>
         </div>

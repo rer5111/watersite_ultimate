@@ -1,4 +1,5 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
+import { parseApiError } from './error-helper';
 
 export type DonationType = {
   id: number;
@@ -37,7 +38,8 @@ export async function getDonationTypes(): Promise<DonationType[]> {
   const response = await fetch(`${base}/api/donation-service/api/v1/donation-types`);
 
   if (!response.ok) {
-    throw new Error(`Не удалось загрузить варианты пожертвования (${response.status})`);
+    const message = await parseApiError(response, 'Не удалось загрузить варианты пожертвования');
+    throw new Error(message);
   }
 
   const payload: unknown = await response.json();

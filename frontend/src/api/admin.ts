@@ -9,6 +9,7 @@ import type {
   UpdateAdminEventPayload,
   UpdateAdminUserPayload,
 } from '@/types';
+import { parseApiError } from './error-helper';
 
 function getApiBaseUrl(): string {
   return (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
@@ -33,22 +34,7 @@ async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   });
 
   if (!response.ok) {
-    let message = `Ошибка запроса (${response.status})`;
-    try {
-      const problem = (await response.json()) as {
-        message?: string;
-        detail?: string;
-        errors?: Record<string, string>;
-      };
-      if (problem.message) message = problem.message;
-      else if (problem.detail) message = problem.detail;
-      else if (problem.errors) {
-        const firstError = Object.values(problem.errors)[0];
-        if (firstError) message = firstError;
-      }
-    } catch {
-      // keep status-based message
-    }
+    const message = await parseApiError(response);
     throw new Error(message);
   }
 

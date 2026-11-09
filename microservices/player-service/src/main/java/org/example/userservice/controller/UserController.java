@@ -1,5 +1,6 @@
 package org.example.userservice.controller;
 
+import org.example.userservice.exception.BadRequestException;
 import org.example.userservice.model.AccountModel;
 import org.example.userservice.model.RoleEnum;
 import org.example.userservice.model.SeasonModel;
@@ -135,18 +136,16 @@ public class UserController {
     }
 
     @DeleteMapping("/{key}")
-    public ResponseEntity<Void> deleteUser(@PathVariable long key) {
-        try {
-            List<UserModel> users = userService.findById(key);
-            if (users.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-            userService.deleteUser(key);
-            return ResponseEntity.noContent().build();
-        } catch (Exception e) {
-            log.error("Failed to delete user", e);
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<Void> deleteUser(
+            @PathVariable long key,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        long currentUserId = extractUserId(jwt);
+        if (currentUserId > 0 && key == currentUserId) {
+            throw new BadRequestException("Нельзя удалить собственный аккаунт");
         }
+        userService.deleteUser(key);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping(path = "/pages", produces = APPLICATION_JSON_VALUE)
@@ -178,13 +177,11 @@ public class UserController {
     @PutMapping(path = "/admin/users/{id}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
     public ResponseEntity<AdminUserResponse> updateAdminUser(
             @PathVariable long id,
-            @Valid @RequestBody AdminUserUpdateRequest request
+            @Valid @RequestBody AdminUserUpdateRequest request,
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        try {
-            return ResponseEntity.ok(adminUserService.updateUser(id, request));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+        long currentUserId = extractUserId(jwt);
+        return ResponseEntity.ok(adminUserService.updateUser(id, request, currentUserId));
     }
 
     @GetMapping(path = "/admin/role-requests", produces = APPLICATION_JSON_VALUE)

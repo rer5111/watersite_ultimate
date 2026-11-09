@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminQueryKeys, deleteAdminUser, updateAdminUser, useAdminUsers } from '@/api';
 import { Button, DataTable, Input, Select, toast, type DataTableColumn } from '@/components/ui';
+import { useAuth } from '@/context';
 import type { AdminUser, AdminUserRole, AdminUserStatus } from '@/types';
 import {
   formatDate,
@@ -18,12 +19,19 @@ import { UserEditDialog } from './components/user-edit-dialog';
 
 export function AdminUsersPage() {
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
   const { data: users = [], isLoading, isError, error, refetch } = useAdminUsers();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<'' | AdminUserRole>('');
   const [statusFilter, setStatusFilter] = useState<'' | AdminUserStatus>('');
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [deletingUser, setDeletingUser] = useState<AdminUser | null>(null);
+
+  const isUserAdmin = (user: AdminUser) => user.role === 'ADMIN';
+  const isCurrentUser = (user: AdminUser) =>
+    currentUser?.id !== undefined
+      ? user.id === currentUser.id
+      : user.username === currentUser?.username;
 
   const banMutation = useMutation({
     mutationFn: ({ user, status }: { user: AdminUser; status: AdminUserStatus }) =>
@@ -116,43 +124,60 @@ export function AdminUsersPage() {
     {
       id: 'actions',
       header: 'Действия',
-      cell: (user) => (
-        <div className="flex min-w-52 flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="tertiary"
-            className="border-border hover:bg-secondary rounded-none border px-2 py-1 text-xs"
-            onClick={() => setEditingUser(user)}
-          >
-            Изменить
-          </Button>
-          <Button
-            type="button"
-            variant="tertiary"
-            className="border-border hover:bg-secondary rounded-none border px-2 py-1 text-xs"
-            onClick={() =>
-              banMutation.mutate({
-                user,
-                status: user.status === 'BANNED' ? 'ACTIVE' : 'BANNED',
-              })
-            }
-            disabled={banMutation.isPending}
-          >
-            {user.status === 'BANNED' ? 'Разбанить' : 'Забанить'}
-          </Button>
-          <Button
-            type="button"
-            variant="tertiary"
-            className="border-error/40 text-error hover:bg-error hover:text-foreground rounded-none border px-2 py-1 text-xs"
-            onClick={() => {
-              deleteMutation.reset();
-              setDeletingUser(user);
-            }}
-          >
-            Удалить
-          </Button>
-        </div>
-      ),
+      cell: (user) => {
+        const banDisabledReason = isCurrentUser(user)
+          ? 'Нельзя заблокировать собственный аккаунт'
+          : isUserAdmin(user) && user.status !== 'BANNED'
+            ? 'Нельзя заблокировать администратора'
+            : undefined;
+
+        const deleteDisabledReason = isCurrentUser(user)
+          ? 'Нельзя удалить собственный аккаунт'
+          : isUserAdmin(user)
+            ? 'Нельзя удалить администратора'
+            : undefined;
+
+        return (
+          <div className="flex min-w-52 flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="tertiary"
+              className="border-border hover:bg-secondary rounded-none border px-2 py-1 text-xs"
+              onClick={() => setEditingUser(user)}
+            >
+              Изменить
+            </Button>
+            <Button
+              type="button"
+              variant="tertiary"
+              className="border-border hover:bg-secondary rounded-none border px-2 py-1 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+              onClick={() =>
+                banMutation.mutate({
+                  user,
+                  status: user.status === 'BANNED' ? 'ACTIVE' : 'BANNED',
+                })
+              }
+              disabled={banMutation.isPending || !!banDisabledReason}
+              title={banDisabledReason}
+            >
+              {user.status === 'BANNED' ? 'Разбанить' : 'Забанить'}
+            </Button>
+            <Button
+              type="button"
+              variant="tertiary"
+              className="border-error/40 text-error hover:bg-error hover:text-foreground rounded-none border px-2 py-1 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+              onClick={() => {
+                deleteMutation.reset();
+                setDeletingUser(user);
+              }}
+              disabled={deleteMutation.isPending || !!deleteDisabledReason}
+              title={deleteDisabledReason}
+            >
+              Удалить
+            </Button>
+          </div>
+        );
+      },
     },
   ];
 

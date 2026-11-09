@@ -1,5 +1,7 @@
 package org.example.userservice.service;
 
+import org.example.userservice.exception.BadRequestException;
+import org.example.userservice.exception.ResourceNotFoundException;
 import org.example.userservice.dto.CheckAvailabilityResponse;
 import org.example.userservice.dto.UserProfileResponse;
 import org.example.userservice.model.AccountModel;
@@ -77,8 +79,18 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void deleteUser(long id) {
-        userRepository.deleteById(id);
+        UserModel user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+        if (user.getRoles() != null && user.getRoles().contains(RoleEnum.ADMIN)) {
+            throw new BadRequestException("Нельзя удалить учетную запись администратора");
+        }
+        AccountModel account = user.getAccount();
+        userRepository.delete(user);
+        if (account != null) {
+            accountRepository.delete(account);
+        }
     }
 
     @Override

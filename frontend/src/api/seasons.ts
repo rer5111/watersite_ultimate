@@ -1,4 +1,5 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
+import { parseApiError } from './error-helper';
 
 export type SeasonPhase = 'UPCOMING' | 'ACTIVE' | 'COMPLETED' | 'UNKNOWN';
 
@@ -68,7 +69,8 @@ export async function getMySeasonParticipation(): Promise<SeasonParticipation> {
   const response = await fetch(`${base}/api/player-service/api/season/me`, { headers });
 
   if (!response.ok) {
-    throw new Error(`Не удалось загрузить историю сезонов (${response.status})`);
+    const message = await parseApiError(response, 'Не удалось загрузить историю сезонов');
+    throw new Error(message);
   }
 
   return readParticipation((await response.json()) as unknown);

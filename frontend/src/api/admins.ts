@@ -1,5 +1,6 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import type { AdminProfile } from '@/types';
+import { parseApiError } from './error-helper';
 
 function isAdminProfile(value: unknown): value is AdminProfile {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -17,7 +18,8 @@ export async function getAdmins(): Promise<AdminProfile[]> {
   const response = await fetch(`${base}/api/player-service/api/user/admins`);
 
   if (!response.ok) {
-    throw new Error(`Не удалось загрузить список администрации (${response.status})`);
+    const message = await parseApiError(response, 'Не удалось загрузить список администрации');
+    throw new Error(message);
   }
 
   const payload: unknown = await response.json();

@@ -1,4 +1,5 @@
 import type { AdminRoleRequest, AdminRequestedRole } from '@/types';
+import { parseApiError } from './error-helper';
 
 export interface CreateRoleRequestPayload {
   requestedRole: AdminRequestedRole;
@@ -18,15 +19,10 @@ export async function createRoleRequest(payload: CreateRoleRequestPayload): Prom
   });
 
   if (!response.ok) {
-    let message = response.status === 409
+    const fallback = response.status === 409
       ? 'У вас уже есть заявка на рассмотрении.'
-      : `Не удалось отправить заявку (${response.status}).`;
-    try {
-      const problem = (await response.json()) as { message?: string; detail?: string };
-      message = problem.message ?? problem.detail ?? message;
-    } catch {
-      // Use the status specific message when the response has no JSON body.
-    }
+      : 'Не удалось отправить заявку';
+    const message = await parseApiError(response, fallback);
     throw new Error(message);
   }
 

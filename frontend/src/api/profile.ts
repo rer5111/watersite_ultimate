@@ -1,5 +1,6 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import type { SendCodeResponse, UserProfile } from '@/types';
+import { parseApiError } from './error-helper';
 
 export class ProfileApiError extends Error {
   readonly status: number;
@@ -32,26 +33,8 @@ function getAuthHeaders(includeJson: boolean = false): HeadersInit {
 }
 
 async function handleResponseError(response: Response, defaultMessage: string): Promise<never> {
-  let message = `${defaultMessage} (${response.status})`;
-  let code: string | undefined;
-  let details: Record<string, string> | undefined;
-
-  try {
-    const errorJson = (await response.json()) as {
-      message?: string;
-      detail?: string;
-      code?: string;
-      details?: Record<string, string>;
-    };
-    if (errorJson.message) message = errorJson.message;
-    else if (errorJson.detail) message = errorJson.detail;
-    code = errorJson.code;
-    details = errorJson.details;
-  } catch {
-    // fallback to status code message
-  }
-
-  throw new ProfileApiError(message, response.status, code, details);
+  const message = await parseApiError(response, defaultMessage);
+  throw new ProfileApiError(message, response.status);
 }
 
 export async function getUserProfile(): Promise<UserProfile> {

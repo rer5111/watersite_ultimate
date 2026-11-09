@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -48,8 +49,26 @@ public class AdminUserService {
 
     @Transactional
     public AdminUserResponse updateUser(long id, AdminUserUpdateRequest request) {
+        return updateUser(id, request, 0L);
+    }
+
+    @Transactional
+    public AdminUserResponse updateUser(long id, AdminUserUpdateRequest request, long currentUserId) {
         UserModel user = findUser(id);
-        user.setRoles(Set.of(request.role()));
+        boolean isTargetAdmin = user.getRoles() != null && user.getRoles().contains(RoleEnum.ADMIN);
+        boolean isSelf = currentUserId > 0 && user.getId() == currentUserId;
+
+        if (isTargetAdmin && request.status() == UserStatus.BANNED) {
+            throw new BadRequestException("Нельзя заблокировать учетную запись администратора");
+        }
+        if (isSelf && request.status() == UserStatus.BANNED) {
+            throw new BadRequestException("Нельзя заблокировать собственный аккаунт");
+        }
+        if (isSelf && isTargetAdmin && request.role() != RoleEnum.ADMIN) {
+            throw new BadRequestException("Нельзя понизить роль собственной учетной записи");
+        }
+
+        user.setRoles(new HashSet<>(Set.of(request.role())));
         user.setStatus(request.status());
         return toUserResponse(userRepository.save(user));
     }

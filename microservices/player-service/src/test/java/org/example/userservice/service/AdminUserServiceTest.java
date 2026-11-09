@@ -3,6 +3,7 @@ package org.example.userservice.service;
 import org.example.userservice.dto.AdminUserResponse;
 import org.example.userservice.dto.AdminUserUpdateRequest;
 import org.example.userservice.dto.RoleRequestResponse;
+import org.example.userservice.exception.BadRequestException;
 import org.example.userservice.exception.ConflictException;
 import org.example.userservice.exception.ResourceNotFoundException;
 import org.example.userservice.model.AccountModel;
@@ -108,6 +109,50 @@ class AdminUserServiceTest {
 
         assertThatThrownBy(() -> adminUserService.rejectRoleRequest(10L, "Повторная причина"))
                 .isInstanceOf(ConflictException.class);
+    }
+
+    @Test
+    void updateUser_whenBanningAdmin_throwsBadRequest() {
+        UserModel admin = user(1, "admin");
+        admin.setRoles(Set.of(RoleEnum.ADMIN));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
+
+        assertThatThrownBy(() -> adminUserService.updateUser(
+                1L,
+                new AdminUserUpdateRequest(RoleEnum.ADMIN, UserStatus.BANNED),
+                2L
+        ))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Нельзя заблокировать учетную запись администратора");
+    }
+
+    @Test
+    void updateUser_whenBanningSelf_throwsBadRequest() {
+        UserModel player = user(5, "someone");
+        when(userRepository.findById(5L)).thenReturn(Optional.of(player));
+
+        assertThatThrownBy(() -> adminUserService.updateUser(
+                5L,
+                new AdminUserUpdateRequest(RoleEnum.USER, UserStatus.BANNED),
+                5L
+        ))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Нельзя заблокировать собственный аккаунт");
+    }
+
+    @Test
+    void updateUser_whenDemotingSelf_throwsBadRequest() {
+        UserModel admin = user(1, "admin");
+        admin.setRoles(Set.of(RoleEnum.ADMIN));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
+
+        assertThatThrownBy(() -> adminUserService.updateUser(
+                1L,
+                new AdminUserUpdateRequest(RoleEnum.USER, UserStatus.ACTIVE),
+                1L
+        ))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Нельзя понизить роль собственной учетной записи");
     }
 
     private UserModel user(long id, String name) {

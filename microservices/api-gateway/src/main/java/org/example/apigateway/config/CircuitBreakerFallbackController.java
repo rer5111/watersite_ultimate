@@ -17,23 +17,33 @@ import java.util.Set;
 public class CircuitBreakerFallbackController {
 
     private static final Logger log = LoggerFactory.getLogger(CircuitBreakerFallbackController.class);
-    private static final Set<String> SERVICES = Set.of(
-            "auth-service", "player-service", "application-service", "payment-service", "donation-service",
-            "chat-service", "notification-service", "event-service", "skin-service");
+    private static final Map<String, String> SERVICE_DESCRIPTIONS = Map.of(
+            "auth-service", "Сервис авторизации",
+            "player-service", "Сервис игроков и профилей",
+            "application-service", "Сервис заявок",
+            "payment-service", "Платежный сервис",
+            "donation-service", "Сервис пожертвований",
+            "chat-service", "Сервис чата",
+            "notification-service", "Сервис уведомлений",
+            "event-service", "Сервис событий",
+            "skin-service", "Сервис скинов"
+    );
 
     @RequestMapping("/fallback/{service}")
     public ProblemDetail serviceUnavailable(@PathVariable String service, ServerWebExchange exchange) {
-        String serviceName = SERVICES.contains(service) ? service : "backend-service";
+        String serviceName = SERVICE_DESCRIPTIONS.containsKey(service) ? service : "backend-service";
+        String serviceTitle = SERVICE_DESCRIPTIONS.getOrDefault(service, "Сервис");
         String requestId = exchange.getRequest().getHeaders().getFirst("X-Request-Id");
         log.warn("Gateway circuit fallback invoked service={} requestId={}", serviceName, requestId);
 
+        String message = "%s временно недоступен. Повторите попытку позже.".formatted(serviceTitle);
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.SERVICE_UNAVAILABLE,
-                "Сервис временно недоступен. Повторите попытку позже.");
-        problem.setTitle("Сервис временно недоступен");
+                message);
+        problem.setTitle(serviceTitle + " недоступен");
         problem.setType(URI.create("urn:problem:service-unavailable"));
         problem.setProperty("code", "SERVICE_UNAVAILABLE");
-        problem.setProperty("message", problem.getDetail());
+        problem.setProperty("message", message);
         problem.setProperty("details", Map.of("service", serviceName));
         return problem;
     }

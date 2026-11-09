@@ -1,4 +1,5 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
+import { parseApiError } from './error-helper';
 
 export type ServerEvent = {
   id: number;
@@ -44,7 +45,8 @@ export async function getEvents(): Promise<ServerEvent[]> {
   const response = await fetch(`${base}/api/event-service/api/v1/events`);
 
   if (!response.ok) {
-    throw new Error(`Не удалось загрузить события сервера (${response.status})`);
+    const message = await parseApiError(response, 'Не удалось загрузить события сервера');
+    throw new Error(message);
   }
 
   const payload: unknown = await response.json();

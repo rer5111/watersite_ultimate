@@ -308,6 +308,24 @@ class UserControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void updateAdminUser_whenBanningAdmin_returnsBadRequestWithMeaningfulMessage() throws Exception {
+        String username = "admin-to-ban-" + UUID.randomUUID();
+        AccountModel account = accountRepository.saveAndFlush(new AccountModel(0, username, LocalDate.now()));
+        UserModel adminUser = new UserModel(0, username, "hash", new HashSet<>(Set.of(RoleEnum.ADMIN)), account);
+        UserModel savedAdmin = userRepository.saveAndFlush(adminUser);
+
+        mockMvc.perform(put("/api/user/admin/users/{id}", savedAdmin.getId())
+                        .with(jwt().jwt(token -> token.claim("user_id", 999L).claim("roles", List.of("ADMIN"))))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"role\":\"ADMIN\",\"status\":\"BANNED\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.message").value("Нельзя заблокировать учетную запись администратора"));
+    }
+
     private RoleRequest createRoleRequest(RoleEnum requestedRole) {
         String username = "role-test-" + UUID.randomUUID();
         AccountModel account = new AccountModel();

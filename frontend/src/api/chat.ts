@@ -1,3 +1,5 @@
+import { parseApiError } from './error-helper';
+
 export type ChatMessageOrigin = 'WEB' | 'DISCORD' | 'MINECRAFT';
 
 export type ChatMessage = {
@@ -35,7 +37,8 @@ export async function getChatMessages(afterId: number): Promise<ChatMessage[]> {
   );
 
   if (!response.ok) {
-    throw new Error(`Не удалось загрузить сообщения (${response.status})`);
+    const message = await parseApiError(response, 'Не удалось загрузить сообщения');
+    throw new Error(message);
   }
 
   const payload: unknown = await response.json();
@@ -50,7 +53,8 @@ export async function getChatStatus(): Promise<ChatStatus> {
   const response = await fetch(`${getBase()}/api/chat-service/api/v1/chat/status`);
 
   if (!response.ok) {
-    throw new Error(`Не удалось получить статус чата (${response.status})`);
+    const message = await parseApiError(response, 'Не удалось получить статус чата');
+    throw new Error(message);
   }
 
   const payload: unknown = await response.json();
@@ -79,6 +83,7 @@ export async function sendChatMessage(message: string): Promise<void> {
   });
 
   if (!response.ok) {
-    throw new Error(`Не удалось отправить сообщение (${response.status})`);
+    const message = await parseApiError(response, 'Не удалось отправить сообщение');
+    throw new Error(message);
   }
 }

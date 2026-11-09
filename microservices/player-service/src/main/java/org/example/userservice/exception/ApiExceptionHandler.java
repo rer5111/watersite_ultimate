@@ -6,6 +6,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -66,6 +68,26 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         ApiProblemResponse body = body(status, "VALIDATION_FAILED", "Проверьте переданные данные", request, details);
         headers.setContentType(MediaType.APPLICATION_PROBLEM_JSON);
         return new ResponseEntity<>(body, headers, status);
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiProblemResponse> invalidState(IllegalStateException exception, WebRequest request) {
+        return problem(HttpStatus.BAD_REQUEST, "INVALID_STATE", exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiProblemResponse> accessDenied(AccessDeniedException exception, WebRequest request) {
+        String msg = exception.getMessage() != null && !exception.getMessage().isBlank()
+                ? exception.getMessage()
+                : "Недостаточно прав для выполнения действия";
+        return problem(HttpStatus.FORBIDDEN, "FORBIDDEN", msg, request, Map.of());
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiProblemResponse> dataIntegrityViolation(
+            DataIntegrityViolationException exception, WebRequest request) {
+        return problem(HttpStatus.CONFLICT, "DATA_CONFLICT",
+                "Невозможно выполнить действие: запись связана с другими данными или уже существует", request, Map.of());
     }
 
     @ExceptionHandler(Exception.class)
