@@ -4,6 +4,9 @@ server:
 spring:
   cloud:
     gateway:
+      httpclient:
+        connect-timeout: 10000
+        response-timeout: 10s
       routes:
         - id: auth-service
           order: 5
@@ -203,7 +206,31 @@ resilience4j:
         waitDurationInOpenState: 10s
         permittedNumberOfCallsInHalfOpenState: 3
         slowCallRateThreshold: 50
-        slowCallDurationThreshold: 3s
+        slowCallDurationThreshold: 5s
+    instances:
+      authService:
+        baseConfig: default
+      playerService:
+        baseConfig: default
+      applicationService:
+        baseConfig: default
+      paymentService:
+        baseConfig: default
+      donationService:
+        baseConfig: default
+      chatService:
+        baseConfig: default
+      notificationService:
+        baseConfig: default
+      eventService:
+        baseConfig: default
+      skinService:
+        baseConfig: default
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 10s
+        cancelRunningFuture: true
     instances:
       authService:
         baseConfig: default

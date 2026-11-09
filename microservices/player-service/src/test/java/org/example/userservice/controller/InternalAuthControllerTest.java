@@ -213,4 +213,50 @@ class InternalAuthControllerTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false));
     }
+
+    @Test
+    void checkAvailability_allowsEmailOnlyWhenUsernameNull() throws Exception {
+        when(userService.checkAvailability(eq("new@waltercraft.ru"), eq(null)))
+                .thenReturn(org.example.userservice.dto.CheckAvailabilityResponse.success());
+
+        mockMvc.perform(post("/internal/auth/check-availability")
+                        .header("X-Internal-Auth", SHARED_SECRET)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"new@waltercraft.ru","username":null}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.available").value(true));
+    }
+
+    @Test
+    void checkAvailability_allowsUsernameOnlyWhenEmailNull() throws Exception {
+        when(userService.checkAvailability(eq(null), eq("NewPlayer")))
+                .thenReturn(org.example.userservice.dto.CheckAvailabilityResponse.success());
+
+        mockMvc.perform(post("/internal/auth/check-availability")
+                        .header("X-Internal-Auth", SHARED_SECRET)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":null,"username":"NewPlayer"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.available").value(true));
+    }
+
+    @Test
+    void checkAvailability_returnsTakenWhenEmailAlreadyExists() throws Exception {
+        when(userService.checkAvailability(eq("existing@waltercraft.ru"), eq(null)))
+                .thenReturn(org.example.userservice.dto.CheckAvailabilityResponse.taken("Email taken", "email"));
+
+        mockMvc.perform(post("/internal/auth/check-availability")
+                        .header("X-Internal-Auth", SHARED_SECRET)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"existing@waltercraft.ru","username":null}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.available").value(false))
+                .andExpect(jsonPath("$.field").value("email"));
+    }
 }

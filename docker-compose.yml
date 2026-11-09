@@ -104,7 +104,7 @@ services:
       CONFIG_REPO_LOCATION: file:/config-repo
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
-      test: ['CMD', 'curl', '-fsS', 'http://localhost:8888/actuator/health']
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:9090/actuator/health']
       interval: 5s
       timeout: 3s
       retries: 30
@@ -128,7 +128,7 @@ services:
     ports:
       - '8761:8761'
     healthcheck:
-      test: ['CMD', 'curl', '-fsS', 'http://localhost:8761/actuator/health']
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:9090/actuator/health']
       interval: 5s
       timeout: 3s
       retries: 30
@@ -412,6 +412,7 @@ services:
       NOTIFICATION_DB_USER: ${NOTIFICATION_DB_USER:-notification_user}
       NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD:-0}
       NOTIFICATION_SERVICE_SHARED_SECRET: ${NOTIFICATION_SERVICE_SHARED_SECRET:-waltercraft-internal-auth-secret-key-32-chars}
+      VERIFICATION_CODE_PEPPER: ${VERIFICATION_CODE_PEPPER:-waltercraft-default-verification-code-pepper-32-chars}
       AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.waltercraft.ru}
       JWT_JWK_SET_URI: ${JWT_JWK_SET_URI:-http://auth-service:8090/.well-known/jwks.json}
       SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
@@ -524,7 +525,7 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_API_URL: ''
+        VITE_API_URL: http://localhost:8080
 
 volumes:
   player-db-data:

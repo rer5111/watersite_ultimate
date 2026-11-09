@@ -187,4 +187,19 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.tokens.accessToken").value("dev-access"));
     }
+
+    @Test
+    void sendRegistrationCode_rateLimitExceeded_returns429() throws Exception {
+        when(authService.sendRegistrationCode(any()))
+                .thenThrow(new com.waltercraft.auth.exception.RateLimitExceededException("Запрос нового кода возможен через 45 сек.", 45));
+
+        mockMvc.perform(post("/auth/register/send-code")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"user@example.com","username":"walter","password":"Password123!"}
+                                """))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.code").value("RATE_LIMIT_EXCEEDED"))
+                .andExpect(jsonPath("$.details.retryAfterSeconds").value("45"));
+    }
 }

@@ -55,7 +55,7 @@ management:
 security:
   notification-service:
     shared-secret: ${NOTIFICATION_SERVICE_SHARED_SECRET}
-    verification-code-pepper: ${VERIFICATION_CODE_PEPPER}
+    verification-code-pepper: ${VERIFICATION_CODE_PEPPER:waltercraft-default-verification-code-pepper-32-chars}
 
 notification:
   jwt:

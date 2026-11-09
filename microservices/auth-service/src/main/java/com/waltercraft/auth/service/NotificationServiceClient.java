@@ -6,13 +6,17 @@ import com.waltercraft.auth.dto.InternalVerifyCodeResponse;
 import com.waltercraft.auth.dto.SendCodeResponse;
 import com.waltercraft.auth.exception.InvalidVerificationCodeException;
 import com.waltercraft.auth.exception.NotificationServiceUnavailableException;
+import com.waltercraft.auth.exception.RateLimitExceededException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 @Component
 public class NotificationServiceClient {
@@ -33,6 +37,29 @@ public class NotificationServiceClient {
                     .body(new InternalSendCodeRequest(email, purpose))
                     .retrieve()
                     .body(SendCodeResponse.class);
+        } catch (RestClientResponseException ex) {
+            if (ex.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
+                int retryAfter = 60;
+                String message = "Подождите перед повторной отправкой кода";
+                try {
+                    ProblemDetail problem = ex.getResponseBodyAs(ProblemDetail.class);
+                    if (problem != null) {
+                        if (problem.getDetail() != null && !problem.getDetail().isBlank()) {
+                            message = problem.getDetail();
+                        }
+                        Object retryProp = problem.getProperties() != null
+                                ? problem.getProperties().get("retryAfterSeconds")
+                                : null;
+                        if (retryProp instanceof Number number) {
+                            retryAfter = number.intValue();
+                        }
+                    }
+                } catch (Exception ignored) {
+                    // keep default message and retryAfter
+                }
+                throw new RateLimitExceededException(message, retryAfter);
+            }
+            throw new NotificationServiceUnavailableException(ex);
         } catch (RestClientException ex) {
             throw new NotificationServiceUnavailableException(ex);
         }
@@ -68,6 +95,9 @@ public class NotificationServiceClient {
     }
 
     private RuntimeException fallbackFailure(Throwable cause) {
+        if (cause instanceof RateLimitExceededException rateLimit) {
+            return rateLimit;
+        }
         if (cause instanceof InvalidVerificationCodeException invalidCode) {
             return invalidCode;
         }

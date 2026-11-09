@@ -111,6 +111,9 @@ public class PlayerServiceCredentialVerifier implements CredentialVerifier, Play
             if (exception.getStatusCode() == HttpStatus.CONFLICT) {
                 throw new UserAlreadyExistsException("Пользователь с таким email или никнеймом уже зарегистрирован");
             }
+            if (exception.getStatusCode().is4xxClientError()) {
+                throw new IllegalArgumentException("Некорректные данные для проверки доступности");
+            }
             throw new PlayerServiceUnavailableException(exception);
         } catch (RestClientException exception) {
             throw new PlayerServiceUnavailableException(exception);
@@ -134,6 +137,9 @@ public class PlayerServiceCredentialVerifier implements CredentialVerifier, Play
         } catch (RestClientResponseException exception) {
             if (exception.getStatusCode() == HttpStatus.CONFLICT) {
                 throw new UserAlreadyExistsException("Пользователь с таким email или никнеймом уже зарегистрирован");
+            }
+            if (exception.getStatusCode().is4xxClientError()) {
+                throw new IllegalArgumentException("Некорректные данные для проверки доступности");
             }
             throw new PlayerServiceUnavailableException(exception);
         } catch (RestClientException exception) {
@@ -226,7 +232,9 @@ public class PlayerServiceCredentialVerifier implements CredentialVerifier, Play
     private RuntimeException fallbackFailure(Throwable cause) {
         if (cause instanceof InvalidCredentialsException
                 || cause instanceof UserAlreadyExistsException
-                || cause instanceof MinecraftAccountAlreadyLinkedException) {
+                || cause instanceof MinecraftAccountAlreadyLinkedException
+                || cause instanceof IllegalArgumentException
+                || cause instanceof IllegalStateException) {
             return (RuntimeException) cause;
         }
         if (cause instanceof PlayerServiceUnavailableException unavailable) {

@@ -11,6 +11,7 @@ import { Button, toast } from '@/components/ui';
 import { cn } from '@/lib';
 import { paths } from '@/routes';
 import type { BroadcastCategory } from '@/types';
+import { useDelayedLoading } from '@/hooks';
 
 const categoryStyles: Record<BroadcastCategory, { label: string; className: string }> = {
   INFO: { label: 'Информация', className: 'bg-secondary text-foreground' },
@@ -33,7 +34,8 @@ function formatDateTime(value: string): string {
 export function NotificationsPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
-  const { data: notifications = [], isError, refetch } = useNotifications(Boolean(user));
+  const { data: notifications = [], isPending, isError, refetch } = useNotifications(Boolean(user));
+  const isSkeletonVisible = useDelayedLoading(isPending);
 
   const invalidate = () =>
     void queryClient.invalidateQueries({ queryKey: notificationQueryKeys.all });
@@ -102,6 +104,14 @@ export function NotificationsPage() {
             Повторить попытку
           </Button>
         </section>
+      ) : isPending || isSkeletonVisible ? (
+        isSkeletonVisible && (
+          <div className="flex flex-col gap-3" aria-busy="true">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="border-border bg-card h-32 animate-pulse border" />
+            ))}
+          </div>
+        )
       ) : notifications.length === 0 ? (
         <section className="border-border bg-card border p-8 text-center">
           <p className="text-foreground-muted text-sm">Уведомлений пока нет.</p>

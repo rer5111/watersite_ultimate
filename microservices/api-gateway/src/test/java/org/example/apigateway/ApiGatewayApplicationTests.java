@@ -24,7 +24,7 @@ import static org.springframework.security.test.web.reactive.server.SecurityMock
         "springdoc.swagger-ui.urls[0].name=test-service",
         "springdoc.swagger-ui.urls[0].url=/api/test-service/v3/api-docs"
 })
-@AutoConfigureWebTestClient
+@AutoConfigureWebTestClient(timeout = "15s")
 @ActiveProfiles("test")
 class ApiGatewayApplicationTests {
 

@@ -35,6 +35,12 @@ public class ApiExceptionHandler {
         return problem(HttpStatus.SERVICE_UNAVAILABLE, "AUTH_DEPENDENCY_UNAVAILABLE", "Сервис проверки аккаунтов временно недоступен", Map.of());
     }
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ProblemDetail> rateLimitExceeded(RateLimitExceededException ex) {
+        return problem(HttpStatus.TOO_MANY_REQUESTS, "RATE_LIMIT_EXCEEDED", ex.getMessage(),
+                Map.of("retryAfterSeconds", String.valueOf(ex.getRetryAfterSeconds())));
+    }
+
     @ExceptionHandler(NotificationServiceUnavailableException.class)
     public ResponseEntity<ProblemDetail> notificationServiceUnavailable() {
         return problem(HttpStatus.SERVICE_UNAVAILABLE, "NOTIFICATION_SERVICE_UNAVAILABLE",
@@ -96,6 +102,11 @@ public class ApiExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ProblemDetail> unreadableRequest() {
         return problem(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Не удалось прочитать тело запроса", Map.of());
+    }
+
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
+    public ResponseEntity<ProblemDetail> illegalStateOrArgument(RuntimeException exception) {
+        return problem(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", exception.getMessage(), Map.of());
     }
 
     @ExceptionHandler(Exception.class)
