@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type DelayedLoadingOptions = {
   delay?: number;
@@ -9,10 +9,10 @@ function useDelayedLoading(
   loading: boolean,
   { delay = 300, minDuration = 400 }: DelayedLoadingOptions = {}
 ) {
-  const [visible, setVisible] = React.useState(false);
-  const shownAt = React.useRef(0);
+  const [visible, setVisible] = useState(false);
+  const shownAt = useRef(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (loading === visible) {
       return;
     }
