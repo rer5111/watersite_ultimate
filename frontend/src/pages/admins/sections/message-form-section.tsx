@@ -23,13 +23,15 @@ export function MessageFormSection() {
       setIsSubmitted(true);
       setNote('');
     } catch (submissionError: unknown) {
-      setError(submissionError instanceof Error ? submissionError.message : 'Не удалось отправить заявку.');
+      setError(
+        submissionError instanceof Error ? submissionError.message : 'Не удалось отправить заявку.'
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const nickname = user ? (profile?.minecraftNickname || profile?.username || user.username) : '';
+  const nickname = user ? profile?.minecraftNickname || profile?.username || user.username : '';
   const isFormDisabled = !user || isSubmitting || isSubmitted;
 
   return (
@@ -69,7 +71,7 @@ export function MessageFormSection() {
             value={requestedRole}
             onChange={(event) => setRequestedRole(event.target.value as AdminRequestedRole)}
             disabled={isFormDisabled}
-            className="text-foreground bg-input w-full rounded-none border border-transparent p-3 text-sm font-medium focus-visible:ring-foreground focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="text-foreground bg-input focus-visible:ring-foreground w-full rounded-none border border-transparent p-3 text-sm font-medium focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           >
             <option value="MODERATOR">Модератор</option>
             <option value="ADMIN">Администратор</option>
@@ -94,9 +96,21 @@ export function MessageFormSection() {
           />
         </div>
 
-        {!user && <p className="text-error text-sm" role="alert">Войдите в аккаунт, чтобы отправить заявку.</p>}
-        {error && <p className="text-error text-sm" role="alert">{error}</p>}
-        {isSubmitted && <p className="text-sm" role="status">Заявка отправлена и ожидает рассмотрения.</p>}
+        {!user && (
+          <p className="text-error text-sm" role="alert">
+            Войдите в аккаунт, чтобы отправить заявку.
+          </p>
+        )}
+        {error && (
+          <p className="text-error text-sm" role="alert">
+            {error}
+          </p>
+        )}
+        {isSubmitted && (
+          <p className="text-sm" role="status">
+            Заявка отправлена и ожидает рассмотрения.
+          </p>
+        )}
         <Button
           type="submit"
           variant="primary"

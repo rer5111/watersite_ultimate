@@ -5,20 +5,12 @@ export type AdminCardProps = {
   uuid: string | null;
 };
 
-const ADMIN_FALLBACKS: Record<string, { image: string; description: string }> = {
+const defaultAdmins: Record<string, { image: string; description: string }> = {
   leadcone_tnf: {
     image: '/images/skins/lidkon.png',
     description: 'Главный администратор, владелец Waltercraft',
   },
-  intervinn: {
-    image: '/images/skins/lidkon.png',
-    description: 'Главный администратор, владелец Waltercraft',
-  },
   rer_5111: {
-    image: '/images/skins/rer1511.png',
-    description: 'Совладелец сервера, организатор ивентов',
-  },
-  rer1511: {
     image: '/images/skins/rer1511.png',
     description: 'Совладелец сервера, организатор ивентов',
   },
@@ -37,12 +29,12 @@ const ADMIN_FALLBACKS: Record<string, { image: string; description: string }> = 
 };
 
 export function AdminCard({ username, uuid }: AdminCardProps) {
-  const meta = ADMIN_FALLBACKS[username.toLowerCase()];
+  const meta = defaultAdmins[username.toLowerCase()];
   const fallbackImage = meta?.image;
   const description = meta?.description ?? 'Администратор Waltercraft';
 
   return (
-    <div className="bg-card flex flex-col gap-4 p-8">
+    <div className="bg-card flex min-h-102 flex-col gap-4 p-8">
       <SkinAvatar
         uuid={uuid}
         name={username}
