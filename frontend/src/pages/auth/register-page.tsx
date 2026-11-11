@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type KeyboardEvent, type RefObject } from 'react';
 import { Button, Input, MicrosoftLoginSection } from '@/components';
 import { AuthApiError, sendRegistrationCode } from '@/api';
 import { paths } from '@/routes';
@@ -146,6 +146,16 @@ export function RegisterPage() {
     }
   };
 
+  const handleKeyDown = (
+    e: KeyboardEvent<HTMLInputElement>,
+    nextElement?: RefObject<HTMLInputElement | null>
+  ) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      nextElement?.current?.focus();
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-3">
@@ -167,6 +177,7 @@ export function RegisterPage() {
             id="email"
             name="email"
             type="email"
+            autoComplete="email"
             placeholder="Введите Email"
             value={email}
             onChange={(e) => {
@@ -175,11 +186,10 @@ export function RegisterPage() {
                 setErrors((prev) => ({ ...prev, email: undefined, general: undefined }));
               }
             }}
+            onKeyDown={(e) => handleKeyDown(e, nicknameInputRef)}
             isError={Boolean(errors.email)}
           />
-          {errors.email && (
-            <span className="text-error text-xs font-medium">{errors.email}</span>
-          )}
+          {errors.email && <span className="text-error text-xs font-medium">{errors.email}</span>}
         </div>
 
         <div className="flex flex-col gap-2">
@@ -190,6 +200,7 @@ export function RegisterPage() {
             ref={nicknameInputRef}
             id="nickname"
             name="nickname"
+            autoComplete="nickname"
             placeholder="Введите никнейм Minecraft"
             value={nickname}
             onChange={(e) => {
@@ -198,6 +209,7 @@ export function RegisterPage() {
                 setErrors((prev) => ({ ...prev, nickname: undefined, general: undefined }));
               }
             }}
+            onKeyDown={(e) => handleKeyDown(e, passwordInputRef)}
             isError={Boolean(errors.nickname)}
           />
           {errors.nickname && (
@@ -214,6 +226,7 @@ export function RegisterPage() {
             id="password"
             name="password"
             type="password"
+            autoComplete="password"
             placeholder="Минимум 8 символов"
             value={password}
             onChange={(e) => {
@@ -230,9 +243,7 @@ export function RegisterPage() {
         </div>
 
         {errors.general && (
-          <p className="text-error text-xs font-medium text-center">
-            {errors.general}
-          </p>
+          <p className="text-error text-center text-xs font-medium">{errors.general}</p>
         )}
 
         <Button type="submit" disabled={isSubmitting} className="mt-2">

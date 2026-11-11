@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type KeyboardEvent } from 'react';
 import { Button, Input, MicrosoftDeviceModal } from '@/components';
 import { loginWithCredentials } from '@/api';
 import { useAuth } from '@/context';
@@ -59,8 +59,7 @@ export function LoginPage() {
       login(tokens);
       navigate(paths.home);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Неверный email/никнейм или пароль';
+      const message = err instanceof Error ? err.message : 'Неверный email/никнейм или пароль';
       setErrors({
         identifier: message,
         password: ' ',
@@ -69,6 +68,13 @@ export function LoginPage() {
       identifierInputRef.current?.select();
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleIdentifierKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      passwordInputRef.current?.focus();
     }
   };
 
@@ -118,6 +124,7 @@ export function LoginPage() {
             ref={identifierInputRef}
             id="login"
             name="login"
+            autoComplete="login"
             placeholder="Введите email или никнейм"
             value={identifier}
             onChange={(e) => {
@@ -130,12 +137,11 @@ export function LoginPage() {
                 }));
               }
             }}
+            onKeyDown={handleIdentifierKeyDown}
             isError={Boolean(errors.identifier)}
           />
           {errors.identifier && errors.identifier.trim() && (
-            <span className="text-error text-xs font-medium">
-              {errors.identifier}
-            </span>
+            <span className="text-error text-xs font-medium">{errors.identifier}</span>
           )}
         </div>
 
@@ -148,6 +154,7 @@ export function LoginPage() {
             id="password"
             name="password"
             type="password"
+            autoComplete="password"
             placeholder="Введите пароль"
             value={password}
             onChange={(e) => {
@@ -163,9 +170,7 @@ export function LoginPage() {
             isError={Boolean(errors.password)}
           />
           {errors.password && errors.password.trim() && (
-            <span className="text-error text-xs font-medium">
-              {errors.password}
-            </span>
+            <span className="text-error text-xs font-medium">{errors.password}</span>
           )}
         </div>
 
