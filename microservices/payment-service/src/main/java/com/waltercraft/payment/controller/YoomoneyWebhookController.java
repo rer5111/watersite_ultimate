@@ -30,20 +30,13 @@ public class YoomoneyWebhookController {
         log.info("Received YooMoney webhook for operation_id={} label={}",
                 params.get("operation_id"), params.get("label"));
 
-        YoomoneyNotificationPayload payload = new YoomoneyNotificationPayload(
-                params.get("notification_type"),
-                params.get("operation_id"),
-                params.get("amount"),
-                params.get("withdraw_amount"),
-                params.get("currency"),
-                params.get("datetime"),
-                params.get("sender"),
-                params.get("codepro"),
-                params.get("label"),
-                params.get("sha1_hash"),
-                params.get("unaccepted")
-        );
+        if ("true".equalsIgnoreCase(params.get("test_notification"))
+                || "test-notification".equals(params.get("operation_id"))) {
+            log.info("Handled test notification from YooMoney, responding HTTP 200 OK");
+            return ResponseEntity.ok("OK");
+        }
 
+        YoomoneyNotificationPayload payload = YoomoneyNotificationPayload.from(params);
         donationPaymentService.processWebhook(payload);
         return ResponseEntity.ok("OK");
     }

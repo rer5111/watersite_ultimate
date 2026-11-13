@@ -86,25 +86,37 @@ public class DonationPaymentService {
 
     @Transactional
     public void processWebhook(YoomoneyNotificationPayload payload) {
-        if (payload == null || payload.label() == null || payload.label().isBlank()) {
-            log.warn("Received empty or invalid YooMoney webhook payload");
+        if (payload == null) {
+            log.warn("Received empty YooMoney webhook payload");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Некорректное уведомление");
         }
 
-        boolean validSignature = signatureVerifier.verify(
-                payload.notification_type(),
-                payload.operation_id(),
-                payload.amount(),
-                payload.currency(),
-                payload.datetime(),
-                payload.sender(),
-                payload.codepro(),
-                payload.label(),
-                payload.sha1_hash()
-        );
+        if (payload.isTest()) {
+            log.info("Received YooMoney test notification in service, skipping processing");
+            return;
+        }
+
+        if (payload.label() == null || payload.label().isBlank()) {
+            log.warn("Received empty or invalid YooMoney webhook payload label");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Некорректное уведомление");
+        }
+
+        boolean validSignature = payload.rawParams() != null && !payload.rawParams().isEmpty()
+                ? signatureVerifier.verify(payload.rawParams())
+                : signatureVerifier.verify(
+                        payload.notification_type(),
+                        payload.operation_id(),
+                        payload.amount(),
+                        payload.currency(),
+                        payload.datetime(),
+                        payload.sender(),
+                        payload.codepro(),
+                        payload.label(),
+                        payload.sha1_hash()
+                );
 
         if (!validSignature) {
-            log.warn("Invalid SHA-1 signature for YooMoney operation_id={} label={}",
+            log.warn("Invalid signature for YooMoney operation_id={} label={}",
                     payload.operation_id(), payload.label());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Неверная цифровая подпись");
         }
