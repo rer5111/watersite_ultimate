@@ -10,8 +10,7 @@ import {
   formatDateTime,
   formatErrorMessage,
 } from '../admin-utils';
-import { AdminErrorState } from '../components/admin-page-shell';
-import { StatusBadge } from '../components/status-badge';
+import { AdminErrorState, StatusBadge } from '../components';
 
 export function BroadcastHistorySection() {
   const { data: broadcasts = [], isLoading, isError, error, refetch } = useBroadcastHistory();

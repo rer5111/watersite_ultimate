@@ -1,9 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useState,
-  type ReactNode,
-} from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import type { AuthUser, TokenResponse } from '@/types';
 import { refreshAccessToken } from '@/api';
 import { queryClient } from '@/lib';

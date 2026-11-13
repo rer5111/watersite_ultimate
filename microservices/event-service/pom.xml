@@ -15,12 +15,12 @@
     <artifactId>event-service</artifactId>
     <version>1.0.0</version>
     <name>event-service</name>
-    <description>Waltercraft server timeline events and seasons</description>
+    <description>Waltercraft server events and participants</description>
 
     <properties>
         <java.version>21</java.version>
         <spring-cloud.version>2025.1.4</spring-cloud.version>
-            <springdoc.version>3.2.0</springdoc.version>
+        <springdoc.version>3.2.0</springdoc.version>
     </properties>
 
     <dependencies>
@@ -104,10 +104,6 @@
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers-junit-jupiter</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
     </dependencies>
 

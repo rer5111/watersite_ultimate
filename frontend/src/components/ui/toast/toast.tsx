@@ -18,17 +18,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={item.id}
             role={item.type === 'error' ? 'alert' : 'status'}
-            className="bg-surface pointer-events-auto flex items-center justify-between gap-3 border border-border p-4 shadow-2xl transition-all duration-200"
+            className="bg-surface border-border pointer-events-auto flex items-center justify-between gap-3 border p-4 shadow-2xl transition-all duration-200"
           >
             <div className="flex items-center gap-3">
-              {item.type === 'success' && (
-                <CheckIcon className="size-5 shrink-0 text-primary" />
-              )}
-              {item.type === 'error' && (
-                <InfoCircleIcon className="size-5 shrink-0 text-error" />
-              )}
+              {item.type === 'success' && <CheckIcon className="text-primary size-5 shrink-0" />}
+              {item.type === 'error' && <InfoCircleIcon className="text-error size-5 shrink-0" />}
               {item.type === 'info' && (
-                <InfoCircleIcon className="size-5 shrink-0 text-foreground-muted" />
+                <InfoCircleIcon className="text-foreground-muted size-5 shrink-0" />
               )}
               <span className="text-foreground text-sm font-medium">{item.message}</span>
             </div>

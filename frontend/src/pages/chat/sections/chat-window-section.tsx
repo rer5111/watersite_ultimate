@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { ChatMessage } from '@/api/chat';
+import type { ChatMessage } from '@/api';
 import { ChatMessageItem } from '../components';
 
 export type ChatWindowSectionProps = {

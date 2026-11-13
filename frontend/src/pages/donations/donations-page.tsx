@@ -1,4 +1,4 @@
-import { DonationCardSection } from './sections/donation-cards-section';
+import { DonationCardSection } from './sections';
 
 export function DonationsPage() {
   return (

@@ -36,7 +36,7 @@ public class UserNotificationService {
     }
 
     public List<UserNotificationResponse> list(long userId, Set<String> roles) {
-        List<Broadcast> broadcasts = visibleBroadcasts(roles);
+        List<Broadcast> broadcasts = visibleBroadcasts(userId, roles);
         Set<Long> readIds = notificationReadRepository.findBroadcastIdsByUserId(userId);
         return broadcasts.stream()
                 .map(broadcast -> UserNotificationResponse.from(broadcast, readIds.contains(broadcast.getId())))
@@ -45,7 +45,7 @@ public class UserNotificationService {
 
     public UnreadCountResponse unreadCount(long userId, Set<String> roles) {
         Set<Long> readIds = notificationReadRepository.findBroadcastIdsByUserId(userId);
-        long count = visibleBroadcasts(roles).stream()
+        long count = visibleBroadcasts(userId, roles).stream()
                 .filter(broadcast -> !readIds.contains(broadcast.getId()))
                 .count();
         return new UnreadCountResponse(count);
@@ -55,7 +55,8 @@ public class UserNotificationService {
     public boolean markRead(long userId, Set<String> roles, long broadcastId) {
         boolean visible = broadcastRepository.findById(broadcastId)
                 .filter(broadcast -> broadcast.getStatus() == BroadcastStatus.SENT)
-                .filter(broadcast -> audiences(roles).contains(broadcast.getAudience()))
+                .filter(broadcast -> (broadcast.getRecipientUserId() != null && broadcast.getRecipientUserId().equals(userId))
+                        || (broadcast.getRecipientUserId() == null && audiences(roles).contains(broadcast.getAudience())))
                 .isPresent();
         if (!visible) {
             return false;
@@ -69,15 +70,15 @@ public class UserNotificationService {
     @Transactional
     public void markAllRead(long userId, Set<String> roles) {
         Set<Long> readIds = notificationReadRepository.findBroadcastIdsByUserId(userId);
-        List<NotificationRead> unread = visibleBroadcasts(roles).stream()
+        List<NotificationRead> unread = visibleBroadcasts(userId, roles).stream()
                 .filter(broadcast -> !readIds.contains(broadcast.getId()))
                 .map(broadcast -> new NotificationRead(userId, broadcast.getId(), Instant.now()))
                 .toList();
         notificationReadRepository.saveAll(unread);
     }
 
-    private List<Broadcast> visibleBroadcasts(Set<String> roles) {
-        return broadcastRepository.findVisible(audiences(roles), BroadcastStatus.SENT);
+    private List<Broadcast> visibleBroadcasts(long userId, Set<String> roles) {
+        return broadcastRepository.findVisibleForUser(userId, audiences(roles), BroadcastStatus.SENT);
     }
 
     private Set<BroadcastAudience> audiences(Set<String> roles) {

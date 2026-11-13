@@ -18,7 +18,7 @@ function getStoredCooldownUntil(storageKey: string): number | null {
 
 export function useCooldown(storageKey: string) {
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(() =>
-    getStoredCooldownUntil(storageKey),
+    getStoredCooldownUntil(storageKey)
   );
 
   const [remaining, setRemaining] = useState<number>(() => {
@@ -71,7 +71,7 @@ export function useCooldown(storageKey: string) {
       setCooldownUntil(until);
       setRemaining(seconds);
     },
-    [storageKey],
+    [storageKey]
   );
 
   const resetCooldown = useCallback(() => {

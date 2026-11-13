@@ -120,21 +120,22 @@ export function ChangePasswordForm({ hasEmail, emailHint }: ChangePasswordFormPr
   return (
     <form onSubmit={handleSubmit} className="bg-card flex flex-col gap-4 p-6 md:p-8">
       <div className="flex flex-col gap-1">
-        <h3 className="text-xl font-bold text-foreground">Безопасность и пароль</h3>
-        <p className="text-sm text-foreground-muted">
+        <h3 className="text-foreground text-xl font-bold">Безопасность и пароль</h3>
+        <p className="text-foreground-muted text-sm">
           Смена пароля подтверждается одноразовым кодом, отправленным на вашу привязанную почту.
         </p>
       </div>
 
       {!hasEmail && (
-        <div className="bg-surface border border-border p-3 text-sm text-foreground-muted">
-          К вашему аккаунту не привязана электронная почта. Сначала укажите email выше, чтобы менять пароль.
+        <div className="bg-surface border-border text-foreground-muted border p-3 text-sm">
+          К вашему аккаунту не привязана электронная почта. Сначала укажите email выше, чтобы менять
+          пароль.
         </div>
       )}
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <label htmlFor="change-pass-new-input" className="text-sm font-medium text-foreground">
+          <label htmlFor="change-pass-new-input" className="text-foreground text-sm font-medium">
             Новый пароль
           </label>
           <Input
@@ -153,7 +154,10 @@ export function ChangePasswordForm({ hasEmail, emailHint }: ChangePasswordFormPr
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="change-pass-confirm-input" className="text-sm font-medium text-foreground">
+          <label
+            htmlFor="change-pass-confirm-input"
+            className="text-foreground text-sm font-medium"
+          >
             Повторите новый пароль
           </label>
           <Input
@@ -166,13 +170,15 @@ export function ChangePasswordForm({ hasEmail, emailHint }: ChangePasswordFormPr
             }}
             placeholder="Повторите пароль"
             disabled={!hasEmail || isSubmitting}
-            isError={Boolean(error && confirmPassword.length > 0 && newPassword !== confirmPassword)}
+            isError={Boolean(
+              error && confirmPassword.length > 0 && newPassword !== confirmPassword
+            )}
             autoComplete="new-password"
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="change-pass-code-input" className="text-sm font-medium text-foreground">
+          <label htmlFor="change-pass-code-input" className="text-foreground text-sm font-medium">
             Код подтверждения
           </label>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -208,17 +214,22 @@ export function ChangePasswordForm({ hasEmail, emailHint }: ChangePasswordFormPr
             </Button>
           </div>
           {codeSent && (
-            <p className="text-xs text-foreground-muted">
-              Код отправлен на почту{emailHint ? <> (<span className="text-foreground font-medium">{emailHint}</span>)</> : ''}. Срок действия: 10 минут.
+            <p className="text-foreground-muted text-xs">
+              Код отправлен на почту
+              {emailHint ? (
+                <>
+                  {' '}
+                  (<span className="text-foreground font-medium">{emailHint}</span>)
+                </>
+              ) : (
+                ''
+              )}
+              . Срок действия: 10 минут.
             </p>
           )}
         </div>
 
-        {error && (
-          <span className="text-error text-xs font-medium">
-            {error}
-          </span>
-        )}
+        {error && <span className="text-error text-xs font-medium">{error}</span>}
 
         <div className="flex justify-end pt-2">
           <Button

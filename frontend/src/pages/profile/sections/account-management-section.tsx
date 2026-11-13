@@ -1,9 +1,5 @@
 import type { UserProfile } from '@/types';
-import {
-  MinecraftNicknameForm,
-  ChangeEmailForm,
-  ChangePasswordForm,
-} from '../components';
+import { MinecraftNicknameForm, ChangeEmailForm, ChangePasswordForm } from '../components';
 
 export interface AccountManagementSectionProps {
   profile: UserProfile;
@@ -13,10 +9,10 @@ export function AccountManagementSection({ profile }: AccountManagementSectionPr
   return (
     <section aria-label="Управление аккаунтом" className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h2 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+        <h2 className="text-foreground text-2xl font-bold tracking-tight md:text-3xl">
           Управление аккаунтом
         </h2>
-        <p className="text-sm text-foreground-muted">
+        <p className="text-foreground-muted text-sm">
           Настройте игровой никнейм Minecraft, контактные данные и параметры входа в систему.
         </p>
       </div>

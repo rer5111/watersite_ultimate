@@ -1,4 +1,4 @@
-import { useChat } from '@/hooks/use-chat';
+import { useChat } from '@/hooks';
 import { useAuth } from '@/context';
 import { ChatWindowSection, ChatInputSection } from './sections';
 

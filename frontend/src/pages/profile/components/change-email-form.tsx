@@ -48,7 +48,8 @@ export function ChangeEmailForm({ currentEmail }: ChangeEmailFormProps) {
   const [isConfirming, setIsConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { countdown, startCooldown, resetCooldown, isCooldownActive } = useCooldown(EMAIL_COOLDOWN_KEY);
+  const { countdown, startCooldown, resetCooldown, isCooldownActive } =
+    useCooldown(EMAIL_COOLDOWN_KEY);
 
   const handleSendCode = async () => {
     const trimmed = newEmail.trim().toLowerCase();
@@ -135,19 +136,17 @@ export function ChangeEmailForm({ currentEmail }: ChangeEmailFormProps) {
   return (
     <form onSubmit={handleConfirm} className="bg-card flex flex-col gap-4 p-6 md:p-8">
       <div className="flex flex-col gap-1">
-        <h3 className="text-xl font-bold text-foreground">Электронная почта</h3>
-        <p className="text-sm text-foreground-muted">
+        <h3 className="text-foreground text-xl font-bold">Электронная почта</h3>
+        <p className="text-foreground-muted text-sm">
           Текущая почта:{' '}
-          <span className="font-medium text-foreground">
-            {currentEmail ?? 'Не указана'}
-          </span>
-          . Для подтверждения нового адреса потребуется одноразовый код.
+          <span className="text-foreground font-medium">{currentEmail ?? 'Не указана'}</span>. Для
+          подтверждения нового адреса потребуется одноразовый код.
         </p>
       </div>
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-2">
-          <label htmlFor="change-email-input" className="text-sm font-medium text-foreground">
+          <label htmlFor="change-email-input" className="text-foreground text-sm font-medium">
             Новый адрес электронной почты
           </label>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -179,16 +178,15 @@ export function ChangeEmailForm({ currentEmail }: ChangeEmailFormProps) {
                     : 'Получить код'}
             </Button>
           </div>
-          {error && !codeSent && (
-            <span className="text-error text-xs font-medium">
-              {error}
-            </span>
-          )}
+          {error && !codeSent && <span className="text-error text-xs font-medium">{error}</span>}
         </div>
 
         {codeSent && (
           <div className="flex flex-col gap-2 pt-2">
-            <label htmlFor="change-email-code-input" className="text-sm font-medium text-foreground">
+            <label
+              htmlFor="change-email-code-input"
+              className="text-foreground text-sm font-medium"
+            >
               Одноразовый 6-значный код
             </label>
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -216,11 +214,7 @@ export function ChangeEmailForm({ currentEmail }: ChangeEmailFormProps) {
                 {isConfirming ? 'Проверка...' : 'Подтвердить смену'}
               </Button>
             </div>
-            {error && codeSent && (
-              <span className="text-error text-xs font-medium">
-                {error}
-              </span>
-            )}
+            {error && codeSent && <span className="text-error text-xs font-medium">{error}</span>}
           </div>
         )}
       </div>

@@ -25,6 +25,15 @@ payment:
     jwk-set-uri: ${JWT_JWK_SET_URI:http://auth-service:8090/.well-known/jwks.json}
     issuer: ${AUTH_JWT_ISSUER:https://auth.waltercraft.ru}
 
+yoomoney:
+  wallet: ${YOOMONEY_WALLET:}
+  notification-secret: ${YOOMONEY_NOTIFICATION_SECRET:}
+  success-url: ${YOOMONEY_SUCCESS_URL:http://localhost:5173/donations/result}
+
+notification-service:
+  base-url: ${NOTIFICATION_SERVICE_URL:http://notification-service:8087}
+  shared-secret: ${NOTIFICATION_SERVICE_SHARED_SECRET:}
+
 management:
   endpoints:
     web:

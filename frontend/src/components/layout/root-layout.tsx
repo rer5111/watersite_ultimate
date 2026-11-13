@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router';
-import { Header } from './header/header';
+import { Header } from './header';
 import { Footer } from './footer';
 
 function ScrollToTopOnNavigate() {
@@ -19,13 +19,13 @@ function ScrollToTopOnNavigate() {
 
 export function RootLayout() {
   return (
-    <>
+    <div className="flex min-h-dvh flex-col">
       <Header />
-      <main className="min-h-dvh">
+      <main className="flex flex-1 flex-col">
         <ScrollToTopOnNavigate />
         <Outlet />
       </main>
       <Footer />
-    </>
+    </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib';
 
 export type SkinAvatarProps = {
   uuid?: string | null;
@@ -9,7 +9,13 @@ export type SkinAvatarProps = {
   mode?: 'full' | 'bust' | 'face';
 };
 
-export function SkinAvatar({ uuid, fallbackImage, name, className, mode = 'full' }: SkinAvatarProps) {
+export function SkinAvatar({
+  uuid,
+  fallbackImage,
+  name,
+  className,
+  mode = 'full',
+}: SkinAvatarProps) {
   const [failedEndpoint, setFailedEndpoint] = useState<string | null>(null);
   const apiUrl = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
 
@@ -21,7 +27,7 @@ export function SkinAvatar({ uuid, fallbackImage, name, className, mode = 'full'
       : undefined;
 
   const imageFailed = skinEndpoint !== undefined && failedEndpoint === skinEndpoint;
-  const image = (skinEndpoint && !imageFailed) ? skinEndpoint : (fallbackImage ?? defaultSteveUrl);
+  const image = skinEndpoint && !imageFailed ? skinEndpoint : (fallbackImage ?? defaultSteveUrl);
 
   return (
     <img
@@ -30,7 +36,7 @@ export function SkinAvatar({ uuid, fallbackImage, name, className, mode = 'full'
       decoding="async"
       width={120}
       height={240}
-      className={cn('text-transparent text-[0px] shrink-0', className)}
+      className={cn('shrink-0 text-[0px] text-transparent', className)}
       onError={() => {
         if (skinEndpoint) {
           setFailedEndpoint(skinEndpoint);

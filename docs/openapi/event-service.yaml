@@ -2,44 +2,68 @@ openapi: 3.0.3
 info:
   title: Waltercraft Event Service
   version: 1.0.0
-  description: Сервис хронологии событий и сезонов игрового сервера Waltercraft
+  description: Сервис игровых ивентов, фильтрации и участников сервера Waltercraft
 servers:
   - url: /api/event-service
 paths:
   /api/v1/events:
     get:
       operationId: listEvents
-      summary: Получить список активных событий и сезонов сервера
-      description: Возвращает активные события сервера, упорядоченные по приоритету отображения и ID. Ответ кешируется на 10 минут.
+      summary: Получить список активных ивентов сервера с фильтрами
+      description: Возвращает активные ивенты сервера, отфильтрованные по сезонам, организаторам, статусам и датам.
       security: []
       parameters:
+        - name: seasons
+          in: query
+          description: Номера сезонов (например, 1, 2)
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: organizer
+          in: query
+          description: Никнеймы организаторов (один или несколько через запятую)
+          schema:
+            type: array
+            items:
+              type: string
+        - name: status
+          in: query
+          description: Статусы ивентов
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/EventStatus'
+        - name: dateFrom
+          in: query
+          description: Фильтр даты после (ISO-8601 YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          description: Фильтр даты до (ISO-8601 YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: search
+          in: query
+          description: Поисковый запрос
+          schema:
+            type: string
         - name: page
           in: query
-          description: Номер страницы (начиная с 0)
           schema:
             type: integer
             default: 0
         - name: size
           in: query
-          description: Размер страницы
           schema:
             type: integer
-            default: 50
-        - name: sort
-          in: query
-          description: Поля сортировки (по умолчанию displayOrder, id)
-          schema:
-            type: array
-            items:
-              type: string
+            default: 20
       responses:
         '200':
-          description: Страница событий сервера
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: "max-age=600, public"
+          description: Страница ивентов
           content:
             application/json:
               schema:
@@ -48,93 +72,50 @@ paths:
                   content:
                     type: array
                     items:
-                      $ref: '#/components/schemas/EventResponse'
+                      $ref: '#/components/schemas/EventSummaryResponse'
                   page:
                     $ref: '#/components/schemas/PageMetadata'
 
-  /api/v1/events/{id}:
+  /api/v1/events/{idOrCode}:
     get:
       operationId: getEvent
-      summary: Получить информацию о событии по ID
+      summary: Получить подробную информацию об ивенте по ID или коду
+      description: Возвращает полное описание ивента и список участников.
       security: []
       parameters:
-        - name: id
+        - name: idOrCode
           in: path
           required: true
           schema:
-            type: integer
-            format: int64
+            type: string
       responses:
         '200':
-          description: Данные события
+          description: Подробная информация об ивенте
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventResponse'
+                $ref: '#/components/schemas/EventDetailResponse'
         '404':
-          description: Событие не найдено
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/ProblemDetails'
+          description: Ивент не найден
 
-  /api/v1/admin/events:
+  /api/v1/events/filters:
     get:
-      operationId: listAllEvents
-      summary: Получить полный список всех событий (включая неактивные)
-      security:
-        - bearerAuth: []
+      operationId: getEventFilters
+      summary: Получить доступные опции фильтрации
+      description: Возвращает списки сезонов, организаторов и статусов для фильтрации в сайдбаре.
+      security: []
       responses:
         '200':
-          description: Полный список событий для администрации
+          description: Доступные опции фильтрации
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  content:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/EventResponse'
-        '401':
-          description: Не авторизован
-        '403':
-          description: Доступ запрещен (требуется роль ADMIN)
-    post:
-      operationId: createEvent
-      summary: Создать новое событие сервера
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EventCreateRequest'
-      responses:
-        '201':
-          description: Событие успешно создано
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EventResponse'
-        '400':
-          description: Ошибка валидации
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/ProblemDetails'
-        '409':
-          description: Событие с таким кодом уже существует
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/ProblemDetails'
+                $ref: '#/components/schemas/EventFiltersResponse'
 
-  /api/v1/admin/events/{id}:
-    put:
-      operationId: updateEvent
-      summary: Обновить существующее событие сервера
+  /api/v1/events/{id}/participate:
+    post:
+      operationId: participateEvent
+      summary: Записаться участником на ивент
       security:
         - bearerAuth: []
       parameters:
@@ -143,47 +124,19 @@ paths:
           required: true
           schema:
             type: integer
-            format: int64
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EventUpdateRequest'
+        - name: notes
+          in: query
+          schema:
+            type: string
       responses:
         '200':
-          description: Событие успешно обновлено
+          description: Успешная запись
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventResponse'
-        '400':
-          description: Ошибка валидации
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/ProblemDetails'
-        '404':
-          description: Событие не найдено
+                $ref: '#/components/schemas/EventDetailResponse'
         '409':
-          description: Конфликт версии (оптимистическая блокировка) или дубликат кода
-    delete:
-      operationId: deleteEvent
-      summary: Удалить событие сервера
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        '204':
-          description: Событие удалено
-        '404':
-          description: Событие не найдено
+          description: Уже записан или ивент не активен
 
 components:
   securitySchemes:
@@ -193,68 +146,106 @@ components:
       bearerFormat: JWT
 
   schemas:
-    EventResponse:
+    EventStatus:
+      type: string
+      enum: [PLANNED, IN_PROGRESS, COMPLETED, CANCELLED]
+
+    EventSummaryResponse:
       type: object
-      required:
-        - id
-        - code
-        - title
-        - description
-        - startDate
-        - endDate
-        - image
-        - displayOrder
-        - active
-        - organizer
-        - status
-        - version
-        - createdAt
-        - updatedAt
       properties:
         id:
           type: integer
-          format: int64
-          example: 1
         code:
           type: string
-          example: season-1
         title:
           type: string
-          example: 1 сезон
-        description:
+        shortDescription:
           type: string
-          example: Начало сервера, когда он ещё не был назван Валтеркрафтом...
-        startDate:
-          type: string
-          example: "2022"
-        endDate:
-          type: string
-          example: "2022"
         image:
           type: string
-          example: /images/seasons/season-1.webp
-        displayOrder:
+        seasonNumber:
           type: integer
-          example: 10
-        startsAt:
+        seasonTitle:
           type: string
-          format: date-time
-          nullable: true
-        active:
-          type: boolean
-          example: true
         organizer:
           type: string
-          maxLength: 120
-          example: LeadCone_TNF
         status:
+          $ref: '#/components/schemas/EventStatus'
+        startDate:
           type: string
-          enum: [DRAFT, PUBLISHED, CANCELLED]
-          example: PUBLISHED
+          format: date
+        endDate:
+          type: string
+          format: date
+        dateRangeFormatted:
+          type: string
+        participantsCount:
+          type: integer
+        displayOrder:
+          type: integer
+        active:
+          type: boolean
+
+    EventParticipantResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        username:
+          type: string
+        role:
+          type: string
+        notes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    EventDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        shortDescription:
+          type: string
+        image:
+          type: string
+        seasonNumber:
+          type: integer
+        seasonTitle:
+          type: string
+        organizer:
+          type: string
+        status:
+          $ref: '#/components/schemas/EventStatus'
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        dateRangeFormatted:
+          type: string
+        participantsCount:
+          type: integer
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventParticipantResponse'
+        displayOrder:
+          type: integer
+        active:
+          type: boolean
         version:
           type: integer
-          format: int64
-          example: 0
         createdAt:
           type: string
           format: date-time
@@ -262,142 +253,36 @@ components:
           type: string
           format: date-time
 
-    EventCreateRequest:
+    EventFiltersResponse:
       type: object
-      required:
-        - code
-        - title
-        - description
-        - startDate
-        - endDate
-        - image
-        - displayOrder
       properties:
-        code:
+        seasons:
+          type: array
+          items:
+            type: integer
+        organizers:
+          type: array
+          items:
+            type: string
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventStatus'
+        minDate:
           type: string
-          maxLength: 64
-          example: season-6
-        title:
+          format: date
+        maxDate:
           type: string
-          maxLength: 120
-          example: 6 сезон
-        description:
-          type: string
-          maxLength: 1000
-          example: Новый этап развития сервера...
-        startDate:
-          type: string
-          maxLength: 32
-          example: "2026"
-        endDate:
-          type: string
-          maxLength: 32
-          example: "н. в."
-        image:
-          type: string
-          maxLength: 255
-          example: /images/seasons/season-5.webp
-        displayOrder:
-          type: integer
-          minimum: 0
-          example: 60
-        startsAt:
-          type: string
-          format: date-time
-        organizer:
-          type: string
-          maxLength: 120
-          example: LeadCone_TNF
-        status:
-          type: string
-          enum: [DRAFT, PUBLISHED, CANCELLED]
-          default: PUBLISHED
-        active:
-          type: boolean
-          default: true
-
-    EventUpdateRequest:
-      type: object
-      required:
-        - code
-        - title
-        - description
-        - startDate
-        - endDate
-        - image
-        - displayOrder
-        - active
-        - version
-      properties:
-        code:
-          type: string
-          maxLength: 64
-        title:
-          type: string
-          maxLength: 120
-        description:
-          type: string
-          maxLength: 1000
-        startDate:
-          type: string
-          maxLength: 32
-        endDate:
-          type: string
-          maxLength: 32
-        image:
-          type: string
-          maxLength: 255
-        displayOrder:
-          type: integer
-          minimum: 0
-        startsAt:
-          type: string
-          format: date-time
-        organizer:
-          type: string
-          maxLength: 120
-        status:
-          type: string
-          enum: [DRAFT, PUBLISHED, CANCELLED]
-        active:
-          type: boolean
-        version:
-          type: integer
-          format: int64
+          format: date
 
     PageMetadata:
       type: object
       properties:
         size:
           type: integer
-          example: 50
         number:
           type: integer
-          example: 0
         totalElements:
           type: integer
-          example: 5
         totalPages:
           type: integer
-          example: 1
-
-    ProblemDetails:
-      type: object
-      properties:
-        type:
-          type: string
-          format: uri
-        title:
-          type: string
-        status:
-          type: integer
-        detail:
-          type: string
-        code:
-          type: string
-        message:
-          type: string
-        details:
-          type: object
-          additionalProperties:
-            type: string

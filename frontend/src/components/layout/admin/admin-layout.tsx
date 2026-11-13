@@ -2,11 +2,12 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router';
 import { Button } from '@/components/ui';
 import { useAuth } from '@/context';
 import { cn } from '@/lib';
-import { paths } from '@/routes/paths';
+import { paths } from '@/routes';
 
 const adminNavItems = [
   { title: 'Пользователи', destination: paths.adminUsers, description: 'Аккаунты и роли' },
-  { title: 'События', destination: paths.adminEvents, description: 'Публикация и модерация' },
+  { title: 'Сезоны', destination: paths.adminSeasons, description: 'Публикация и модерация' },
+  { title: 'Ивенты', destination: paths.adminEvents, description: 'События и турниры' },
   { title: 'Рассылки', destination: paths.adminBroadcast, description: 'Уведомления игрокам' },
   { title: 'Заявки', destination: paths.adminRequests, description: 'Повышение ролей' },
 ];

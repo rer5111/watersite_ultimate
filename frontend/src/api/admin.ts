@@ -1,12 +1,16 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import type {
   AdminEvent,
-  AdminEventStatus,
   AdminRoleRequest,
+  AdminSeason,
+  AdminSeasonStatus,
   AdminUser,
   BroadcastDispatch,
   BroadcastPayload,
+  CreateAdminEventPayload,
+  CreateAdminSeasonPayload,
   UpdateAdminEventPayload,
+  UpdateAdminSeasonPayload,
   UpdateAdminUserPayload,
 } from '@/types';
 import { parseApiError } from './error-helper';
@@ -45,7 +49,7 @@ async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   return (await response.json()) as T;
 }
 
-interface BackendEvent {
+interface BackendSeason {
   id: number;
   code: string;
   title: string;
@@ -57,45 +61,46 @@ interface BackendEvent {
   startsAt: string | null;
   active: boolean;
   organizer: string;
-  status: AdminEventStatus;
+  status: AdminSeasonStatus;
   version: number;
 }
 
-function mapEvent(event: BackendEvent): AdminEvent {
+function mapSeason(season: BackendSeason): AdminSeason {
   return {
-    id: event.id,
-    code: event.code,
-    title: event.title,
-    description: event.description,
-    startsAt: event.startsAt ?? event.startDate,
-    organizer: event.organizer ?? '',
-    status: event.status ?? (event.active ? 'PUBLISHED' : 'DRAFT'),
+    id: season.id,
+    code: season.code,
+    title: season.title,
+    description: season.description,
+    startsAt: season.startsAt ?? season.startDate,
+    organizer: season.organizer ?? '',
+    status: season.status ?? (season.active ? 'PUBLISHED' : 'DRAFT'),
   };
 }
 
-function eventUpdateBody(event: BackendEvent, payload: UpdateAdminEventPayload): string {
+function seasonUpdateBody(season: BackendSeason, payload: UpdateAdminSeasonPayload): string {
   return JSON.stringify({
-    code: event.code,
+    code: season.code,
     title: payload.title,
     description: payload.description,
-    startDate: event.startDate,
-    endDate: event.endDate,
-    image: event.image,
-    displayOrder: event.displayOrder,
+    startDate: season.startDate,
+    endDate: season.endDate,
+    image: season.image,
+    displayOrder: season.displayOrder,
     ...(/^\d{4}-\d{2}-\d{2}T/.test(payload.startsAt) ? { startsAt: payload.startsAt } : {}),
     organizer: payload.organizer,
     status: payload.status,
     active: payload.status === 'PUBLISHED',
-    version: event.version,
+    version: season.version,
   });
 }
 
-async function requestBackendEvent(id: number): Promise<BackendEvent> {
-  return apiRequest<BackendEvent>(`/api/event-service/api/v1/admin/events/${id}`);
+async function requestBackendSeason(id: number): Promise<BackendSeason> {
+  return apiRequest<BackendSeason>(`/api/season-service/api/v1/admin/seasons/${id}`);
 }
 
 export const adminQueryKeys = {
   users: ['admin', 'users'] as const,
+  seasons: ['admin', 'seasons'] as const,
   events: ['admin', 'events'] as const,
   requests: ['admin', 'requests'] as const,
   broadcasts: ['admin', 'broadcasts'] as const,
@@ -119,42 +124,132 @@ export async function deleteAdminUser(id: number): Promise<void> {
   await apiRequest<void>(`/api/player-service/api/user/${id}`, { method: 'DELETE' });
 }
 
+export async function getAdminSeasons(): Promise<AdminSeason[]> {
+  // shortcut: the admin table loads at most 100 seasons; add pagination when the catalog grows.
+  const page = await apiRequest<{ content: BackendSeason[] }>(
+    '/api/season-service/api/v1/admin/seasons?size=100'
+  );
+  return page.content.map(mapSeason);
+}
+
+export async function createAdminSeason(payload: CreateAdminSeasonPayload): Promise<AdminSeason> {
+  const parsedDate = payload.startsAt ? new Date(payload.startsAt) : new Date();
+  const yearStr = Number.isNaN(parsedDate.getTime())
+    ? new Date().getFullYear().toString()
+    : parsedDate.getFullYear().toString();
+
+  const body = JSON.stringify({
+    code: payload.code.trim(),
+    title: payload.title.trim(),
+    description: payload.description.trim(),
+    startDate: payload.startDate || yearStr,
+    endDate: payload.endDate || 'н. в.',
+    image: payload.image || '/images/seasons/season-1.webp',
+    displayOrder: payload.displayOrder ?? 100,
+    ...(/^\d{4}-\d{2}-\d{2}T/.test(payload.startsAt) ? { startsAt: payload.startsAt } : {}),
+    organizer: payload.organizer.trim(),
+    status: payload.status,
+    active: payload.status === 'PUBLISHED',
+  });
+
+  const created = await apiRequest<BackendSeason>('/api/season-service/api/v1/admin/seasons', {
+    method: 'POST',
+    body,
+  });
+  return mapSeason(created);
+}
+
+export async function updateAdminSeason(
+  id: number,
+  payload: UpdateAdminSeasonPayload
+): Promise<AdminSeason> {
+  const current = await requestBackendSeason(id);
+  const updated = await apiRequest<BackendSeason>(
+    `/api/season-service/api/v1/admin/seasons/${id}`,
+    {
+      method: 'PUT',
+      body: seasonUpdateBody(current, payload),
+    }
+  );
+  return mapSeason(updated);
+}
+
+export async function updateAdminSeasonStatus(
+  id: number,
+  status: AdminSeasonStatus
+): Promise<AdminSeason> {
+  const current = await requestBackendSeason(id);
+  const updated = await apiRequest<BackendSeason>(
+    `/api/season-service/api/v1/admin/seasons/${id}`,
+    {
+      method: 'PUT',
+      body: seasonUpdateBody(current, {
+        title: current.title,
+        description: current.description,
+        startsAt: current.startDate,
+        organizer: current.organizer,
+        status,
+      }),
+    }
+  );
+  return mapSeason(updated);
+}
+
+export async function deleteAdminSeason(id: number): Promise<void> {
+  await apiRequest<void>(`/api/season-service/api/v1/admin/seasons/${id}`, { method: 'DELETE' });
+}
+
 export async function getAdminEvents(): Promise<AdminEvent[]> {
-  // shortcut: the admin table loads at most 100 events; add pagination when the catalog grows.
-  const page = await apiRequest<{ content: BackendEvent[] }>(
+  const page = await apiRequest<{ content: AdminEvent[] }>(
     '/api/event-service/api/v1/admin/events?size=100'
   );
-  return page.content.map(mapEvent);
+  return page.content;
+}
+
+export async function createAdminEvent(payload: CreateAdminEventPayload): Promise<AdminEvent> {
+  const body = JSON.stringify({
+    code: payload.code.trim(),
+    title: payload.title.trim(),
+    description: payload.description.trim(),
+    shortDescription: payload.shortDescription?.trim() || null,
+    image: payload.image?.trim() || '/images/events/placeholder.webp',
+    seasonNumber: payload.seasonNumber,
+    organizer: payload.organizer.trim(),
+    status: payload.status,
+    startDate: payload.startDate || null,
+    endDate: payload.endDate || null,
+    displayOrder: payload.displayOrder ?? 0,
+    active: payload.active ?? true,
+  });
+
+  return apiRequest<AdminEvent>('/api/event-service/api/v1/admin/events', {
+    method: 'POST',
+    body,
+  });
 }
 
 export async function updateAdminEvent(
   id: number,
   payload: UpdateAdminEventPayload
 ): Promise<AdminEvent> {
-  const current = await requestBackendEvent(id);
-  const updated = await apiRequest<BackendEvent>(`/api/event-service/api/v1/admin/events/${id}`, {
-    method: 'PUT',
-    body: eventUpdateBody(current, payload),
+  const body = JSON.stringify({
+    title: payload.title?.trim(),
+    description: payload.description?.trim(),
+    shortDescription: payload.shortDescription?.trim() || null,
+    image: payload.image?.trim() || '/images/events/placeholder.webp',
+    seasonNumber: payload.seasonNumber,
+    organizer: payload.organizer?.trim(),
+    status: payload.status,
+    startDate: payload.startDate || null,
+    endDate: payload.endDate || null,
+    displayOrder: payload.displayOrder ?? 0,
+    active: payload.active ?? true,
   });
-  return mapEvent(updated);
-}
 
-export async function updateAdminEventStatus(
-  id: number,
-  status: AdminEventStatus
-): Promise<AdminEvent> {
-  const current = await requestBackendEvent(id);
-  const updated = await apiRequest<BackendEvent>(`/api/event-service/api/v1/admin/events/${id}`, {
+  return apiRequest<AdminEvent>(`/api/event-service/api/v1/admin/events/${id}`, {
     method: 'PUT',
-    body: eventUpdateBody(current, {
-      title: current.title,
-      description: current.description,
-      startsAt: current.startDate,
-      organizer: current.organizer,
-      status,
-    }),
+    body,
   });
-  return mapEvent(updated);
 }
 
 export async function deleteAdminEvent(id: number): Promise<void> {
@@ -204,6 +299,11 @@ export const adminUsersQueryOptions = queryOptions({
   queryFn: getAdminUsers,
 });
 
+export const adminSeasonsQueryOptions = queryOptions({
+  queryKey: adminQueryKeys.seasons,
+  queryFn: getAdminSeasons,
+});
+
 export const adminEventsQueryOptions = queryOptions({
   queryKey: adminQueryKeys.events,
   queryFn: getAdminEvents,
@@ -221,6 +321,10 @@ export const broadcastHistoryQueryOptions = queryOptions({
 
 export function useAdminUsers() {
   return useQuery(adminUsersQueryOptions);
+}
+
+export function useAdminSeasons() {
+  return useQuery(adminSeasonsQueryOptions);
 }
 
 export function useAdminEvents() {

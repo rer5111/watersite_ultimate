@@ -59,14 +59,14 @@ export function MinecraftNicknameForm({ currentNickname }: MinecraftNicknameForm
   return (
     <form onSubmit={handleSubmit} className="bg-card flex flex-col gap-4 p-6 md:p-8">
       <div className="flex flex-col gap-1">
-        <h3 className="text-xl font-bold text-foreground">Никнейм Minecraft</h3>
-        <p className="text-sm text-foreground-muted">
+        <h3 className="text-foreground text-xl font-bold">Никнейм Minecraft</h3>
+        <p className="text-foreground-muted text-sm">
           Этот ник используется для синхронизации скина и отображения вашего персонажа на сервере.
         </p>
       </div>
 
       <div className="flex flex-col gap-2">
-        <label htmlFor="minecraft-nickname-input" className="text-sm font-medium text-foreground">
+        <label htmlFor="minecraft-nickname-input" className="text-foreground text-sm font-medium">
           Игровой ник
         </label>
         <Input
@@ -81,11 +81,7 @@ export function MinecraftNicknameForm({ currentNickname }: MinecraftNicknameForm
           disabled={isSubmitting}
           isError={Boolean(error)}
         />
-        {error && (
-          <span className="text-error text-xs font-medium">
-            {error}
-          </span>
-        )}
+        {error && <span className="text-error text-xs font-medium">{error}</span>}
       </div>
 
       <div className="flex justify-end pt-2">
@@ -101,4 +97,3 @@ export function MinecraftNicknameForm({ currentNickname }: MinecraftNicknameForm
     </form>
   );
 }
-

@@ -13,7 +13,7 @@ export function Input({ className, type = 'text', isError, ref, ...props }: Inpu
       type={type}
       aria-invalid={isError ? 'true' : undefined}
       className={cn(
-        'text-foreground bg-input w-full p-3 text-sm leading-6 font-medium transition-all rounded-none',
+        'text-foreground bg-input w-full rounded-none p-3 text-sm leading-6 font-medium transition-all',
         'placeholder:text-foreground-subtle placeholder:font-normal',
         'border border-transparent',
         isError

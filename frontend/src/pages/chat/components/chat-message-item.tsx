@@ -1,4 +1,4 @@
-import type { ChatMessage } from '@/api/chat';
+import type { ChatMessage } from '@/api';
 import { SkinAvatar } from '@/components/ui';
 import { OriginBadge } from './origin-badge';
 import { cn } from '@/lib';

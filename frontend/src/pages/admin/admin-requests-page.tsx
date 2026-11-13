@@ -10,9 +10,7 @@ import {
   userRoleLabels,
   userRoleTones,
 } from './admin-utils';
-import { AdminErrorState, AdminPageHeader } from './components/admin-page-shell';
-import { RequestReviewDialog } from './components/request-review-dialog';
-import { StatusBadge } from './components/status-badge';
+import { AdminErrorState, AdminPageHeader, RequestReviewDialog, StatusBadge } from './components';
 
 export function AdminRequestsPage() {
   const { data: requests = [], isLoading, isError, error, refetch } = useRoleRequests();

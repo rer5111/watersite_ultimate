@@ -12,10 +12,13 @@ import {
   userStatusLabels,
   userStatusTones,
 } from './admin-utils';
-import { AdminErrorState, AdminPageHeader } from './components/admin-page-shell';
-import { ConfirmDialog } from './components/confirm-dialog';
-import { StatusBadge } from './components/status-badge';
-import { UserEditDialog } from './components/user-edit-dialog';
+import {
+  AdminErrorState,
+  AdminPageHeader,
+  ConfirmDialog,
+  StatusBadge,
+  UserEditDialog,
+} from './components';
 
 export function AdminUsersPage() {
   const queryClient = useQueryClient();
@@ -150,7 +153,7 @@ export function AdminUsersPage() {
             <Button
               type="button"
               variant="tertiary"
-              className="border-border hover:bg-secondary rounded-none border px-2 py-1 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+              className="border-border hover:bg-secondary rounded-none border px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-40"
               onClick={() =>
                 banMutation.mutate({
                   user,
@@ -165,7 +168,7 @@ export function AdminUsersPage() {
             <Button
               type="button"
               variant="tertiary"
-              className="border-error/40 text-error hover:bg-error hover:text-foreground rounded-none border px-2 py-1 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+              className="border-error/40 text-error hover:bg-error hover:text-foreground rounded-none border px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-40"
               onClick={() => {
                 deleteMutation.reset();
                 setDeletingUser(user);

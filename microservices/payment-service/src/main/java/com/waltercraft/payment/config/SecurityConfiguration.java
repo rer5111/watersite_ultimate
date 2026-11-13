@@ -58,6 +58,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/actuator/metrics/**", "/actuator/prometheus").hasRole("ADMIN")
                         .requestMatchers("/actuator/health/**", "/actuator/info",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**").permitAll()
+                        .requestMatchers("/api/v1/payments/webhooks/**").permitAll()
+                        .requestMatchers("/api/v1/payments/donations/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/api/v1/admin/payments/**").hasRole("ADMIN")
                         .anyRequest().denyAll())
                 .oauth2ResourceServer(resourceServer -> resourceServer

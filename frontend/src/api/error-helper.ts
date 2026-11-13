@@ -49,7 +49,12 @@ export async function parseApiError(response: Response, defaultMessage?: string)
       message = data.message.trim();
     } else if (data.detail && data.detail.trim()) {
       message = data.detail.trim();
-    } else if (data.title && data.title.trim() && data.title !== 'Bad Request' && data.title !== 'Internal Server Error') {
+    } else if (
+      data.title &&
+      data.title.trim() &&
+      data.title !== 'Bad Request' &&
+      data.title !== 'Internal Server Error'
+    ) {
       message = data.title.trim();
     } else if (data.errors) {
       if (Array.isArray(data.errors)) {

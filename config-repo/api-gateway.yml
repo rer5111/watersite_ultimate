@@ -107,7 +107,7 @@ spring:
                   - BAD_GATEWAY
                   - GATEWAY_TIMEOUT
         - id: event-service
-          order: 19
+          order: 17
           uri: lb://event-service
           predicates:
             - Path=/api/event-service/**
@@ -117,6 +117,20 @@ spring:
               args:
                 name: eventService
                 fallbackUri: forward:/fallback/event-service
+                statusCodes:
+                  - BAD_GATEWAY
+                  - GATEWAY_TIMEOUT
+        - id: season-service
+          order: 19
+          uri: lb://season-service
+          predicates:
+            - Path=/api/season-service/**
+          filters:
+            - StripPrefix=2
+            - name: CircuitBreaker
+              args:
+                name: seasonService
+                fallbackUri: forward:/fallback/season-service
                 statusCodes:
                   - BAD_GATEWAY
                   - GATEWAY_TIMEOUT
@@ -173,6 +187,8 @@ springdoc:
         url: /api/notification-service/v3/api-docs
       - name: event-service
         url: /api/event-service/v3/api-docs
+      - name: season-service
+        url: /api/season-service/v3/api-docs
       - name: skin-service
         url: /api/skin-service/v3/api-docs
 
@@ -206,6 +222,8 @@ resilience4j:
         baseConfig: default
       eventService:
         baseConfig: default
+      seasonService:
+        baseConfig: default
       skinService:
         baseConfig: default
   timelimiter:
@@ -229,6 +247,8 @@ resilience4j:
       notificationService:
         baseConfig: default
       eventService:
+        baseConfig: default
+      seasonService:
         baseConfig: default
       skinService:
         baseConfig: default

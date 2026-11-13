@@ -1,6 +1,20 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { parseApiError } from './error-helper';
 
+export type ServerSeason = {
+  id: number;
+  code: string;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  image: string;
+  displayOrder: number;
+  active: boolean;
+};
+
+export type ServerEvent = ServerSeason;
+
 export type SeasonPhase = 'UPCOMING' | 'ACTIVE' | 'COMPLETED' | 'UNKNOWN';
 
 export type SeasonEntry = {
@@ -21,6 +35,53 @@ export type SeasonParticipation = {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isServerSeason(value: unknown): value is ServerSeason {
+  return (
+    isRecord(value) &&
+    typeof value.id === 'number' &&
+    typeof value.code === 'string' &&
+    typeof value.title === 'string' &&
+    typeof value.description === 'string' &&
+    typeof value.startDate === 'string' &&
+    typeof value.endDate === 'string' &&
+    typeof value.image === 'string' &&
+    typeof value.displayOrder === 'number' &&
+    typeof value.active === 'boolean'
+  );
+}
+
+function readSeasons(value: unknown): ServerSeason[] {
+  if (!isRecord(value) || !Array.isArray(value.content) || !value.content.every(isServerSeason)) {
+    throw new Error('API вернул некорректный список сезонов');
+  }
+
+  return value.content;
+}
+
+export async function getSeasons(): Promise<ServerSeason[]> {
+  const base = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
+  const response = await fetch(`${base}/api/season-service/api/v1/seasons`);
+
+  if (!response.ok) {
+    const message = await parseApiError(response, 'Не удалось загрузить сезоны сервера');
+    throw new Error(message);
+  }
+
+  const payload: unknown = await response.json();
+  return readSeasons(payload);
+}
+
+export const seasonsQueryOptions = queryOptions({
+  queryKey: ['seasons'] as const,
+  queryFn: getSeasons,
+  staleTime: 1000 * 60 * 10,
+  gcTime: 1000 * 60 * 60,
+});
+
+export function useSeasons() {
+  return useQuery(seasonsQueryOptions);
 }
 
 function isNullableString(value: unknown): value is string | null {

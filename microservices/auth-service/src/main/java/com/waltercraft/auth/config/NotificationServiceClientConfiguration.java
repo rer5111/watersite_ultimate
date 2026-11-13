@@ -1,5 +1,6 @@
 package com.waltercraft.auth.config;
 
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +26,10 @@ public class NotificationServiceClientConfiguration {
                 .requestInterceptor((request, body, execution) -> {
                     if (sharedSecret != null && !sharedSecret.isBlank()) {
                         request.getHeaders().set("X-Internal-Auth", sharedSecret);
+                    }
+                    String requestId = MDC.get("requestId");
+                    if (requestId != null && !requestId.isBlank()) {
+                        request.getHeaders().set("X-Request-Id", requestId);
                     }
                     return execution.execute(request, body);
                 })

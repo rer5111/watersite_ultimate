@@ -355,7 +355,7 @@ public class MinecraftOAuthClient {
         } catch (RestClientException ex) {
             throw new MinecraftProviderUnavailableException(ex);
         } catch (Exception ex) {
-            log.error("Unexpected error authorizing with XSTS for " + relyingParty, ex);
+            log.error("Unexpected error authorizing with XSTS for {}", relyingParty, ex);
             throw new MinecraftOAuthException("Не удалось связаться с сервисом XSTS", ex);
         }
     }

@@ -71,11 +71,11 @@ export function DeleteAccountDialog({ isOpen, username, onClose }: DeleteAccount
     >
       <div
         ref={modalRef}
-        className="bg-card w-full max-w-lg border border-error/50 p-6 shadow-2xl md:p-8"
+        className="bg-card border-error/50 w-full max-w-lg border p-6 shadow-2xl md:p-8"
       >
         <div className="flex flex-col gap-4">
           <div className="flex items-start justify-between gap-4">
-            <h3 id="delete-dialog-title" className="text-2xl font-bold text-error">
+            <h3 id="delete-dialog-title" className="text-error text-2xl font-bold">
               Удаление аккаунта
             </h3>
             <button
@@ -89,13 +89,14 @@ export function DeleteAccountDialog({ isOpen, username, onClose }: DeleteAccount
             </button>
           </div>
 
-          <p className="text-sm leading-relaxed text-foreground-muted">
-            Это действие является <span className="font-semibold text-error">необратимым</span>.
-            Ваш аккаунт, привязанный профиль игрока и все персональные данные будут безвозвратно удалены.
+          <p className="text-foreground-muted text-sm leading-relaxed">
+            Это действие является <span className="text-error font-semibold">необратимым</span>. Ваш
+            аккаунт, привязанный профиль игрока и все персональные данные будут безвозвратно
+            удалены.
           </p>
 
           <div className="flex flex-col gap-2">
-            <label htmlFor="delete-confirm-input" className="text-sm font-medium text-foreground">
+            <label htmlFor="delete-confirm-input" className="text-foreground text-sm font-medium">
               Для подтверждения введите ваш логин (<span className="text-error">{username}</span>):
             </label>
             <Input
@@ -110,20 +111,11 @@ export function DeleteAccountDialog({ isOpen, username, onClose }: DeleteAccount
               autoFocus
               isError={Boolean(error)}
             />
-            {error && (
-              <span className="text-error text-xs font-medium">
-                {error}
-              </span>
-            )}
+            {error && <span className="text-error text-xs font-medium">{error}</span>}
           </div>
 
           <div className="flex flex-col-reverse justify-end gap-3 pt-4 sm:flex-row">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleClose}
-              disabled={isDeleting}
-            >
+            <Button type="button" variant="secondary" onClick={handleClose} disabled={isDeleting}>
               Отмена
             </Button>
             <Button

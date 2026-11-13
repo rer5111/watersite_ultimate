@@ -17,10 +17,22 @@ public interface BroadcastRepository extends JpaRepository<Broadcast, Long> {
 
     @Query("""
             select b from Broadcast b
-            where b.status = :status and b.audience in :audiences
+            where b.status = :status and b.audience in :audiences and b.recipientUserId is null
             order by b.sentAt desc
             """)
     List<Broadcast> findVisible(
+            @Param("audiences") Collection<BroadcastAudience> audiences,
+            @Param("status") BroadcastStatus status
+    );
+
+    @Query("""
+            select b from Broadcast b
+            where b.status = :status
+              and ((b.recipientUserId is null and b.audience in :audiences) or b.recipientUserId = :userId)
+            order by b.sentAt desc
+            """)
+    List<Broadcast> findVisibleForUser(
+            @Param("userId") long userId,
             @Param("audiences") Collection<BroadcastAudience> audiences,
             @Param("status") BroadcastStatus status
     );

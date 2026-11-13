@@ -1,70 +1,51 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminQueryKeys, deleteAdminEvent, updateAdminEventStatus, useAdminEvents } from '@/api';
+import { adminQueryKeys, deleteAdminEvent, useAdminEvents } from '@/api';
 import { Button, DataTable, Input, Select, toast, type DataTableColumn } from '@/components/ui';
 import type { AdminEvent, AdminEventStatus } from '@/types';
+import { eventStatusLabels, eventStatusTones, formatErrorMessage } from './admin-utils';
 import {
-  eventStatusLabels,
-  eventStatusTones,
-  formatDateTime,
-  formatErrorMessage,
-} from './admin-utils';
-import { AdminErrorState, AdminPageHeader } from './components/admin-page-shell';
-import { ConfirmDialog } from './components/confirm-dialog';
-import { EventDetailsDialog } from './components/event-details-dialog';
-import { EventEditDialog } from './components/event-edit-dialog';
-import { StatusBadge } from './components/status-badge';
-
-type DateFilter = 'ALL' | 'UPCOMING' | 'PAST';
+  AdminErrorState,
+  AdminPageHeader,
+  ConfirmDialog,
+  EventCreateDialog,
+  EventDetailsDialog,
+  EventEditDialog,
+  StatusBadge,
+} from './components';
 
 export function AdminEventsPage() {
   const queryClient = useQueryClient();
   const { data: events = [], isLoading, isError, error, refetch } = useAdminEvents();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'' | AdminEventStatus>('');
-  const [dateFilter, setDateFilter] = useState<DateFilter>('ALL');
+  const [isCreating, setIsCreating] = useState(false);
   const [viewingEvent, setViewingEvent] = useState<AdminEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<AdminEvent | null>(null);
   const [deletingEvent, setDeletingEvent] = useState<AdminEvent | null>(null);
-  const [now] = useState(() => Date.now());
-
-  const statusMutation = useMutation({
-    mutationFn: ({ event, status }: { event: AdminEvent; status: AdminEventStatus }) =>
-      updateAdminEventStatus(event.id, status),
-    onSuccess: (updated) => {
-      void queryClient.invalidateQueries({ queryKey: adminQueryKeys.events });
-      toast.success(`Статус события «${updated.title}» изменён`);
-    },
-    onError: (mutationError) => {
-      toast.error(formatErrorMessage(mutationError, 'Не удалось изменить статус события'));
-    },
-  });
 
   const deleteMutation = useMutation({
     mutationFn: (event: AdminEvent) => deleteAdminEvent(event.id),
     onSuccess: (_result, event) => {
       void queryClient.invalidateQueries({ queryKey: adminQueryKeys.events });
-      toast.success(`Событие «${event.title}» удалено`);
+      toast.success(`Ивент «${event.title}» удалён`);
       setDeletingEvent(null);
       deleteMutation.reset();
     },
     onError: (mutationError) => {
-      toast.error(formatErrorMessage(mutationError, 'Не удалось удалить событие'));
+      toast.error(formatErrorMessage(mutationError, 'Не удалось удалить ивент'));
     },
   });
 
   const normalizedSearch = search.trim().toLowerCase();
   const filteredEvents = events.filter((event) => {
-    const timestamp = new Date(event.startsAt).getTime();
     const matchesSearch =
       !normalizedSearch ||
       [String(event.id), event.title, event.code, event.organizer].some((value) =>
         value.toLowerCase().includes(normalizedSearch)
       );
     const matchesStatus = !statusFilter || event.status === statusFilter;
-    const matchesDate =
-      dateFilter === 'ALL' || (dateFilter === 'UPCOMING' ? timestamp >= now : timestamp < now);
-    return matchesSearch && matchesStatus && matchesDate;
+    return matchesSearch && matchesStatus;
   });
 
   const columns: DataTableColumn<AdminEvent>[] = [
@@ -77,7 +58,7 @@ export function AdminEventsPage() {
     },
     {
       id: 'title',
-      header: 'Событие',
+      header: 'Ивент',
       cell: (event) => (
         <div className="flex min-w-48 flex-col">
           <span className="text-foreground font-semibold">{event.title}</span>
@@ -87,10 +68,25 @@ export function AdminEventsPage() {
       sortValue: (event) => event.title.toLowerCase(),
     },
     {
-      id: 'startsAt',
-      header: 'Дата и время',
-      cell: (event) => <span className="whitespace-nowrap">{formatDateTime(event.startsAt)}</span>,
-      sortValue: (event) => new Date(event.startsAt).getTime(),
+      id: 'season',
+      header: 'Сезон',
+      cell: (event) => (
+        <span className="text-foreground-muted whitespace-nowrap">
+          {event.seasonTitle || `${event.seasonNumber} сезон`}
+        </span>
+      ),
+      sortValue: (event) => event.seasonNumber,
+    },
+    {
+      id: 'dates',
+      header: 'Даты',
+      cell: (event) => {
+        const dates =
+          event.dateRangeFormatted ||
+          (event.startDate ? `${event.startDate} — ${event.endDate || 'н. в.'}` : '—');
+        return <span className="whitespace-nowrap tabular-nums">{dates}</span>;
+      },
+      sortValue: (event) => event.startDate || '',
     },
     {
       id: 'organizer',
@@ -112,88 +108,71 @@ export function AdminEventsPage() {
     {
       id: 'actions',
       header: 'Действия',
-      cell: (event) => {
-        const isPublished = event.status === 'PUBLISHED';
-        const isCancelled = event.status === 'CANCELLED';
-        return (
-          <div className="flex min-w-80 flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="tertiary"
-              className="border-border hover:bg-secondary rounded-none border px-2 py-1 text-xs"
-              onClick={() => setViewingEvent(event)}
-            >
-              Просмотр
-            </Button>
-            <Button
-              type="button"
-              variant="tertiary"
-              className="border-border hover:bg-secondary rounded-none border px-2 py-1 text-xs"
-              onClick={() =>
-                statusMutation.mutate({
-                  event,
-                  status: isPublished ? 'DRAFT' : 'PUBLISHED',
-                })
-              }
-              disabled={statusMutation.isPending || isCancelled}
-            >
-              {isPublished ? 'Снять' : 'Опубликовать'}
-            </Button>
-            <Button
-              type="button"
-              variant="tertiary"
-              className="border-border hover:bg-secondary rounded-none border px-2 py-1 text-xs"
-              onClick={() => setEditingEvent(event)}
-            >
-              Изменить
-            </Button>
-            <Button
-              type="button"
-              variant="tertiary"
-              className="border-border hover:bg-secondary rounded-none border px-2 py-1 text-xs"
-              onClick={() => statusMutation.mutate({ event, status: 'CANCELLED' })}
-              disabled={statusMutation.isPending || isCancelled}
-            >
-              Отменить
-            </Button>
-            <Button
-              type="button"
-              variant="tertiary"
-              className="border-error/40 text-error hover:bg-error hover:text-foreground rounded-none border px-2 py-1 text-xs"
-              onClick={() => {
-                deleteMutation.reset();
-                setDeletingEvent(event);
-              }}
-            >
-              Удалить
-            </Button>
-          </div>
-        );
-      },
+      cell: (event) => (
+        <div className="flex min-w-56 flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="tertiary"
+            className="border-border hover:bg-secondary rounded-none border px-2 py-1 text-xs"
+            onClick={() => setViewingEvent(event)}
+          >
+            Просмотр
+          </Button>
+          <Button
+            type="button"
+            variant="tertiary"
+            className="border-border hover:bg-secondary rounded-none border px-2 py-1 text-xs"
+            onClick={() => setEditingEvent(event)}
+          >
+            Изменить
+          </Button>
+          <Button
+            type="button"
+            variant="tertiary"
+            className="border-error/40 text-error hover:bg-error hover:text-foreground rounded-none border px-2 py-1 text-xs"
+            onClick={() => {
+              deleteMutation.reset();
+              setDeletingEvent(event);
+            }}
+          >
+            Удалить
+          </Button>
+        </div>
+      ),
     },
   ];
 
   return (
     <div className="flex flex-col gap-6">
       <AdminPageHeader
-        title="События"
-        description="Публикация, редактирование и отмена событий сервера. Черновики не видны игрокам."
+        title="Ивенты"
+        description="Создание, редактирование и управление игровыми событиями сервера."
         actions={
-          <Button
-            type="button"
-            variant="secondary"
-            className="rounded-none"
-            onClick={() => void refetch()}
-            disabled={isLoading}
-          >
-            Обновить
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="primary"
+              className="rounded-none"
+              onClick={() => setIsCreating(true)}
+            >
+              Создать ивент
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              className="rounded-none"
+              onClick={() => void refetch()}
+              disabled={isLoading}
+            >
+              Обновить
+            </Button>
+          </div>
         }
       />
 
       {isError ? (
         <AdminErrorState
-          message={formatErrorMessage(error, 'Не удалось загрузить события')}
+          message={formatErrorMessage(error, 'Не удалось загрузить ивенты')}
           onRetry={() => void refetch()}
         />
       ) : (
@@ -205,10 +184,10 @@ export function AdminEventsPage() {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Поиск по названию, коду или организатору"
-                aria-label="Поиск событий"
+                aria-label="Поиск ивентов"
               />
             </div>
-            <div className="w-full lg:w-52">
+            <div className="w-full lg:w-56">
               <Select
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value as '' | AdminEventStatus)}
@@ -222,17 +201,6 @@ export function AdminEventsPage() {
                 ))}
               </Select>
             </div>
-            <div className="w-full lg:w-52">
-              <Select
-                value={dateFilter}
-                onChange={(event) => setDateFilter(event.target.value as DateFilter)}
-                aria-label="Фильтр по дате"
-              >
-                <option value="ALL">Любая дата</option>
-                <option value="UPCOMING">Предстоящие</option>
-                <option value="PAST">Прошедшие</option>
-              </Select>
-            </div>
             <Button
               type="button"
               variant="tertiary"
@@ -240,9 +208,8 @@ export function AdminEventsPage() {
               onClick={() => {
                 setSearch('');
                 setStatusFilter('');
-                setDateFilter('ALL');
               }}
-              disabled={!search && !statusFilter && dateFilter === 'ALL'}
+              disabled={!search && !statusFilter}
             >
               Сбросить
             </Button>
@@ -253,12 +220,14 @@ export function AdminEventsPage() {
             data={filteredEvents}
             getRowId={(event) => event.id}
             isLoading={isLoading}
-            emptyMessage="События не найдены"
-            key={`${search}|${statusFilter}|${dateFilter}`}
-            caption="Список событий"
+            emptyMessage="Ивенты не найдены"
+            key={`${search}|${statusFilter}`}
+            caption="Список ивентов"
           />
         </>
       )}
+
+      {isCreating && <EventCreateDialog onClose={() => setIsCreating(false)} />}
 
       {viewingEvent && (
         <EventDetailsDialog event={viewingEvent} onClose={() => setViewingEvent(null)} />
@@ -274,14 +243,14 @@ export function AdminEventsPage() {
 
       <ConfirmDialog
         isOpen={Boolean(deletingEvent)}
-        title="Удалить событие?"
-        description={`Событие «${deletingEvent?.title ?? ''}» будет удалено без возможности восстановления.`}
-        confirmLabel="Удалить событие"
+        title="Удалить ивент?"
+        description={`Ивент «${deletingEvent?.title ?? ''}» будет удален без возможности восстановления.`}
+        confirmLabel="Удалить ивент"
         destructive
         isPending={deleteMutation.isPending}
         error={
-          deleteMutation.isError
-            ? formatErrorMessage(deleteMutation.error, 'Не удалось удалить событие')
+          deleteMutation.error
+            ? formatErrorMessage(deleteMutation.error, 'Не удалось удалить ивент')
             : null
         }
         onConfirm={() => {

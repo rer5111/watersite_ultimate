@@ -5,10 +5,10 @@ import { queryClient } from '@/lib';
 import { router } from '@/routes';
 import { AuthProvider } from '@/context';
 import { ToastProvider } from '@/components/ui';
-import { donationTypesQueryOptions, eventsQueryOptions } from '@/api';
+import { donationTypesQueryOptions, seasonsQueryOptions } from '@/api';
 
 void queryClient.query(donationTypesQueryOptions).catch(() => {});
-void queryClient.query(eventsQueryOptions).catch(() => {});
+void queryClient.query(seasonsQueryOptions).catch(() => {});
 
 function App() {
   return (

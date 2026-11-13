@@ -11,13 +11,7 @@ type LogoProps = LogoVariants & {
 export function Logo({ size, className }: LogoProps) {
   return (
     <Link to={paths.home} className={cn(logoVariants({ size }), className)}>
-      <img
-        src={waltercraftLogo}
-        alt=""
-        decoding="async"
-        loading="eager"
-        className="shrink-0"
-      />
+      <img src={waltercraftLogo} alt="" decoding="async" loading="eager" className="shrink-0" />
 
       <span className="font-brand leading-none [text-box:trim-both_cap_alphabetic]">
         WALTERCRAFT

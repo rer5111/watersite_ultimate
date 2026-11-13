@@ -48,7 +48,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
             } else {
                 log.info("HTTP request completed method={} status={} durationMs={}", method, status, durationMs);
             }
-            MDC.remove("requestId");
+            MDC.clear();
         }
     }
 }

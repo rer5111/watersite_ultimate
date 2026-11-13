@@ -52,9 +52,11 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
         onClick={() => setIsOpen((prev) => !prev)}
         aria-expanded={isOpen}
         aria-haspopup="true"
-        aria-label={unreadCount > 0
-          ? `${displayName}, непрочитанных уведомлений: ${unreadCount}`
-          : `Меню профиля ${displayName}`}
+        aria-label={
+          unreadCount > 0
+            ? `${displayName}, непрочитанных уведомлений: ${unreadCount}`
+            : `Меню профиля ${displayName}`
+        }
         className={cn(
           buttonVariants({ variant: 'tertiary' }),
           'hover:bg-tertiary-hover/50 active:bg-tertiary-active/50 h-10 gap-2.5 rounded-none px-3 py-1.5'

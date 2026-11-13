@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfiguration {
 
     private static final Set<String> ALLOWED_ROLES = Set.of("USER", "ADMIN");
@@ -45,6 +47,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/actuator/health/**", "/actuator/info",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/events", "/api/v1/events/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/events/*/participate").authenticated()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().denyAll())
                 .oauth2ResourceServer(resourceServer -> resourceServer
@@ -55,7 +58,7 @@ public class SecurityConfiguration {
     @Bean
     JwtDecoder jwtDecoder(
             @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}") String jwkSetUri,
-            @Value("${event.jwt.issuer}") String issuer
+            @Value("${event.jwt.issuer:${AUTH_JWT_ISSUER:https://auth.waltercraft.ru}}") String issuer
     ) {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
         OAuth2TokenValidator<Jwt> accessTokenValidator = jwt -> "access".equals(jwt.getClaimAsString("token_type"))

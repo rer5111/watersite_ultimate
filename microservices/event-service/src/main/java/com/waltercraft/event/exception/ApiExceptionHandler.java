@@ -60,22 +60,19 @@ public class ApiExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ProblemDetail> unhandled(Exception exception) {
-        log.error("Unhandled error in event-service", exception);
+    public ResponseEntity<ProblemDetail> internal(Exception exception) {
+        log.error("Unhandled exception in event-service", exception);
         return problem(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR",
-                "Произошла внутренняя ошибка сервера. Повторите попытку позже.", Map.of());
+                "Внутренняя ошибка сервиса ивентов. Повторите попытку позже.", Map.of());
     }
 
-    private ResponseEntity<ProblemDetail> problem(HttpStatus status, String code, String message,
-                                                  Map<String, String> details) {
+    private ResponseEntity<ProblemDetail> problem(HttpStatus status, String code, String message, Object details) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, message);
-        problemDetail.setType(URI.create("urn:waltercraft:error:" + code.toLowerCase()));
-        problemDetail.setTitle(code);
+        problemDetail.setTitle(status.getReasonPhrase());
+        problemDetail.setType(URI.create("urn:problem:%s".formatted(code.toLowerCase())));
         problemDetail.setProperty("code", code);
         problemDetail.setProperty("message", message);
-        if (!details.isEmpty()) {
-            problemDetail.setProperty("details", details);
-        }
+        problemDetail.setProperty("details", details);
         return ResponseEntity.status(status).body(problemDetail);
     }
 }

@@ -65,7 +65,8 @@ Waltercraft — сайт игрового сервера Minecraft с микро
 | `payment-service`     | Платежи                                      | `payments`                     |
 | `chat-service`         | Подключение к чату через Discord             | —                              |
 | `notification-service` | Отправка кодов подтверждения и email-сообщений | `email_verification_codes`     |
-| `event-service`        | Хронология событий и сезоны сервера          | `events`                       |
+| `season-service`       | Сезоны сервера                               | `seasons`                      |
+| `event-service`        | Игровые ивенты и их участники                | `events`, `event_participants` |
 | `skin-service`         | Получение скинов Minecraft через внешний API | —                              |
 
 ---

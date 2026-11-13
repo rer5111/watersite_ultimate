@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from 'react-router';
 import { ButtonLink } from '@/components/ui';
 import { useAuth } from '@/context';
-import { paths } from '@/routes/paths';
+import { paths } from './paths';
 
 export function AdminRoute() {
   const { user, isLoading } = useAuth();

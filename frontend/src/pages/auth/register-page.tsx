@@ -1,5 +1,6 @@
 import { useRef, useState, type KeyboardEvent, type RefObject } from 'react';
-import { Button, Input, MicrosoftLoginSection } from '@/components';
+import { Button, Input } from '@/components/ui';
+import { MicrosoftLoginSection } from './components';
 import { AuthApiError, sendRegistrationCode } from '@/api';
 import { paths } from '@/routes';
 import { Link, useNavigate } from 'react-router';

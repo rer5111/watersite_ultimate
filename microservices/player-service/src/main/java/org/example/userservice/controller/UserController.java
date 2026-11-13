@@ -97,7 +97,7 @@ public class UserController {
             userService.addUser(userModel);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("Failed to register user", e);
+            log.error("Failed to register user name={}", name, e);
             return ResponseEntity.badRequest().build();
         }
     }
@@ -130,7 +130,7 @@ public class UserController {
             userService.updateUser(userModel);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("Failed to update user", e);
+            log.error("Failed to update user userId={}", id, e);
             return ResponseEntity.badRequest().build();
         }
     }
@@ -219,7 +219,7 @@ public class UserController {
 
     @DeleteMapping(value = {"/season/{id}/{s_id}", "/deleteSeason/{id}/{s_id}"})
     public ResponseEntity<Void> deleteFromSeason(@PathVariable long id, @PathVariable long s_id) {
-        log.info("Deleting user {} from season {}", id, s_id);
+        log.info("Deleting user from season userId={} seasonId={}", id, s_id);
         try {
             List<UserModel> users = userService.findById(id);
             List<SeasonModel> seasons = seasonService.findById(s_id);
@@ -231,14 +231,14 @@ public class UserController {
             userService.updateUser(userModel);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("Failed to delete user from season", e);
+            log.error("Failed to delete user from season userId={} seasonId={}", id, s_id, e);
             return ResponseEntity.badRequest().build();
         }
     }
 
     @PostMapping(value = {"/season/{id}/{s_id}", "/addSeason/{id}/{s_id}"})
     public ResponseEntity<Void> addToSeason(@PathVariable long id, @PathVariable long s_id) {
-        log.info("Adding user {} to season {}", id, s_id);
+        log.info("Adding user to season userId={} seasonId={}", id, s_id);
         try {
             List<UserModel> users = userService.findById(id);
             List<SeasonModel> seasons = seasonService.findById(s_id);
@@ -248,10 +248,10 @@ public class UserController {
             UserModel userModel = users.get(0);
             userModel.addSeason(seasons.get(0));
             userService.updateUser(userModel);
-            log.info("User {} added to season {}", id, s_id);
+            log.info("User added to season userId={} seasonId={}", id, s_id);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("Failed to add user to season", e);
+            log.error("Failed to add user to season userId={} seasonId={}", id, s_id, e);
             return ResponseEntity.badRequest().build();
         }
     }

@@ -22,7 +22,7 @@ export function SeasonCard({
         decoding="async"
         width={240}
         height={320}
-        className="aspect-3/4 w-60 shrink-0 rounded-2xl object-cover text-transparent text-[0px]"
+        className="aspect-3/4 w-60 shrink-0 rounded-2xl object-cover text-[0px] text-transparent"
       />
       <div className="flex max-w-88 flex-col gap-4">
         <h3 className="text-2xl leading-tight font-bold">{`${title} (${startDate}–${endDate})`}</h3>

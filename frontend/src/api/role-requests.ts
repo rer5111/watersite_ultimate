@@ -6,7 +6,9 @@ export interface CreateRoleRequestPayload {
   note: string;
 }
 
-export async function createRoleRequest(payload: CreateRoleRequestPayload): Promise<AdminRoleRequest> {
+export async function createRoleRequest(
+  payload: CreateRoleRequestPayload
+): Promise<AdminRoleRequest> {
   const baseUrl = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
   const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
   const response = await fetch(`${baseUrl}/api/player-service/api/user/role-requests`, {
@@ -19,9 +21,10 @@ export async function createRoleRequest(payload: CreateRoleRequestPayload): Prom
   });
 
   if (!response.ok) {
-    const fallback = response.status === 409
-      ? 'У вас уже есть заявка на рассмотрении.'
-      : 'Не удалось отправить заявку';
+    const fallback =
+      response.status === 409
+        ? 'У вас уже есть заявка на рассмотрении.'
+        : 'Не удалось отправить заявку';
     const message = await parseApiError(response, fallback);
     throw new Error(message);
   }

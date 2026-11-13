@@ -17,8 +17,11 @@ export function SkinShowcaseSection({ profile }: { profile: UserProfile }) {
   const minecraftName = profile.minecraftNickname || profile.username;
 
   return (
-    <section aria-labelledby="skin-showcase-title" className="bg-card grid gap-8 p-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:p-8">
-      <div className="flex min-h-80 items-center justify-center overflow-hidden bg-secondary/40 p-6">
+    <section
+      aria-labelledby="skin-showcase-title"
+      className="bg-card grid gap-8 p-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:p-8"
+    >
+      <div className="bg-secondary/40 flex min-h-80 items-center justify-center overflow-hidden p-6">
         <SkinAvatar
           uuid={profile.minecraftUuid}
           name={minecraftName}
@@ -29,7 +32,9 @@ export function SkinShowcaseSection({ profile }: { profile: UserProfile }) {
 
       <div className="flex flex-col justify-center gap-5">
         <div className="flex flex-col gap-2">
-          <h2 id="skin-showcase-title" className="text-2xl font-bold">Игровой облик</h2>
+          <h2 id="skin-showcase-title" className="text-2xl font-bold">
+            Игровой облик
+          </h2>
           <p className="text-foreground-muted text-sm">
             Просмотрите скин Minecraft в трёх ракурсах. Используется ник {minecraftName}.
           </p>

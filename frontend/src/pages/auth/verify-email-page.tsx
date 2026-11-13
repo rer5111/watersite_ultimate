@@ -29,7 +29,8 @@ export function VerifyEmailPage() {
       return stateData;
     }
 
-    const saved = typeof window !== 'undefined' ? sessionStorage.getItem('pendingRegistration') : null;
+    const saved =
+      typeof window !== 'undefined' ? sessionStorage.getItem('pendingRegistration') : null;
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as RegistrationData;
@@ -51,7 +52,8 @@ export function VerifyEmailPage() {
     if (stateData?.cooldownUntil) {
       return getRemainingSeconds(stateData.cooldownUntil);
     }
-    const saved = typeof window !== 'undefined' ? sessionStorage.getItem('pendingRegistration') : null;
+    const saved =
+      typeof window !== 'undefined' ? sessionStorage.getItem('pendingRegistration') : null;
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as RegistrationData;
@@ -102,8 +104,7 @@ export function VerifyEmailPage() {
       login(tokens);
       navigate(paths.home);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Неверный код подтверждения';
+      const message = err instanceof Error ? err.message : 'Неверный код подтверждения';
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -189,8 +190,7 @@ export function VerifyEmailPage() {
       const updated = { ...regData, cooldownUntil: newCooldownUntil };
       sessionStorage.setItem('pendingRegistration', JSON.stringify(updated));
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Не удалось повторно отправить код';
+      const message = err instanceof Error ? err.message : 'Не удалось повторно отправить код';
       setError(message);
     } finally {
       setIsResending(false);
@@ -235,7 +235,7 @@ export function VerifyEmailPage() {
 
       <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div className="flex flex-col items-center gap-3">
-          <div className="flex justify-between gap-2 sm:gap-3 w-full">
+          <div className="flex w-full justify-between gap-2 sm:gap-3">
             {digits.map((digit, index) => (
               <input
                 key={index}
@@ -250,7 +250,7 @@ export function VerifyEmailPage() {
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 onPaste={handlePaste}
                 disabled={isSubmitting}
-                className={`bg-card text-foreground aspect-square shrink-0 size-12 sm:size-14 rounded-none border text-center text-xl font-bold transition-colors focus:outline-none focus:ring-1 ${
+                className={`bg-card text-foreground aspect-square size-12 shrink-0 rounded-none border text-center text-xl font-bold transition-colors focus:ring-1 focus:outline-none sm:size-14 ${
                   error
                     ? 'border-error text-error focus:border-error focus:ring-error'
                     : 'border-border focus:border-border-hover focus:ring-ring'
@@ -259,36 +259,25 @@ export function VerifyEmailPage() {
             ))}
           </div>
 
-          {error && (
-            <span className="text-error text-xs font-medium text-center">
-              {error}
-            </span>
-          )}
+          {error && <span className="text-error text-center text-xs font-medium">{error}</span>}
         </div>
 
-        <Button
-          type="submit"
-          disabled={!isCodeComplete || isSubmitting}
-          className="w-full"
-        >
+        <Button type="submit" disabled={!isCodeComplete || isSubmitting} className="w-full">
           {isSubmitting ? 'Проверка...' : 'Подтвердить'}
         </Button>
 
-        <div className="flex flex-col items-center gap-2 text-sm text-center">
+        <div className="flex flex-col items-center gap-2 text-center text-sm">
           {countdown > 0 ? (
             <span className="text-foreground-muted">
               Повторная отправка доступна через{' '}
-              <span className="text-foreground font-mono font-medium">
-                {countdown}
-              </span>{' '}
-              сек.
+              <span className="text-foreground font-mono font-medium">{countdown}</span> сек.
             </span>
           ) : (
             <button
               type="button"
               onClick={handleResend}
               disabled={isResending}
-              className="text-foreground font-medium transition-all hover:underline cursor-pointer disabled:opacity-50"
+              className="text-foreground cursor-pointer font-medium transition-all hover:underline disabled:opacity-50"
             >
               {isResending ? 'Отправка...' : 'Отправить код повторно'}
             </button>
@@ -296,7 +285,7 @@ export function VerifyEmailPage() {
 
           <Link
             to={paths.register}
-            className="text-foreground-muted hover:text-foreground text-xs transition-colors hover:underline mt-1"
+            className="text-foreground-muted hover:text-foreground mt-1 text-xs transition-colors hover:underline"
           >
             Изменить данные
           </Link>

@@ -25,7 +25,8 @@ public class CircuitBreakerFallbackController {
             "donation-service", "Сервис пожертвований",
             "chat-service", "Сервис чата",
             "notification-service", "Сервис уведомлений",
-            "event-service", "Сервис событий",
+            "season-service", "Сервис сезонов",
+            "event-service", "Сервис ивентов",
             "skin-service", "Сервис скинов"
     );
 

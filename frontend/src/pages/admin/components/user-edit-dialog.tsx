@@ -18,9 +18,10 @@ export function UserEditDialog({ user, onClose }: UserEditDialogProps) {
   const [status, setStatus] = useState<AdminUserStatus>(user.status);
 
   const isTargetAdmin = user.role === 'ADMIN';
-  const isSelf = currentUser?.id !== undefined
-    ? user.id === currentUser.id
-    : user.username === currentUser?.username;
+  const isSelf =
+    currentUser?.id !== undefined
+      ? user.id === currentUser.id
+      : user.username === currentUser?.username;
 
   const mutation = useMutation({
     mutationFn: (payload: UpdateAdminUserPayload) => updateAdminUser(user.id, payload),
@@ -99,7 +100,8 @@ export function UserEditDialog({ user, onClose }: UserEditDialogProps) {
                 const disabled = isSelf && isTargetAdmin && value !== 'ADMIN';
                 return (
                   <option key={value} value={value} disabled={disabled}>
-                    {label}{disabled ? ' (нельзя понизить себя)' : ''}
+                    {label}
+                    {disabled ? ' (нельзя понизить себя)' : ''}
                   </option>
                 );
               })}
@@ -124,7 +126,8 @@ export function UserEditDialog({ user, onClose }: UserEditDialogProps) {
                 const disabled = (isTargetAdmin || isSelf) && isBanOption;
                 return (
                   <option key={value} value={value} disabled={disabled}>
-                    {label}{disabled ? ' (недоступно для администратора)' : ''}
+                    {label}
+                    {disabled ? ' (недоступно для администратора)' : ''}
                   </option>
                 );
               })}

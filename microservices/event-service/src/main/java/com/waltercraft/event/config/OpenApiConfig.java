@@ -19,7 +19,7 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("Event Service API")
                         .version("1.0.0")
-                        .description("API сервиса событий Waltercraft"))
+                        .description("API сервиса ивентов и участников Waltercraft"))
                 .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME))
                 .components(new Components()
                         .addSecuritySchemes(SECURITY_SCHEME_NAME, new SecurityScheme()

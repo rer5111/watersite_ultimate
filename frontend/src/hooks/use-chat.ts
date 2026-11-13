@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { getChatMessages, sendChatMessage, getChatStatus } from '@/api/chat';
-import type { ChatMessage, ChatStatus } from '@/api/chat';
+import { getChatMessages, sendChatMessage, getChatStatus } from '@/api';
+import type { ChatMessage, ChatStatus } from '@/api';
 
 const POLL_INTERVAL_MS = 3000;
 

@@ -1,4 +1,4 @@
-import { AdminPageHeader } from './components/admin-page-shell';
+import { AdminPageHeader } from './components';
 import { BroadcastComposerSection, BroadcastHistorySection } from './sections';
 
 export function AdminBroadcastPage() {

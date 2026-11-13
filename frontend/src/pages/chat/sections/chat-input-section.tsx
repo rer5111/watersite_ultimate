@@ -1,6 +1,6 @@
 import { Button, Input } from '@/components/ui';
 import { ChevronRightIcon } from '@/components/ui';
-import type { ChatStatus } from '@/api/chat';
+import type { ChatStatus } from '@/api';
 import { useRef, useState } from 'react';
 
 export type ChatInputSectionProps = {

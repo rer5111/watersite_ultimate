@@ -1,5 +1,5 @@
 import type { SVGProps } from 'react';
-import type { ChatMessageOrigin } from '@/api/chat';
+import type { ChatMessageOrigin } from '@/api';
 import { cn } from '@/lib';
 
 export type OriginBadgeProps = {

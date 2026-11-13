@@ -26,7 +26,10 @@ function getApiBaseUrl(): string {
 
 export async function getMicrosoftAuthorizeUrl(redirectUri?: string): Promise<string> {
   const base = getApiBaseUrl();
-  const target = new URL(`${base}/api/auth-service/auth/microsoft/authorize-url`, window.location.origin);
+  const target = new URL(
+    `${base}/api/auth-service/auth/microsoft/authorize-url`,
+    window.location.origin
+  );
   if (redirectUri) {
     target.searchParams.set('redirect_uri', redirectUri);
   }
@@ -108,9 +111,7 @@ export async function getMicrosoftDeviceCode(): Promise<DeviceCodeResponse> {
   return (await response.json()) as DeviceCodeResponse;
 }
 
-export async function pollMicrosoftDeviceLogin(
-  deviceCode: string
-): Promise<DeviceLoginResponse> {
+export async function pollMicrosoftDeviceLogin(deviceCode: string): Promise<DeviceLoginResponse> {
   const base = getApiBaseUrl();
   const response = await fetch(`${base}/api/auth-service/auth/microsoft/device-login`, {
     method: 'POST',

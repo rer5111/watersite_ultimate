@@ -16,24 +16,87 @@ export interface UpdateAdminUserPayload {
   status: AdminUserStatus;
 }
 
-export type AdminEventStatus = 'DRAFT' | 'PUBLISHED' | 'CANCELLED';
+export type AdminSeasonStatus = 'DRAFT' | 'PUBLISHED' | 'CANCELLED';
 
-export interface AdminEvent {
+export interface AdminSeason {
   id: number;
   code: string;
   title: string;
   description: string;
   startsAt: string;
   organizer: string;
-  status: AdminEventStatus;
+  status: AdminSeasonStatus;
 }
 
-export interface UpdateAdminEventPayload {
+export interface CreateAdminSeasonPayload {
+  code: string;
+  title: string;
+  description: string;
+  startDate?: string;
+  endDate?: string;
+  image?: string;
+  displayOrder?: number;
+  startsAt: string;
+  organizer: string;
+  status: AdminSeasonStatus;
+}
+
+export interface UpdateAdminSeasonPayload {
   title: string;
   description: string;
   startsAt: string;
   organizer: string;
+  status: AdminSeasonStatus;
+}
+
+export type AdminEventStatus = 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+
+export interface AdminEvent {
+  id: number;
+  code: string;
+  title: string;
+  description?: string;
+  shortDescription?: string;
+  image?: string;
+  seasonNumber: number;
+  seasonTitle?: string;
+  organizer: string;
   status: AdminEventStatus;
+  startDate?: string | null;
+  endDate?: string | null;
+  dateRangeFormatted?: string;
+  participantsCount?: number;
+  displayOrder?: number;
+  active?: boolean;
+}
+
+export interface CreateAdminEventPayload {
+  code: string;
+  title: string;
+  description: string;
+  shortDescription?: string;
+  image?: string;
+  seasonNumber: number;
+  organizer: string;
+  status: AdminEventStatus;
+  startDate?: string | null;
+  endDate?: string | null;
+  displayOrder?: number;
+  active?: boolean;
+}
+
+export interface UpdateAdminEventPayload {
+  title?: string;
+  description?: string;
+  shortDescription?: string;
+  image?: string;
+  seasonNumber?: number;
+  organizer?: string;
+  status?: AdminEventStatus;
+  startDate?: string | null;
+  endDate?: string | null;
+  displayOrder?: number;
+  active?: boolean;
 }
 
 export type AdminRoleRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';

@@ -1,9 +1,12 @@
-import { useRef, useState, type KeyboardEvent } from 'react';
-import { Button, Input, MicrosoftDeviceModal } from '@/components';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { Button, Checkbox, Input } from '@/components/ui';
+import { MicrosoftDeviceModal } from './components';
 import { loginWithCredentials } from '@/api';
 import { useAuth } from '@/context';
 import { paths } from '@/routes';
 import { Link, useNavigate } from 'react-router';
+
+const REMEMBERED_LOGIN_KEY = 'remembered_login';
 
 interface FormErrors {
   identifier?: string;
@@ -15,13 +18,28 @@ export function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false);
-  const [identifier, setIdentifier] = useState('');
+  const [identifier, setIdentifier] = useState(() => {
+    return (
+      (typeof window !== 'undefined' ? localStorage.getItem(REMEMBERED_LOGIN_KEY) : null) || ''
+    );
+  });
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(() => {
+    return Boolean(
+      typeof window !== 'undefined' ? localStorage.getItem(REMEMBERED_LOGIN_KEY) : false
+    );
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
   const identifierInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (localStorage.getItem(REMEMBERED_LOGIN_KEY)) {
+      passwordInputRef.current?.focus();
+    }
+  }, []);
 
   const handleDeviceSuccess = () => {
     setIsDeviceModalOpen(false);
@@ -56,6 +74,11 @@ export function LoginPage() {
 
     try {
       const tokens = await loginWithCredentials(trimmedIdentifier, password);
+      if (rememberMe) {
+        localStorage.setItem(REMEMBERED_LOGIN_KEY, trimmedIdentifier);
+      } else {
+        localStorage.removeItem(REMEMBERED_LOGIN_KEY);
+      }
       login(tokens);
       navigate(paths.home);
     } catch (err: unknown) {
@@ -174,29 +197,12 @@ export function LoginPage() {
           )}
         </div>
 
-        <label className="flex w-fit cursor-pointer items-center gap-3">
-          <span className="relative flex size-4.5 shrink-0 items-center justify-center">
-            <input
-              type="checkbox"
-              name="rememberMe"
-              className="peer border-border checked:border-primary checked:bg-primary focus-visible:outline-primary size-4.5 cursor-pointer appearance-none rounded-none border bg-transparent transition-colors duration-100 focus-visible:outline-2 focus-visible:outline-offset-2"
-            />
-
-            <svg
-              viewBox="0 0 16 16"
-              fill="none"
-              className="pointer-events-none absolute size-4 text-white opacity-0 transition-opacity duration-100 peer-checked:opacity-100"
-            >
-              <path
-                d="m3 8 3 3 7-7"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="butt"
-                strokeLinejoin="miter"
-              />
-            </svg>
-          </span>
-
+        <label className="flex w-fit cursor-pointer items-center gap-3 select-none">
+          <Checkbox
+            name="rememberMe"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+          />
           <span className="text-foreground-muted text-sm">Запомнить меня</span>
         </label>
 

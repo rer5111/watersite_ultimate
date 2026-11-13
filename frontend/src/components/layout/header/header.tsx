@@ -16,7 +16,7 @@ const navItems: NavItem[] = [
   { title: 'Главная', destination: paths.home },
   { title: 'Администрация', destination: paths.admins },
   { title: 'Пожертвовать', destination: paths.donate },
-  { title: 'Чат', destination: paths.chat },
+  { title: 'Ивенты', destination: paths.events },
 ];
 
 export function Header() {

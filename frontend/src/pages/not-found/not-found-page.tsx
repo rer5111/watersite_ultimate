@@ -1,4 +1,4 @@
-import { paths } from '@/routes/paths';
+import { paths } from '@/routes';
 import { ButtonLink } from '@/components';
 import teto404 from '@/assets/images/teto-404.png';
 

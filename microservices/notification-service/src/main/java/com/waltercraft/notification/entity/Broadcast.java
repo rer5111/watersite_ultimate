@@ -46,11 +46,19 @@ public class Broadcast {
     @Column(nullable = false, length = 16)
     private BroadcastStatus status;
 
+    @Column(name = "recipient_user_id")
+    private Long recipientUserId;
+
     public Broadcast() {
     }
 
     public Broadcast(String subject, BroadcastCategory category, BroadcastAudience audience, String message,
                      Instant sentAt, int recipients, BroadcastStatus status) {
+        this(subject, category, audience, message, sentAt, recipients, status, null);
+    }
+
+    public Broadcast(String subject, BroadcastCategory category, BroadcastAudience audience, String message,
+                     Instant sentAt, int recipients, BroadcastStatus status, Long recipientUserId) {
         this.subject = subject;
         this.category = category;
         this.audience = audience;
@@ -58,6 +66,7 @@ public class Broadcast {
         this.sentAt = sentAt;
         this.recipients = recipients;
         this.status = status;
+        this.recipientUserId = recipientUserId;
     }
 
     public Long getId() {
@@ -122,6 +131,14 @@ public class Broadcast {
 
     public void setStatus(BroadcastStatus status) {
         this.status = status;
+    }
+
+    public Long getRecipientUserId() {
+        return recipientUserId;
+    }
+
+    public void setRecipientUserId(Long recipientUserId) {
+        this.recipientUserId = recipientUserId;
     }
 
     @Override

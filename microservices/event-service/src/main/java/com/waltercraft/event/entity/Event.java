@@ -1,5 +1,6 @@
 package com.waltercraft.event.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -7,12 +8,17 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -23,42 +29,45 @@ public class Event {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 64)
+    @Column(name = "code", nullable = false, unique = true, length = 64)
     private String code;
 
-    @Column(nullable = false, length = 120)
+    @Column(name = "title", nullable = false, length = 120)
     private String title;
 
-    @Column(nullable = false, length = 1000)
+    @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "start_date", nullable = false, length = 32)
-    private String startDate;
+    @Column(name = "short_description", nullable = false, length = 500)
+    private String shortDescription = "";
 
-    @Column(name = "end_date", nullable = false, length = 32)
-    private String endDate;
+    @Column(name = "image", nullable = false, length = 255)
+    private String image = "";
 
-    @Column(nullable = false, length = 255)
-    private String image;
+    @Column(name = "season_number", nullable = false)
+    private Integer seasonNumber = 1;
 
-    @Column(name = "display_order", nullable = false)
-    private int displayOrder;
-
-    @Column(name = "starts_at")
-    private Instant startsAt;
-
-    @Column(nullable = false)
-    private boolean active = true;
-
-    @Column(nullable = false, length = 120)
+    @Column(name = "organizer", nullable = false, length = 120)
     private String organizer = "";
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 16)
-    private EventStatus status = EventStatus.PUBLISHED;
+    @Column(name = "status", nullable = false, length = 32)
+    private EventStatus status = EventStatus.PLANNED;
+
+    @Column(name = "start_date")
+    private LocalDate startDate;
+
+    @Column(name = "end_date")
+    private LocalDate endDate;
+
+    @Column(name = "display_order", nullable = false)
+    private Integer displayOrder = 0;
+
+    @Column(name = "active", nullable = false)
+    private Boolean active = true;
 
     @Version
-    @Column(nullable = false)
+    @Column(name = "version", nullable = false)
     private Long version = 0L;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -67,25 +76,15 @@ public class Event {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
+    private List<EventParticipant> participants = new ArrayList<>();
+
     public Event() {
     }
 
-    public Event(String code, String title, String description, String startDate, String endDate,
-                 String image, int displayOrder, String organizer, EventStatus status) {
-        this.code = code;
-        this.title = title;
-        this.description = description;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.image = image;
-        this.displayOrder = displayOrder;
-        this.organizer = organizer;
-        this.status = status;
-        this.active = status == EventStatus.PUBLISHED;
-    }
-
     @PrePersist
-    void prePersist() {
+    void onPrePersist() {
         Instant now = Instant.now();
         if (createdAt == null) {
             createdAt = now;
@@ -93,25 +92,36 @@ public class Event {
         if (updatedAt == null) {
             updatedAt = now;
         }
+        if (shortDescription == null) {
+            shortDescription = "";
+        }
+        if (image == null) {
+            image = "";
+        }
+        if (organizer == null) {
+            organizer = "";
+        }
+        if (displayOrder == null) {
+            displayOrder = 0;
+        }
+        if (active == null) {
+            active = true;
+        }
     }
 
     @PreUpdate
-    void preUpdate() {
+    void onPreUpdate() {
         updatedAt = Instant.now();
     }
 
-    public void replace(String code, String title, String description, String startDate, String endDate,
-                        String image, int displayOrder, String organizer, EventStatus status) {
-        this.code = code;
-        this.title = title;
-        this.description = description;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.image = image;
-        this.displayOrder = displayOrder;
-        this.organizer = organizer;
-        this.status = status;
-        this.active = status == EventStatus.PUBLISHED;
+    public void addParticipant(EventParticipant participant) {
+        participants.add(participant);
+        participant.setEvent(this);
+    }
+
+    public void removeParticipant(EventParticipant participant) {
+        participants.remove(participant);
+        participant.setEvent(null);
     }
 
     public Long getId() {
@@ -146,20 +156,12 @@ public class Event {
         this.description = description;
     }
 
-    public String getStartDate() {
-        return startDate;
+    public String getShortDescription() {
+        return shortDescription;
     }
 
-    public void setStartDate(String startDate) {
-        this.startDate = startDate;
-    }
-
-    public String getEndDate() {
-        return endDate;
-    }
-
-    public void setEndDate(String endDate) {
-        this.endDate = endDate;
+    public void setShortDescription(String shortDescription) {
+        this.shortDescription = shortDescription;
     }
 
     public String getImage() {
@@ -170,28 +172,12 @@ public class Event {
         this.image = image;
     }
 
-    public int getDisplayOrder() {
-        return displayOrder;
+    public Integer getSeasonNumber() {
+        return seasonNumber;
     }
 
-    public void setDisplayOrder(int displayOrder) {
-        this.displayOrder = displayOrder;
-    }
-
-    public Instant getStartsAt() {
-        return startsAt;
-    }
-
-    public void setStartsAt(Instant startsAt) {
-        this.startsAt = startsAt;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
+    public void setSeasonNumber(Integer seasonNumber) {
+        this.seasonNumber = seasonNumber;
     }
 
     public String getOrganizer() {
@@ -208,6 +194,38 @@ public class Event {
 
     public void setStatus(EventStatus status) {
         this.status = status;
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
+    }
+
+    public Integer getDisplayOrder() {
+        return displayOrder;
+    }
+
+    public void setDisplayOrder(Integer displayOrder) {
+        this.displayOrder = displayOrder;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
     }
 
     public Long getVersion() {
@@ -234,6 +252,14 @@ public class Event {
         this.updatedAt = updatedAt;
     }
 
+    public List<EventParticipant> getParticipants() {
+        return participants;
+    }
+
+    public void setParticipants(List<EventParticipant> participants) {
+        this.participants = participants;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -244,6 +270,6 @@ public class Event {
 
     @Override
     public int hashCode() {
-        return getClass().hashCode();
+        return Objects.hashCode(id);
     }
 }

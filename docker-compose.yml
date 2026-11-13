@@ -77,6 +77,21 @@ services:
       timeout: 3s
       retries: 20
 
+  season-db:
+    image: docker.io/library/postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${SEASON_DB_NAME:-season_db}
+      POSTGRES_USER: ${SEASON_DB_USER:-season_user}
+      POSTGRES_PASSWORD: ${SEASON_DB_PASSWORD:?Set SEASON_DB_PASSWORD in .env}
+    volumes:
+      - season-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   event-db:
     image: docker.io/library/postgres:16-alpine
     environment:
@@ -338,6 +353,11 @@ services:
       PAYMENT_DB_PASSWORD: ${PAYMENT_DB_PASSWORD:?Set PAYMENT_DB_PASSWORD in .env}
       JWT_JWK_SET_URI: http://auth-service:8090/.well-known/jwks.json
       AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.waltercraft.ru}
+      YOOMONEY_WALLET: ${YOOMONEY_WALLET:-}
+      YOOMONEY_NOTIFICATION_SECRET: ${YOOMONEY_NOTIFICATION_SECRET:-}
+      YOOMONEY_SUCCESS_URL: ${YOOMONEY_SUCCESS_URL:-http://localhost:5173/donations/result}
+      NOTIFICATION_SERVICE_URL: http://notification-service:8087
+      NOTIFICATION_SERVICE_SHARED_SECRET: ${NOTIFICATION_SERVICE_SHARED_SECRET:-}
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
     healthcheck:
       test:
@@ -434,6 +454,46 @@ services:
       retries: 30
       start_period: 30s
 
+  season-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.java
+      args:
+        SERVICE_DIR: microservices/season-service
+    depends_on:
+      season-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8088
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_URL: http://discovery-server:8761/eureka/
+      SEASON_DB_HOST: ${SEASON_DB_HOST:-season-db}
+      SEASON_DB_PORT: ${SEASON_DB_PORT:-5432}
+      SEASON_DB_NAME: ${SEASON_DB_NAME:-season_db}
+      SEASON_DB_USER: ${SEASON_DB_USER:-season_user}
+      SEASON_DB_PASSWORD: ${SEASON_DB_PASSWORD:?Set SEASON_DB_PASSWORD in .env}
+      JWT_JWK_SET_URI: http://auth-service:8090/.well-known/jwks.json
+      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://auth.waltercraft.ru}
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'curl',
+          '-fsS',
+          'http://localhost:8088/actuator/health/readiness',
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 25s
+
   event-service:
     build:
       context: .
@@ -450,7 +510,7 @@ services:
       auth-service:
         condition: service_healthy
     environment:
-      SERVER_PORT: 8088
+      SERVER_PORT: 8089
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_URL: http://discovery-server:8761/eureka/
       EVENT_DB_HOST: ${EVENT_DB_HOST:-event-db}
@@ -467,7 +527,7 @@ services:
           'CMD',
           'curl',
           '-fsS',
-          'http://localhost:8088/actuator/health/readiness',
+          'http://localhost:8089/actuator/health/readiness',
         ]
       interval: 5s
       timeout: 3s
@@ -501,6 +561,8 @@ services:
         condition: service_healthy
       notification-service:
         condition: service_healthy
+      season-service:
+        condition: service_healthy
       event-service:
         condition: service_healthy
     environment:
@@ -533,4 +595,5 @@ volumes:
   application-db-data:
   payment-db-data:
   notification-db-data:
+  season-db-data:
   event-db-data:

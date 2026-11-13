@@ -1,6 +1,7 @@
 import type {
   AdminEventStatus,
   AdminRoleRequestStatus,
+  AdminSeasonStatus,
   AdminUserRole,
   AdminUserStatus,
   BroadcastAudience,
@@ -20,10 +21,17 @@ export const userStatusLabels: Record<AdminUserStatus, string> = {
   DEACTIVATED: 'Деактивирован',
 };
 
-export const eventStatusLabels: Record<AdminEventStatus, string> = {
+export const seasonStatusLabels: Record<AdminSeasonStatus, string> = {
   DRAFT: 'Черновик',
   PUBLISHED: 'Опубликовано',
   CANCELLED: 'Отменено',
+};
+
+export const eventStatusLabels: Record<AdminEventStatus, string> = {
+  PLANNED: 'Планируется',
+  IN_PROGRESS: 'В процессе',
+  COMPLETED: 'Завершен',
+  CANCELLED: 'Отменен',
 };
 
 export const requestStatusLabels: Record<AdminRoleRequestStatus, string> = {
@@ -65,9 +73,16 @@ export const userStatusTones: Record<AdminUserStatus, BadgeTone> = {
   DEACTIVATED: 'muted',
 };
 
-export const eventStatusTones: Record<AdminEventStatus, BadgeTone> = {
+export const seasonStatusTones: Record<AdminSeasonStatus, BadgeTone> = {
   PUBLISHED: 'success',
   DRAFT: 'muted',
+  CANCELLED: 'danger',
+};
+
+export const eventStatusTones: Record<AdminEventStatus, BadgeTone> = {
+  IN_PROGRESS: 'success',
+  PLANNED: 'info',
+  COMPLETED: 'muted',
   CANCELLED: 'danger',
 };
 
